@@ -233,13 +233,31 @@ function NovaProposta() {
               {itens.map((it, i) => {
                 const prod = produtos.find((x) => x.id === it.produtoId);
                 return (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                    <select value={it.produtoId} onChange={(e) => updateItem(i, { produtoId: e.target.value })} className={inp + " col-span-6"}>
-                      {produtos.filter((p) => p.ativo).map((p) => <option key={p.id} value={p.id}>{p.nome}{p.fabricante ? ` · ${p.fabricante}` : ""}</option>)}
-                    </select>
-                    <input type="number" step="0.01" value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: +e.target.value })} className={inp + " col-span-2"} />
-                    <input type="number" step="0.01" value={it.precoUnitario} onChange={(e) => updateItem(i, { precoUnitario: +e.target.value })} className={inp + " col-span-3"} />
-                    <button onClick={() => removeItem(i)} className="col-span-1 p-2 rounded hover:bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4 mx-auto" /></button>
+                  <div key={i} className="space-y-1">
+                    <div className="grid grid-cols-12 gap-2 items-center">
+                      <select value={it.produtoId} onChange={(e) => updateItem(i, { produtoId: e.target.value })} className={inp + " col-span-6"}>
+                        {produtos.filter((p) => p.ativo).map((p) => <option key={p.id} value={p.id}>{p.nome}{p.fabricante ? ` · ${p.fabricante}` : ""}</option>)}
+                      </select>
+                      <input type="number" step="0.01" value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: +e.target.value })} className={inp + " col-span-2"} />
+                      <input type="number" step="0.01" value={it.precoUnitario} onChange={(e) => updateItem(i, { precoUnitario: +e.target.value })} className={inp + " col-span-3"} />
+                      <button onClick={() => removeItem(i)} className="col-span-1 p-2 rounded hover:bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4 mx-auto" /></button>
+                    </div>
+                    {prod?.categoria === "modulo" && prod.potenciaW && (
+                      <div className="flex items-center gap-1.5 text-[11px] text-vert pl-1">
+                        <Zap className="h-3 w-3" />
+                        <span>
+                          Quantidade calculada para atender {kwp(dim.potenciaKwp)} ({prod.potenciaW}W cada).
+                        </span>
+                        {it.quantidade !== qtdModulosIdeal(prod.potenciaW) && (
+                          <button
+                            onClick={() => updateItem(i, { quantidade: qtdModulosIdeal(prod.potenciaW!) })}
+                            className="ml-1 underline font-semibold"
+                          >
+                            Recalcular ({qtdModulosIdeal(prod.potenciaW)})
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
