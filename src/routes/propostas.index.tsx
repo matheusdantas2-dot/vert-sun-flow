@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Plus, FileText, ExternalLink } from "lucide-react";
+import { Plus, FileText, ExternalLink, Download } from "lucide-react";
+import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { usePode } from "@/lib/permissoes";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
@@ -14,7 +16,17 @@ function PropostasList() {
   const clientes = useStore((s) => s.clientes);
   const usuarios = useStore((s) => s.usuarios);
   const produtos = useStore((s) => s.produtos);
+  const empresa = useStore((s) => s.empresa);
   const aceitarProposta = useStore((s) => s.aceitarProposta);
+  const podeCriar = usePode("criar_proposta");
+  const podePdf = usePode("exportar_pdf");
+
+  const baixarPdf = (id: string) => {
+    const p = propostas.find((x) => x.id === id);
+    const cliente = clientes.find((c) => c.id === p?.clienteId);
+    const consultor = usuarios.find((u) => u.id === p?.consultorId);
+    if (p && cliente) gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa });
+  };
 
   const calcTotal = (p: typeof propostas[number]) =>
     p.itens.reduce((a, it) => {
