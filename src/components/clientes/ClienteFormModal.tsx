@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { notify } from "@/lib/notificacoes";
 import type { Cliente } from "@/lib/types";
 
 const empty: Omit<Cliente, "id" | "criadoEm"> = {
@@ -45,9 +46,17 @@ export function ClienteFormModal({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!data.nome.trim()) return;
-    if (cliente) updateCliente(cliente.id, data);
-    else addCliente(data);
+    if (!data.nome.trim()) {
+      notify.warning("Informe o nome", "O nome do cliente é obrigatório.");
+      return;
+    }
+    if (cliente) {
+      updateCliente(cliente.id, data);
+      notify.success("Cliente atualizado", data.nome);
+    } else {
+      addCliente(data);
+      notify.success("Cliente cadastrado", data.nome);
+    }
     onClose();
   };
 
