@@ -72,6 +72,9 @@ function Pipeline() {
       return;
     }
     moveCard(cardId, newStage);
+    const clienteCard = clientes.find((c) => c.id === card.clienteId);
+    const stageNome = STAGES.find((s) => s.id === newStage)?.nome ?? newStage;
+    notify.success("Card movido", `${clienteCard?.nome ?? "Lead"} → ${stageNome}`);
 
     if (newStage === "proposta") {
       const cliente = clientes.find((c) => c.id === card.clienteId);
