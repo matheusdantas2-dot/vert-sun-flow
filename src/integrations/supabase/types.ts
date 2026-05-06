@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      proposta_aberturas: {
+        Row: {
+          aberto_em: string
+          id: string
+          ip: string | null
+          proposta_id: string
+          referer: string | null
+          share_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          aberto_em?: string
+          id?: string
+          ip?: string | null
+          proposta_id: string
+          referer?: string | null
+          share_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          aberto_em?: string
+          id?: string
+          ip?: string | null
+          proposta_id?: string
+          referer?: string | null
+          share_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposta_aberturas_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "propostas_compartilhadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propostas_compartilhadas: {
+        Row: {
+          ativo: boolean
+          cliente_nome: string
+          criado_em: string
+          expira_em: string
+          id: string
+          pdf_path: string
+          proposta_id: string
+          proposta_numero: string
+          token: string
+          total_aberturas: number
+          ultima_abertura: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_nome: string
+          criado_em?: string
+          expira_em: string
+          id?: string
+          pdf_path: string
+          proposta_id: string
+          proposta_numero: string
+          token: string
+          total_aberturas?: number
+          ultima_abertura?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cliente_nome?: string
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          pdf_path?: string
+          proposta_id?: string
+          proposta_numero?: string
+          token?: string
+          total_aberturas?: number
+          ultima_abertura?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
