@@ -251,7 +251,7 @@ function NovaProposta() {
             {cliente && (
               <div className="text-xs text-muted-foreground space-y-0.5 pt-2 border-t border-border">
                 <div>Consumo: <span className="font-semibold text-foreground">{kwh(cliente.consumoMedio)}</span></div>
-                <div>Tarifa: <span className="font-semibold text-foreground">R$ {cliente.tarifa.toFixed(2)}/kWh</span></div>
+                <div>Tarifa: <span className="font-semibold text-foreground">{brlPrec(cliente.tarifa)}/kWh</span></div>
                 <div>Fatura atual: <span className="font-semibold text-vert">{brl(econ.faturaAtual)}/mês</span></div>
               </div>
             )}

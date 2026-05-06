@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
-import { brl, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
+import { brl, brlPrec, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Phone, MessageCircle, Pencil, FileText, Calendar, ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
@@ -96,7 +96,7 @@ function ClienteDetalhe() {
               <div className="flex justify-between"><dt className="text-muted-foreground">Grupo</dt><dd className="font-medium">{cliente.grupoTarifario}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Rede</dt><dd className="font-medium capitalize">{cliente.rede}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Consumo</dt><dd className="font-semibold">{kwh(cliente.consumoMedio)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa</dt><dd className="font-medium">R$ {cliente.tarifa.toFixed(2)}/kWh</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa</dt><dd className="font-medium">{brlPrec(cliente.tarifa)}/kWh</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">UC</dt><dd className="font-mono text-xs">{cliente.uc}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Fatura mensal</dt><dd className="font-bold text-vert">{brl(cliente.consumoMedio * cliente.tarifa)}</dd></div>
             </dl>
