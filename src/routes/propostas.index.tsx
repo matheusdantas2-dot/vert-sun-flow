@@ -26,6 +26,7 @@ function PropostasList() {
   const podePdf = usePode("exportar_pdf");
 
   const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
