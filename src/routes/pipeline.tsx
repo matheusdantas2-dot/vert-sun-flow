@@ -59,6 +59,7 @@ function Pipeline() {
   const handleDragStart = (e: DragStartEvent) => setActiveId(e.active.id as string);
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
+    if (!podeMover) return;
     if (!e.over) return;
     const cardId = e.active.id as string;
     const newStage = e.over.id as StageId;
