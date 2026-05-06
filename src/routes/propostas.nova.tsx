@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { z } from "zod";
