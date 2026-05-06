@@ -17,24 +17,46 @@ export function SegmentoPie() {
     }));
   }, [clientes]);
 
+  const total = data.reduce((a, d) => a + d.value, 0);
+
   return (
-    <div className="h-56">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart className="recharts-surface text-center">
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e0e0d8" }} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs px-4">
+    <div className="flex flex-col items-center">
+      <div className="relative w-full h-56 flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={2}
+              dataKey="value"
+              stroke="none"
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e0e0d8" }} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
+          <span className="font-display font-extrabold text-2xl text-vert-dark tabular-nums leading-none">
+            {total}
+          </span>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 mt-3 text-xs w-full px-2">
         {data.map((d, i) => (
           <div key={d.name} className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
-            <span className="text-muted-foreground">{d.name}</span>
-            <span className="ml-auto font-semibold">{d.value}</span>
+            <span
+              className="w-2.5 h-2.5 rounded-sm shrink-0"
+              style={{ background: COLORS[i % COLORS.length] }}
+            />
+            <span className="text-muted-foreground truncate">{d.name}</span>
+            <span className="ml-auto font-semibold tabular-nums">{d.value}</span>
           </div>
         ))}
       </div>
