@@ -8,6 +8,8 @@ import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import { useMemo, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
+import { notify } from "@/lib/notificacoes";
+import { STAGE_LABEL } from "@/lib/types";
 
 export const Route = createFileRoute("/pipeline")({
   component: Pipeline,
