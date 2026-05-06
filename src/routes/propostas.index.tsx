@@ -61,9 +61,11 @@ function PropostasList() {
           <a href="/gerador-proposta.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-accent">
             <ExternalLink className="h-4 w-4" /> Gerador externo
           </a>
-          <Link to="/propostas/nova" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
-            <Plus className="h-4 w-4" /> Nova proposta
-          </Link>
+          {podeCriar && (
+            <Link to="/propostas/nova" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
+              <Plus className="h-4 w-4" /> Nova proposta
+            </Link>
+          )}
         </div>
       </header>
 
@@ -107,11 +109,18 @@ function PropostasList() {
                       <span className={`badge-stage ${statusColor[p.status]}`}>{STATUS_PROPOSTA_LABEL[p.status]}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {p.status !== "aceita" && p.status !== "recusada" && (
-                        <button onClick={() => aceitarProposta(p.id)} className="text-xs font-semibold text-vert hover:underline">
-                          Marcar aceita
-                        </button>
-                      )}
+                      <div className="inline-flex items-center gap-3">
+                        {podePdf && (
+                          <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
+                            <Download className="h-3.5 w-3.5" /> PDF
+                          </button>
+                        )}
+                        {p.status !== "aceita" && p.status !== "recusada" && (
+                          <button onClick={() => aceitarProposta(p.id)} className="text-xs font-semibold text-vert hover:underline">
+                            Marcar aceita
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
