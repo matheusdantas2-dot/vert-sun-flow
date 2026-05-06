@@ -166,7 +166,12 @@ function Pipeline() {
         open={!!pendingMove}
         onClose={() => setPendingMove(null)}
         onConfirm={(motivo) => {
-          if (pendingMove) moveCard(pendingMove.cardId, pendingMove.stage, motivo);
+          if (pendingMove) {
+            moveCard(pendingMove.cardId, pendingMove.stage, motivo);
+            const card = cards.find((c) => c.id === pendingMove.cardId);
+            const cli = clientes.find((c) => c.id === card?.clienteId);
+            notify.warning("Lead perdido", `${cli?.nome ?? "Lead"} · ${motivo}`);
+          }
           setPendingMove(null);
         }}
       />
