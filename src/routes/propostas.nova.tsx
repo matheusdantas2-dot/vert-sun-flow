@@ -3,9 +3,11 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
+import { notify } from "@/lib/notificacoes";
+import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { z } from "zod";
 
 const search = z.object({ clienteId: z.string().optional() });
