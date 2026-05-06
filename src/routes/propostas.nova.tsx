@@ -3,9 +3,11 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
+import { notify } from "@/lib/notificacoes";
+import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { z } from "zod";
 
 const search = z.object({ clienteId: z.string().optional() });
@@ -121,8 +123,17 @@ function NovaProposta() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dim.potenciaKwp, produtos]);
 
-  const salvar = (baixarPdf = false) => {
-    if (!cliente || itens.length === 0) return alert("Selecione cliente e adicione itens.");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const salvar = (acao: "save" | "savePdf" | "preview" = "save") => {
+    if (!cliente) {
+      notify.warning("Selecione um cliente", "Escolha o cliente antes de salvar a proposta.");
+      return;
+    }
+    if (itens.length === 0) {
+      notify.warning("Adicione itens", "Inclua módulos, inversor e serviços para gerar a proposta.");
+      return;
+    }
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
     const nova = addProposta({
@@ -138,11 +149,56 @@ function NovaProposta() {
       taxaFinanciamento: taxaFin,
       taxaCartao: taxaCart,
     });
-    if (baixarPdf) {
-      const consultor = usuarios.find((u) => u.id === currentUserId);
-      gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa });
+    const consultor = usuarios.find((u) => u.id === currentUserId);
+
+    if (acao === "savePdf") {
+      gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "save" });
+      notify.success("Proposta salva", `${nova.numero} criada e PDF baixado.`);
+      navigate({ to: "/propostas" });
+      return;
     }
+    if (acao === "preview") {
+      const url = gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "blob" });
+      if (typeof url === "string") setPreviewUrl(url);
+      notify.success("Proposta salva", `${nova.numero} pronta para visualização.`);
+      return;
+    }
+    notify.success("Proposta salva", `${nova.numero} criada como rascunho.`);
     navigate({ to: "/propostas" });
+  };
+
+  const visualizarPreviewSemSalvar = () => {
+    if (!cliente) {
+      notify.warning("Selecione um cliente para visualizar.");
+      return;
+    }
+    if (itens.length === 0) {
+      notify.warning("Adicione itens para visualizar a proposta.");
+      return;
+    }
+    const validade = new Date();
+    validade.setDate(validade.getDate() + validadeDias);
+    const consultor = usuarios.find((u) => u.id === currentUserId);
+    // Proposta temporária só para preview
+    const temp = {
+      id: "preview",
+      numero: "PRÉVIA",
+      versao: 1,
+      criadoEm: new Date().toISOString(),
+      clienteId: cliente.id,
+      consultorId: currentUserId,
+      validadeAte: validade.toISOString(),
+      status: "rascunho" as const,
+      itens,
+      irradiacao,
+      eficiencia,
+      cobertura,
+      inflacao,
+      taxaFinanciamento: taxaFin,
+      taxaCartao: taxaCart,
+    };
+    const url = gerarPdfProposta({ proposta: temp, cliente, consultor, produtos, empresa, modo: "blob" });
+    if (typeof url === "string") setPreviewUrl(url);
   };
 
   const abrirGerador = () => {
@@ -168,15 +224,18 @@ function NovaProposta() {
           <p className="text-sm text-muted-foreground mt-0.5">Monte o sistema e simule retorno financeiro</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={abrirGerador} disabled={!cliente} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-vert-dark text-vert-dark text-sm font-semibold hover:bg-vert-soft disabled:opacity-50">
-            <ExternalLink className="h-4 w-4" /> Abrir Gerador HTML
+          <button onClick={abrirGerador} disabled={!cliente} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-accent disabled:opacity-50">
+            <ExternalLink className="h-4 w-4" /> Gerador HTML
+          </button>
+          <button onClick={visualizarPreviewSemSalvar} disabled={!cliente || itens.length === 0} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-vert text-vert text-sm font-semibold hover:bg-vert-soft disabled:opacity-50">
+            <Eye className="h-4 w-4" /> Visualizar PDF
           </button>
           {podePdf && (
-            <button onClick={() => salvar(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert-dark text-white text-sm font-semibold">
-              <Download className="h-4 w-4" /> Salvar e baixar PDF
+            <button onClick={() => salvar("savePdf")} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert-dark text-white text-sm font-semibold">
+              <Download className="h-4 w-4" /> Salvar e baixar
             </button>
           )}
-          <button onClick={() => salvar(false)} className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Salvar proposta</button>
+          <button onClick={() => salvar("save")} className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Salvar proposta</button>
         </div>
       </header>
 
@@ -312,6 +371,14 @@ function NovaProposta() {
           </div>
         </div>
       </div>
+
+      {previewUrl && (
+        <PdfPreviewModal
+          url={previewUrl}
+          titulo={cliente ? `Prévia · ${cliente.nome}` : "Prévia da proposta"}
+          onClose={() => setPreviewUrl(null)}
+        />
+      )}
     </div>
   );
 }

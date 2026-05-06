@@ -14,10 +14,11 @@ const VERT_GLOW: [number, number, number] = [94, 232, 154];
 const TEXT: [number, number, number] = [30, 30, 30];
 const MUTED: [number, number, number] = [120, 120, 120];
 const SOFT: [number, number, number] = [232, 246, 238];
+const BORDER: [number, number, number] = [225, 230, 228];
 
 const W = 210;
 const H = 297;
-const M = 14;
+const M = 16;
 
 interface Ctx {
   pdf: jsPDF;
@@ -36,23 +37,24 @@ interface Ctx {
 function header(ctx: Ctx, pagina: number, titulo: string) {
   const { pdf } = ctx;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(0, 0, W, 18, "F");
-  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.circle(M + 4, 9, 3, "F");
+  pdf.rect(0, 0, W, 16, "F");
+  // logo pequeno no header
+  const lh = 8;
+  const lw = lh * LOGO_RATIO;
+  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", M, 4, lw, lh, undefined, "FAST");
   pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(13);
-  pdf.text("vert.energie", M + 10, 11);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.text(titulo, W - M, 9, { align: "right" });
+  pdf.text(titulo.toUpperCase(), W / 2, 10, { align: "center" });
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.text(`Página ${pagina} de 7`, W - M, 14, { align: "right" });
+  pdf.setFont("helvetica", "bold");
+  pdf.text(`${pagina} / 7`, W - M, 10, { align: "right" });
 }
 
 function footer(ctx: Ctx) {
   const { pdf, empresa, proposta } = ctx;
-  pdf.setDrawColor(220, 220, 220);
+  pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  pdf.setLineWidth(0.2);
   pdf.line(M, H - 14, W - M, H - 14);
   pdf.setFontSize(7);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -68,13 +70,19 @@ function pageFrame(ctx: Ctx, pagina: number, titulo: string) {
   footer(ctx);
 }
 
-function sectionTitle(pdf: jsPDF, y: number, texto: string) {
+function sectionTitle(pdf: jsPDF, y: number, texto: string, sub?: string) {
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(M, y, 3, 7, "F");
   pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
   pdf.text(texto, M + 6, y + 5.5);
+  if (sub) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.text(sub, W - M, y + 5.5, { align: "right" });
+  }
 }
 
 function kvBox(pdf: jsPDF, x: number, y: number, w: number, h: number, label: string, valor: string, destaque = false) {
@@ -97,75 +105,89 @@ function kvBox(pdf: jsPDF, x: number, y: number, w: number, h: number, label: st
 
 function paginaCapa(ctx: Ctx) {
   const { pdf, cliente, proposta, totais, consultor } = ctx;
+  // Fundo verde escuro sólido
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(0, 0, W, H, "F");
-  // arc decorativo
+  // Elementos decorativos sutis
   pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
-  pdf.circle(W + 20, H - 30, 80, "F");
+  pdf.circle(W + 30, H - 40, 90, "F");
   pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.circle(-10, 30, 40, "F");
+  pdf.circle(-15, 25, 35, "F");
 
-  // Logomarca da Vert Energie (PNG branco com transparência)
-  const logoH = 22;
+  // LOGO 2x maior — centralizado horizontalmente no topo
+  const logoH = 44; // antes era ~22mm; agora dobrado
   const logoW = logoH * LOGO_RATIO;
-  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", M, 36, logoW, logoH, undefined, "FAST");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "normal");
-  pdf.text("Energia solar fotovoltaica", M, 36 + logoH + 6);
+  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", (W - logoW) / 2, 28, logoW, logoH, undefined, "FAST");
 
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(36);
-  pdf.text("Proposta", M, 110);
-  pdf.text("Comercial", M, 124);
+  // Tagline
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setFontSize(14);
-  pdf.text(proposta.numero, M, 134);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
+  pdf.text("Energia solar fotovoltaica · Comércio e Serviços Elétricos", W / 2, 28 + logoH + 8, { align: "center" });
+
+  // Linha separadora
+  pdf.setDrawColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+  pdf.setLineWidth(0.4);
+  pdf.line(W / 2 - 25, 28 + logoH + 14, W / 2 + 25, 28 + logoH + 14);
+
+  // Bloco título "Proposta Comercial"
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
+  pdf.text("PROPOSTA COMERCIAL", W / 2, 130, { align: "center" });
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(40);
+  pdf.text("Energia Solar", W / 2, 148, { align: "center" });
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+  pdf.setFontSize(13);
+  pdf.text(proposta.numero, W / 2, 158, { align: "center" });
 
   // Card cliente
   pdf.setFillColor(255, 255, 255);
-  pdf.roundedRect(M, 160, W - 2 * M, 70, 4, 4, "F");
+  pdf.roundedRect(M, 175, W - 2 * M, 58, 4, 4, "F");
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.text("PREPARADA PARA", M + 6, 170);
+  pdf.text("PREPARADA PARA", M + 6, 184);
   pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(18);
-  pdf.text(cliente.nome, M + 6, 180);
+  pdf.setFontSize(20);
+  pdf.text(cliente.nome, M + 6, 195);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${formatDoc(cliente.documento)}`, M + 6, 188);
-  pdf.text(`${cliente.endereco.cidade}/${cliente.endereco.uf}`, M + 6, 195);
-  pdf.text(`Telefone: ${formatTel(cliente.telefone)}  ·  ${cliente.email}`, M + 6, 202);
-  pdf.setDrawColor(SOFT[0], SOFT[1], SOFT[2]);
-  pdf.line(M + 6, 208, W - M - 6, 208);
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}  ${formatDoc(cliente.documento)}`, M + 6, 204);
+  pdf.text(`${cliente.endereco.cidade}/${cliente.endereco.uf}`, M + 6, 211);
+  pdf.text(`${formatTel(cliente.telefone)}  ·  ${cliente.email}`, M + 6, 218);
+
+  pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  pdf.line(M + 6, 222, W - M - 6, 222);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.setFontSize(8);
-  pdf.text("CONSULTOR", M + 6, 215);
-  pdf.text("DATA", W - M - 50, 215);
+  pdf.setFontSize(7);
+  pdf.text("CONSULTOR", M + 6, 227);
+  pdf.text("EMITIDA EM", W - M - 50, 227);
   pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
-  pdf.text(consultor?.nome ?? "—", M + 6, 222);
-  pdf.text(dataBR(proposta.criadoEm), W - M - 50, 222);
+  pdf.text(consultor?.nome ?? "—", M + 6, 232);
+  pdf.text(dataBR(proposta.criadoEm), W - M - 50, 232);
 
   // Destaques
-  pdf.setFillColor(255, 255, 255, 0.1);
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setFontSize(8);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
   pdf.text("SISTEMA DIMENSIONADO", M, 250);
-  pdf.text("INVESTIMENTO", M + 70, 250);
+  pdf.text("INVESTIMENTO TOTAL", W / 2, 250);
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(22);
-  pdf.text(kwp(totais.kwpInst), M, 262);
-  pdf.text(brl(totais.valorVenda), M + 70, 262);
+  pdf.setFontSize(24);
+  pdf.text(kwp(totais.kwpInst), M, 263);
+  pdf.text(brl(totais.valorVenda), W / 2, 263);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.text(`Validade desta proposta: ${dataBR(proposta.validadeAte)}`, M, H - 12);
+  pdf.text(`Validade: ${dataBR(proposta.validadeAte)}`, W - M, 263, { align: "right" });
 }
 
 function paginaSobre(ctx: Ctx) {
@@ -173,7 +195,7 @@ function paginaSobre(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 2, "Sobre a Vert Energie");
 
-  sectionTitle(pdf, 28, "Sobre nós");
+  sectionTitle(pdf, 26, "Sobre nós");
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
@@ -181,41 +203,58 @@ function paginaSobre(ctx: Ctx) {
     "A Vert Energie é uma empresa especializada em soluções de energia solar fotovoltaica para residências, comércios, agronegócio e indústrias. Atuamos do projeto à instalação e homologação, com equipe técnica certificada, equipamentos de marcas líderes e suporte pós-venda completo.",
     W - 2 * M,
   );
-  pdf.text(txt, M, 42);
+  pdf.text(txt, M, 40);
 
-  // Diferenciais
-  sectionTitle(pdf, 80, "Por que escolher a Vert");
-  const itens = [
-    ["Equipamentos Tier 1", "Trabalhamos apenas com módulos e inversores das principais fabricantes do mundo."],
-    ["Garantia estendida", "12 anos de garantia de fabricação e até 25 anos de eficiência dos painéis."],
-    ["Equipe certificada", "Engenheiros eletricistas e instaladores NR10/NR35."],
-    ["Homologação inclusa", "Cuidamos de todo o processo junto à concessionária local."],
-    ["Monitoramento 24/7", "App próprio para acompanhar geração em tempo real."],
-    ["Suporte pós-venda", "Plano de manutenção preventiva opcional."],
-  ];
-  let y = 95;
-  itens.forEach(([t, d]) => {
-    pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-    pdf.circle(M + 2, y - 1.5, 1.5, "F");
-    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.text(t, M + 7, y);
-    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
-    pdf.text(d, M + 7, y + 5);
-    y += 14;
-  });
-
-  // Indicadores
-  sectionTitle(pdf, 195, "Em números");
+  // Indicadores LOGO ABAIXO da introdução
   const cardW = (W - 2 * M - 9) / 4;
   const stats = [["+500", "Projetos"], ["+8 MWp", "Instalados"], ["98%", "Satisfação"], ["10 anos", "De mercado"]];
   stats.forEach(([v, l], i) => {
     const x = M + i * (cardW + 3);
-    kvBox(pdf, x, 205, cardW, 22, l, v, true);
+    kvBox(pdf, x, 70, cardW, 22, l, v, true);
   });
+
+  // Diferenciais em duas colunas
+  sectionTitle(pdf, 105, "Por que escolher a Vert");
+  const itens = [
+    ["Equipamentos Tier 1", "Módulos e inversores das principais fabricantes do mundo."],
+    ["Garantia estendida", "12 anos de fabricação + 25 anos de eficiência."],
+    ["Equipe certificada", "Engenheiros eletricistas e instaladores NR10/NR35."],
+    ["Homologação inclusa", "Cuidamos de todo o processo na concessionária."],
+    ["Monitoramento 24/7", "App próprio para acompanhar geração em tempo real."],
+    ["Suporte pós-venda", "Plano de manutenção preventiva opcional."],
+  ];
+  const colW = (W - 2 * M - 8) / 2;
+  itens.forEach((par, i) => {
+    const col = i % 2;
+    const linha = Math.floor(i / 2);
+    const x = M + col * (colW + 8);
+    const y = 122 + linha * 22;
+    pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+    pdf.circle(x + 2, y - 1.5, 1.8, "F");
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.text(par[0], x + 7, y);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    const d = pdf.splitTextToSize(par[1], colW - 8);
+    pdf.text(d, x + 7, y + 5);
+  });
+
+  // Compromisso
+  sectionTitle(pdf, 200, "Nosso compromisso");
+  pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+  pdf.roundedRect(M, 210, W - 2 * M, 30, 3, 3, "F");
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.text("Energia limpa, economia real e tranquilidade por décadas.", M + 6, 222);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  pdf.text("Cada projeto é dimensionado de forma personalizada para o seu perfil de consumo, garantindo retorno", M + 6, 230);
+  pdf.text("financeiro previsível e desempenho máximo do sistema.", M + 6, 235);
 }
 
 function paginaConsumo(ctx: Ctx) {
@@ -223,7 +262,8 @@ function paginaConsumo(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 3, "Análise do consumo");
 
-  sectionTitle(pdf, 28, "Perfil energético atual");
+  sectionTitle(pdf, 26, "Perfil energético atual");
+  // Tabela em 2 colunas para economizar espaço
   const dados = [
     ["Concessionária", cliente.concessionaria || "—"],
     ["Unidade Consumidora", cliente.uc || "—"],
@@ -232,56 +272,61 @@ function paginaConsumo(ctx: Ctx) {
     ["Consumo médio mensal", kwh(cliente.consumoMedio)],
     ["Tarifa praticada", `R$ ${cliente.tarifa.toFixed(2)} / kWh`],
   ];
-  let y = 42;
-  dados.forEach(([k, v]) => {
+  const linhaW = (W - 2 * M - 6) / 2;
+  let yy = 40;
+  dados.forEach(([k, v], i) => {
+    const col = i % 2;
+    const linha = Math.floor(i / 2);
+    const x = M + col * (linhaW + 6);
+    const y = yy + linha * 12;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.rect(M, y, W - 2 * M, 8, "F");
+    pdf.roundedRect(x, y, linhaW, 10, 2, 2, "F");
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
-    pdf.text(k, M + 4, y + 5.5);
+    pdf.text(k, x + 4, y + 4);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.text(v, W - M - 4, y + 5.5, { align: "right" });
-    y += 10;
+    pdf.setFontSize(10);
+    pdf.text(v, x + 4, y + 8.5);
   });
 
-  sectionTitle(pdf, y + 8, "Sua fatura hoje vs com energia solar");
-  y += 22;
-  // Barras comparativas
+  // Comparativo de barras
+  sectionTitle(pdf, 90, "Sua fatura hoje vs com energia solar");
   const max = Math.max(econ.faturaAtual, econ.faturaSolar) || 1;
   const barW = (W - 2 * M - 30) / 2;
-  const barMaxH = 60;
-  const baseY = y + barMaxH;
+  const barMaxH = 56;
+  const baseY = 110 + barMaxH;
 
-  const drawBar = (x: number, valor: number, label: string, cor: [number, number, number]) => {
+  const drawBar = (x: number, valor: number, label: string, cor: [number, number, number], escuro = false) => {
     const h = (valor / max) * barMaxH;
-    pdf.setFillColor(...cor);
-    pdf.rect(x, baseY - h, barW, h, "F");
-    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.setFillColor(cor[0], cor[1], cor[2]);
+    pdf.roundedRect(x, baseY - h, barW, h, 2, 2, "F");
+    pdf.setTextColor(escuro ? 255 : VERT_DARK[0], escuro ? 255 : VERT_DARK[1], escuro ? 255 : VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(13);
-    pdf.text(brl(valor), x + barW / 2, baseY - h - 3, { align: "center" });
+    pdf.text(brl(valor), x + barW / 2, baseY - 4, { align: "center" });
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.text(label, x + barW / 2, baseY + 6, { align: "center" });
   };
-  drawBar(M + 5, econ.faturaAtual, "Sem solar", [220, 100, 90]);
-  drawBar(M + 20 + barW, econ.faturaSolar, "Com solar", VERT);
+  drawBar(M + 5, econ.faturaAtual, "Sem solar", [220, 100, 90], true);
+  drawBar(M + 20 + barW, econ.faturaSolar, "Com solar", VERT, true);
 
   // Highlight economia
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.roundedRect(M, baseY + 18, W - 2 * M, 26, 3, 3, "F");
+  pdf.roundedRect(M, baseY + 18, W - 2 * M, 32, 3, 3, "F");
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFontSize(8);
   pdf.text("ECONOMIA MENSAL ESTIMADA", M + 6, baseY + 27);
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(20);
-  pdf.text(brl(econ.economiaMes), M + 6, baseY + 40);
-  pdf.setFontSize(11);
-  pdf.text(`(${brl(econ.economiaAno)} no primeiro ano)`, W - M - 6, baseY + 40, { align: "right" });
+  pdf.setFontSize(24);
+  pdf.text(brl(econ.economiaMes), M + 6, baseY + 42);
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(`equivalente a ${brl(econ.economiaAno)} no primeiro ano`, W - M - 6, baseY + 42, { align: "right" });
 }
 
 function paginaSistema(ctx: Ctx) {
@@ -289,80 +334,91 @@ function paginaSistema(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 4, "Sistema proposto");
 
-  sectionTitle(pdf, 28, "Configuração técnica");
+  sectionTitle(pdf, 26, "Configuração técnica");
   const cardW = (W - 2 * M - 6) / 3;
-  kvBox(pdf, M, 38, cardW, 22, "Potência instalada", kwp(totais.kwpInst || dim.potenciaKwp), true);
-  kvBox(pdf, M + cardW + 3, 38, cardW, 22, "Geração mensal", kwh(dim.geracaoMensal));
-  kvBox(pdf, M + 2 * (cardW + 3), 38, cardW, 22, "Geração anual", kwh(dim.geracaoMensal * 12));
+  kvBox(pdf, M, 36, cardW, 22, "Potência instalada", kwp(totais.kwpInst || dim.potenciaKwp), true);
+  kvBox(pdf, M + cardW + 3, 36, cardW, 22, "Geração mensal", kwh(dim.geracaoMensal));
+  kvBox(pdf, M + 2 * (cardW + 3), 36, cardW, 22, "Geração anual", kwh(dim.geracaoMensal * 12));
 
-  sectionTitle(pdf, 70, "Componentes inclusos");
-  // tabela
-  const head = ["Item", "Qtd", "Unit.", "Total"];
-  const colX = [M + 2, M + 110, M + 135, M + 165];
-  let y = 80;
+  sectionTitle(pdf, 66, "Componentes inclusos");
+
+  // Cabeçalho da tabela
+  let y = 78;
+  const colX = { item: M + 4, qtd: M + 110, unit: M + 132, total: W - M - 4 };
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(M, y - 5, W - 2 * M, 8, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
-  head.forEach((h, i) => pdf.text(h, colX[i], y));
+  pdf.text("ITEM", colX.item, y);
+  pdf.text("QTD", colX.qtd, y, { align: "right" });
+  pdf.text("UNIT.", colX.unit, y, { align: "right" });
+  pdf.text("TOTAL", colX.total, y, { align: "right" });
   y += 6;
 
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  proposta.itens.forEach((it, idx) => {
-    const prod = produtos.find((p) => p.id === it.produtoId);
-    if (!prod) return;
-    if (idx % 2 === 0) {
-      pdf.setFillColor(245, 250, 247);
-      pdf.rect(M, y - 4, W - 2 * M, 8, "F");
-    }
-    const nome = `${prod.nome}${prod.fabricante ? ` · ${prod.fabricante}` : ""}`;
-    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-    const nomeLines = pdf.splitTextToSize(nome, 100);
-    pdf.text(nomeLines[0], colX[0], y);
-    pdf.text(String(it.quantidade), colX[1], y);
-    pdf.text(brlPrec(it.precoUnitario), colX[2], y);
+  // Agrupar por categoria
+  const ordem: Record<string, number> = { modulo: 1, inversor: 2, estrutura: 3, cabeamento: 4, servico: 5 };
+  const labels: Record<string, string> = {
+    modulo: "Painéis solares",
+    inversor: "Inversores",
+    estrutura: "Estrutura de fixação",
+    cabeamento: "Cabeamento e proteções",
+    servico: "Serviços",
+  };
+  const itensComProd = proposta.itens
+    .map((it) => ({ it, prod: produtos.find((p) => p.id === it.produtoId) }))
+    .filter((x) => x.prod);
+  const grupos = new Map<string, typeof itensComProd>();
+  itensComProd.forEach(({ it, prod }) => {
+    const cat = prod!.categoria;
+    if (!grupos.has(cat)) grupos.set(cat, []);
+    grupos.get(cat)!.push({ it, prod });
+  });
+  const catsOrdenadas = Array.from(grupos.keys()).sort((a, b) => (ordem[a] ?? 99) - (ordem[b] ?? 99));
+
+  let zebra = 0;
+  catsOrdenadas.forEach((cat) => {
+    // header de categoria
+    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+    pdf.rect(M, y - 4, W - 2 * M, 7, "F");
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.text(brlPrec(it.precoUnitario * it.quantidade), colX[3], y);
-    pdf.setFont("helvetica", "normal");
-    y += 8;
-    if (y > H - 40) return;
+    pdf.setFontSize(8);
+    pdf.text(labels[cat]?.toUpperCase() ?? cat.toUpperCase(), M + 4, y);
+    y += 7;
+
+    grupos.get(cat)!.forEach(({ it, prod }) => {
+      if (zebra % 2 === 1) {
+        pdf.setFillColor(250, 252, 251);
+        pdf.rect(M, y - 4, W - 2 * M, 8, "F");
+      }
+      zebra++;
+      const nome = `${prod!.nome}${prod!.fabricante ? ` · ${prod!.fabricante}` : ""}`;
+      pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      const nomeLines = pdf.splitTextToSize(nome, 95);
+      pdf.text(nomeLines[0], colX.item, y);
+      pdf.text(`${it.quantidade}`, colX.qtd, y, { align: "right" });
+      pdf.text(brlPrec(it.precoUnitario), colX.unit, y, { align: "right" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(brlPrec(it.precoUnitario * it.quantidade), colX.total, y, { align: "right" });
+      y += 7;
+      if (y > H - 50) return;
+    });
   });
 
   // Total
   y += 4;
-  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.setLineWidth(0.5);
-  pdf.line(M, y, W - M, y);
-  y += 8;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.roundedRect(M, y, W - 2 * M, 14, 2, 2, "F");
+  pdf.roundedRect(M, y, W - 2 * M, 16, 2, 2, "F");
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
-  pdf.text("INVESTIMENTO TOTAL", M + 5, y + 9);
+  pdf.text("INVESTIMENTO TOTAL", M + 5, y + 10);
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(16);
-  pdf.text(brl(totais.valorVenda), W - M - 5, y + 10, { align: "right" });
-
-  // Inclusos
-  y += 22;
-  if (y < H - 40) {
-    sectionTitle(pdf, y, "Serviços inclusos");
-    y += 10;
-    const inc = ["Projeto técnico e ART", "Homologação na concessionária", "Instalação completa", "Configuração e testes", "Treinamento de uso do app"];
-    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-    pdf.setFontSize(9);
-    inc.forEach((t) => {
-      pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
-      pdf.text("✓", M + 2, y);
-      pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-      pdf.text(t, M + 8, y);
-      y += 6;
-    });
-  }
+  pdf.setFontSize(18);
+  pdf.text(brl(totais.valorVenda), W - M - 5, y + 11, { align: "right" });
 }
 
 function paginaRetorno(ctx: Ctx) {
@@ -370,29 +426,24 @@ function paginaRetorno(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 5, "Retorno do investimento");
 
-  sectionTitle(pdf, 28, "Indicadores financeiros");
+  sectionTitle(pdf, 26, "Indicadores financeiros");
   const cardW = (W - 2 * M - 9) / 4;
-  kvBox(pdf, M, 38, cardW, 22, "Investimento", brl(totais.valorVenda));
-  kvBox(pdf, M + cardW + 3, 38, cardW, 22, "Economia mês", brl(econ.economiaMes), true);
-  kvBox(pdf, M + 2 * (cardW + 3), 38, cardW, 22, "Payback",
+  kvBox(pdf, M, 36, cardW, 24, "Investimento", brl(totais.valorVenda));
+  kvBox(pdf, M + cardW + 3, 36, cardW, 24, "Economia / mês", brl(econ.economiaMes), true);
+  kvBox(pdf, M + 2 * (cardW + 3), 36, cardW, 24, "Payback",
     Number.isFinite(paybackMeses) ? `${(paybackMeses / 12).toFixed(1)} anos` : "—");
-  kvBox(pdf, M + 3 * (cardW + 3), 38, cardW, 22, "Economia 20 anos", brl(economia20), true);
+  kvBox(pdf, M + 3 * (cardW + 3), 36, cardW, 24, "Economia 20 anos", brl(economia20), true);
 
   // Curva acumulada
-  sectionTitle(pdf, 72, "Projeção de economia em 20 anos");
-  const chartX = M;
-  const chartY = 90;
-  const chartW = W - 2 * M;
+  sectionTitle(pdf, 70, "Projeção de economia em 20 anos", `Reajuste tarifário ${proposta.inflacao.toFixed(1)}% a.a.`);
+  const chartX = M + 12;
+  const chartY = 88;
+  const chartW = W - 2 * M - 14;
   const chartH = 90;
-
-  pdf.setDrawColor(220, 220, 220);
-  pdf.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
-  pdf.line(chartX, chartY, chartX, chartY + chartH);
 
   const inflMes = Math.pow(1 + proposta.inflacao / 100, 1 / 12) - 1;
   let acum = -totais.valorVenda;
   let mensal = econ.economiaMes;
-  const pontos: { x: number; y: number; ano: number; valor: number }[] = [];
   const meses = 240;
   let max = 0, min = -totais.valorVenda;
   const serie: number[] = [];
@@ -403,37 +454,62 @@ function paginaRetorno(ctx: Ctx) {
     if (acum < min) min = acum;
   }
   const range = max - min || 1;
-  serie.forEach((v, i) => {
-    const x = chartX + (i / meses) * chartW;
-    const y = chartY + chartH - ((v - min) / range) * chartH;
-    pontos.push({ x, y, ano: i / 12, valor: v });
-  });
 
-  // área positiva
-  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.setLineWidth(0.6);
-  for (let i = 1; i < pontos.length; i++) {
-    pdf.line(pontos[i - 1].x, pontos[i - 1].y, pontos[i].x, pontos[i].y);
+  const yFor = (v: number) => chartY + chartH - ((v - min) / range) * chartH;
+  const xFor = (m: number) => chartX + (m / meses) * chartW;
+
+  // Eixos com ticks
+  pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  pdf.setLineWidth(0.2);
+  for (let g = 0; g <= 4; g++) {
+    const v = min + (range / 4) * g;
+    const y = yFor(v);
+    pdf.line(chartX, y, chartX + chartW, y);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.setFontSize(7);
+    pdf.text(brl(v), chartX - 2, y + 1, { align: "right" });
   }
-  // linha zero
-  const zeroY = chartY + chartH - ((0 - min) / range) * chartH;
-  pdf.setDrawColor(180, 180, 180);
-  pdf.setLineDashPattern([1, 1], 0);
+
+  // Linha zero destacada
+  const zeroY = yFor(0);
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setLineWidth(0.3);
+  pdf.setLineDashPattern([1.5, 1.5], 0);
   pdf.line(chartX, zeroY, chartX + chartW, zeroY);
   pdf.setLineDashPattern([], 0);
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.setFontSize(7);
-  pdf.text("R$ 0", chartX + chartW + 1, zeroY + 1);
+
+  // Curva
+  pdf.setDrawColor(VERT[0], VERT[1], VERT[2]);
+  pdf.setLineWidth(0.7);
+  for (let i = 1; i < serie.length; i++) {
+    pdf.line(xFor(i - 1), yFor(serie[i - 1]), xFor(i), yFor(serie[i]));
+  }
+
+  // Marcador payback
+  if (Number.isFinite(paybackMeses) && paybackMeses < meses) {
+    const px = xFor(paybackMeses);
+    pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.setLineWidth(0.4);
+    pdf.line(px, chartY, px, chartY + chartH);
+    pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.circle(px, zeroY, 1.6, "F");
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.setFontSize(7);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`Payback ${(paybackMeses / 12).toFixed(1)}a`, px + 2, chartY + 5);
+  }
 
   // Eixo X anos
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
   for (let a = 0; a <= 20; a += 5) {
-    const x = chartX + (a / 20) * chartW;
+    const x = xFor(a * 12);
     pdf.text(`${a}a`, x, chartY + chartH + 5, { align: "center" });
   }
 
-  // Tabela anos-chave
-  sectionTitle(pdf, 195, "Marcos do investimento");
+  // Marcos
+  sectionTitle(pdf, 200, "Marcos do investimento");
   const marcos = [
     ["1 ano", brl(econ.economiaAno)],
     ["5 anos", brl(serie[60] + totais.valorVenda)],
@@ -442,7 +518,7 @@ function paginaRetorno(ctx: Ctx) {
   ];
   const mw = (W - 2 * M - 9) / 4;
   marcos.forEach(([l, v], i) => {
-    kvBox(pdf, M + i * (mw + 3), 205, mw, 22, l, v, i === 3);
+    kvBox(pdf, M + i * (mw + 3), 210, mw, 24, l, v, i === 3);
   });
 }
 
@@ -451,73 +527,72 @@ function paginaPagamento(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 6, "Formas de pagamento");
 
-  sectionTitle(pdf, 28, "Opções flexíveis");
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  sectionTitle(pdf, 26, "Opções flexíveis");
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFontSize(9);
   pdf.text("Escolha a modalidade que melhor se adapta ao seu fluxo de caixa.", M, 38);
 
   // À vista
   let y = 48;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.roundedRect(M, y, W - 2 * M, 24, 3, 3, "F");
+  pdf.roundedRect(M, y, W - 2 * M, 26, 3, 3, "F");
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
-  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 9);
+  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 10);
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(20);
   pdf.text(brl(totais.valorVenda * 0.95), W - M - 6, y + 18, { align: "right" });
-
-  y += 32;
-  // Financiamento
-  sectionTitle(pdf, y, "Financiamento bancário");
-  y += 8;
-  pdf.setFontSize(8);
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`Taxa simulada: ${proposta.taxaFinanciamento.toFixed(2)}% ao mês · sujeito à aprovação`, M, y);
-  y += 5;
+  pdf.setFontSize(8);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+  pdf.text(`Economia de ${brl(totais.valorVenda * 0.05)}`, M + 6, y + 20);
+
+  y += 34;
+  // Financiamento
+  sectionTitle(pdf, y, "Financiamento bancário", `${proposta.taxaFinanciamento.toFixed(2)}% a.m. · sujeito à aprovação`);
+  y += 12;
   const planosFin = [24, 36, 48, 60, 72, 84];
+  const colW = (W - 2 * M - 6) / 3;
   planosFin.forEach((n, i) => {
-    const col = i % 2;
-    const linha = Math.floor(i / 2);
-    const x = M + col * ((W - 2 * M) / 2 + 2);
-    const yy = y + linha * 16;
-    const w = (W - 2 * M) / 2 - 2;
+    const col = i % 3;
+    const linha = Math.floor(i / 3);
+    const x = M + col * (colW + 3);
+    const yy = y + linha * 18;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, w, 14, 2, 2, "F");
+    pdf.roundedRect(x, yy, colW, 16, 2, 2, "F");
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.text(`${n}x`, x + 5, yy + 9);
-    pdf.setFontSize(11);
+    pdf.setFontSize(13);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaFinanciamento, n);
-    pdf.text(brlPrec(parc), x + w - 5, yy + 9, { align: "right" });
+    pdf.text(brlPrec(parc), x + colW - 4, yy + 12, { align: "right" });
   });
 
-  y += 16 * 3 + 8;
-  sectionTitle(pdf, y, "Cartão de crédito");
-  y += 8;
-  pdf.setFontSize(8);
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.text(`Taxa: ${proposta.taxaCartao.toFixed(2)}% ao mês · até 21 vezes`, M, y);
-  y += 5;
+  y += 18 * 2 + 10;
+  sectionTitle(pdf, y, "Cartão de crédito", `${proposta.taxaCartao.toFixed(2)}% a.m. · até 21 vezes`);
+  y += 12;
   const planosCart = [10, 12, 18, 21];
   planosCart.forEach((n, i) => {
     const col = i % 2;
     const linha = Math.floor(i / 2);
-    const x = M + col * ((W - 2 * M) / 2 + 2);
-    const yy = y + linha * 16;
-    const w = (W - 2 * M) / 2 - 2;
+    const cw = (W - 2 * M - 3) / 2;
+    const x = M + col * (cw + 3);
+    const yy = y + linha * 18;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, w, 14, 2, 2, "F");
+    pdf.roundedRect(x, yy, cw, 16, 2, 2, "F");
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.text(`${n}x`, x + 5, yy + 9);
-    pdf.setFontSize(11);
+    pdf.setFontSize(13);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaCartao, n);
-    pdf.text(brlPrec(parc), x + w - 5, yy + 9, { align: "right" });
+    pdf.text(brlPrec(parc), x + cw - 4, yy + 12, { align: "right" });
   });
 }
 
@@ -526,7 +601,7 @@ function paginaContrato(ctx: Ctx) {
   pdf.addPage();
   pageFrame(ctx, 7, "Aceite e próximos passos");
 
-  sectionTitle(pdf, 28, "Etapas após aceite");
+  sectionTitle(pdf, 26, "Etapas após aceite");
   const etapas = [
     ["1. Assinatura do contrato", "Envio digital · até 1 dia útil"],
     ["2. Projeto técnico", "Elaboração e ART · 5 dias úteis"],
@@ -534,10 +609,10 @@ function paginaContrato(ctx: Ctx) {
     ["4. Instalação", "Equipe técnica em campo · 2-5 dias"],
     ["5. Vistoria e ativação", "Sistema gerando · após troca do medidor"],
   ];
-  let y = 42;
+  let y = 40;
   etapas.forEach(([t, d]) => {
     pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-    pdf.circle(M + 3, y - 1, 2, "F");
+    pdf.circle(M + 3, y - 1, 2.2, "F");
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
@@ -546,12 +621,12 @@ function paginaContrato(ctx: Ctx) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(d, M + 9, y + 5);
-    y += 14;
+    y += 13;
   });
 
-  y += 8;
+  y += 6;
   sectionTitle(pdf, y, "Garantias");
-  y += 10;
+  y += 12;
   const gs = [
     "Módulos: 12 anos de fabricação + 25 anos de eficiência",
     "Inversores: 10 anos de fabricação",
@@ -562,22 +637,25 @@ function paginaContrato(ctx: Ctx) {
   pdf.setFontSize(9);
   gs.forEach((t) => {
     pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
+    pdf.setFont("helvetica", "bold");
     pdf.text("✓", M + 2, y);
     pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    pdf.setFont("helvetica", "normal");
     pdf.text(t, M + 8, y);
     y += 6;
   });
 
   y += 10;
   sectionTitle(pdf, y, "Aceite da proposta");
-  y += 12;
+  y += 14;
   pdf.setFontSize(9);
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.text(`Eu, ${cliente.nome}, declaro estar de acordo com os termos da proposta ${proposta.numero}.`, M, y);
-  y += 18;
+  y += 22;
 
   const sigW = (W - 2 * M - 8) / 2;
   pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setLineWidth(0.4);
   pdf.line(M, y, M + sigW, y);
   pdf.line(M + sigW + 8, y, W - M, y);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -588,14 +666,18 @@ function paginaContrato(ctx: Ctx) {
   pdf.text(`${consultor?.nome ?? ""}`, M + sigW + 8, y + 11);
 }
 
-export function gerarPdfProposta(opts: {
+interface GerarOpts {
   proposta: Proposta;
   cliente: Cliente;
   consultor?: Usuario;
   produtos: Produto[];
   empresa: Empresa;
-}) {
-  const { proposta, cliente, consultor, produtos, empresa } = opts;
+  /** "save" baixa o arquivo, "blob" retorna URL para preview no sistema */
+  modo?: "save" | "blob";
+}
+
+export function gerarPdfProposta(opts: GerarOpts): string | void {
+  const { proposta, cliente, consultor, produtos, empresa, modo = "save" } = opts;
 
   const valorVenda = proposta.itens.reduce((a, it) => a + it.precoUnitario * it.quantidade, 0);
   const kwpInst = proposta.itens.reduce((a, it) => {
@@ -622,5 +704,8 @@ export function gerarPdfProposta(opts: {
   paginaPagamento(ctx);
   paginaContrato(ctx);
 
+  if (modo === "blob") {
+    return pdf.output("bloburl") as unknown as string;
+  }
   pdf.save(`Proposta-${proposta.numero}-${cliente.nome.replace(/\s+/g, "_")}.pdf`);
 }

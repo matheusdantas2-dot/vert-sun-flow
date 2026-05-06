@@ -8,6 +8,7 @@ import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import { useMemo, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
+import { notify } from "@/lib/notificacoes";
 
 export const Route = createFileRoute("/pipeline")({
   component: Pipeline,
@@ -71,6 +72,9 @@ function Pipeline() {
       return;
     }
     moveCard(cardId, newStage);
+    const clienteCard = clientes.find((c) => c.id === card.clienteId);
+    const stageNome = STAGES.find((s) => s.id === newStage)?.nome ?? newStage;
+    notify.success("Card movido", `${clienteCard?.nome ?? "Lead"} → ${stageNome}`);
 
     if (newStage === "proposta") {
       const cliente = clientes.find((c) => c.id === card.clienteId);
@@ -162,7 +166,12 @@ function Pipeline() {
         open={!!pendingMove}
         onClose={() => setPendingMove(null)}
         onConfirm={(motivo) => {
-          if (pendingMove) moveCard(pendingMove.cardId, pendingMove.stage, motivo);
+          if (pendingMove) {
+            moveCard(pendingMove.cardId, pendingMove.stage, motivo);
+            const card = cards.find((c) => c.id === pendingMove.cardId);
+            const cli = clientes.find((c) => c.id === card?.clienteId);
+            notify.warning("Lead perdido", `${cli?.nome ?? "Lead"} · ${motivo}`);
+          }
           setPendingMove(null);
         }}
       />

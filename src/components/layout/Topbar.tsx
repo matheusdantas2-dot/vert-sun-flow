@@ -1,8 +1,9 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { useNotificacoes } from "@/lib/notificacoes";
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import { initials } from "@/lib/format";
+import { initials, dataHoraBR } from "@/lib/format";
 
 export function Topbar() {
   const [q, setQ] = useState("");
@@ -10,14 +11,41 @@ export function Topbar() {
   const cards = useStore((s) => s.cards);
   const sla = useStore((s) => s.sla);
 
-  const alertasCount = useMemo(() => {
-    return cards.filter((c) => {
-      if (c.stage === "ativado" || c.stage === "perdido") return false;
-      const limite = sla[c.stage] ?? 999;
-      const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
-      return dias > limite;
-    }).length;
-  }, [cards, sla]);
+  // Alertas SLA convertidos em "notificações" virtuais
+  const alertasSla = useMemo(() => {
+    return cards
+      .filter((c) => {
+        if (c.stage === "ativado" || c.stage === "perdido") return false;
+        const limite = sla[c.stage] ?? 999;
+        const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
+        return dias > limite;
+      })
+      .map((c) => {
+        const cliente = clientes.find((x) => x.id === c.clienteId);
+        const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
+        return {
+          id: `sla-${c.id}`,
+          tipo: "warning" as const,
+          titulo: `SLA estourado · ${cliente?.nome ?? "Lead"}`,
+          mensagem: `${dias} dias na etapa ${c.stage}`,
+          criadoEm: c.diasNaEtapaDesde,
+          lida: false,
+          link: undefined,
+        };
+      });
+  }, [cards, sla, clientes]);
+
+  const notifs = useNotificacoes((s) => s.itens);
+  const marcarTodasLidas = useNotificacoes((s) => s.marcarTodasLidas);
+  const limpar = useNotificacoes((s) => s.limpar);
+
+  const todas = useMemo(
+    () => [...alertasSla, ...notifs].sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()),
+    [alertasSla, notifs],
+  );
+  const naoLidas = todas.filter((n) => !n.lida).length;
+
+  const [openNotif, setOpenNotif] = useState(false);
 
   const results = useMemo(() => {
     if (!q.trim()) return [];
@@ -62,18 +90,75 @@ export function Topbar() {
           )}
         </div>
 
-        <button className="relative p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground" aria-label="Notificações">
-          <Bell className="h-5 w-5" />
-          {alertasCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-              {alertasCount}
-            </span>
+        <div className="relative">
+          <button
+            onClick={() => { setOpenNotif((v) => !v); if (!openNotif) marcarTodasLidas(); }}
+            className="relative p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+            aria-label="Notificações"
+          >
+            <Bell className="h-5 w-5" />
+            {naoLidas > 0 && (
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                {naoLidas}
+              </span>
+            )}
+          </button>
+          {openNotif && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setOpenNotif(false)} />
+              <div className="absolute right-0 top-12 w-[360px] max-w-[calc(100vw-1rem)] bg-card border border-border rounded-xl shadow-xl z-40 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <div>
+                    <div className="font-display font-bold text-sm">Notificações</div>
+                    <div className="text-[11px] text-muted-foreground">{todas.length} no total</div>
+                  </div>
+                  {notifs.length > 0 && (
+                    <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
+                      <Trash2 className="h-3 w-3" /> limpar
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[420px] overflow-y-auto">
+                  {todas.length === 0 ? (
+                    <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      Nenhuma notificação no momento.
+                    </div>
+                  ) : (
+                    todas.map((n) => <NotifRow key={n.id} n={n} />)
+                  )}
+                </div>
+              </div>
+            </>
           )}
-        </button>
+        </div>
 
         <UserSwitcher />
       </div>
     </header>
+  );
+}
+
+function NotifRow({ n }: { n: { id: string; tipo: string; titulo: string; mensagem?: string; criadoEm: string; link?: string } }) {
+  const Icon = n.tipo === "error" ? AlertCircle
+    : n.tipo === "warning" ? AlertTriangle
+    : n.tipo === "success" ? CheckCircle2
+    : Info;
+  const cor = n.tipo === "error" ? "text-rose-600 bg-rose-50"
+    : n.tipo === "warning" ? "text-amber-700 bg-amber-50"
+    : n.tipo === "success" ? "text-vert bg-vert-soft"
+    : "text-blue-600 bg-blue-50";
+  return (
+    <div className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cor}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold text-foreground truncate">{n.titulo}</div>
+        {n.mensagem && <div className="text-xs text-muted-foreground line-clamp-2">{n.mensagem}</div>}
+        <div className="text-[10px] text-muted-foreground mt-1">{dataHoraBR(n.criadoEm)}</div>
+      </div>
+    </div>
   );
 }
 

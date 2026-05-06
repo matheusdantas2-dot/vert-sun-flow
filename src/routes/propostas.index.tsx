@@ -2,9 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Plus, FileText, ExternalLink, Download } from "lucide-react";
+import { Plus, FileText, ExternalLink, Download, Eye } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
+import { notify } from "@/lib/notificacoes";
+import { useState } from "react";
+import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
@@ -21,11 +24,31 @@ function PropostasList() {
   const podeCriar = usePode("criar_proposta");
   const podePdf = usePode("exportar_pdf");
 
-  const baixarPdf = (id: string) => {
+  const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
+
+  const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
     const cliente = clientes.find((c) => c.id === p?.clienteId);
     const consultor = usuarios.find((u) => u.id === p?.consultorId);
-    if (p && cliente) gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa });
+    if (!p || !cliente) return null;
+    return { result: gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
+  };
+
+  const baixarPdf = (id: string) => {
+    const r = buildPdf(id, "save");
+    if (r) notify.success("PDF gerado", `Proposta ${r.p.numero} baixada.`);
+  };
+
+  const visualizarPdf = (id: string) => {
+    const r = buildPdf(id, "blob");
+    if (r && typeof r.result === "string") {
+      setPreview({ url: r.result, titulo: `${r.p.numero} · ${r.cliente.nome}`, propostaId: id });
+    }
+  };
+
+  const aceitar = (id: string, numero: string) => {
+    aceitarProposta(id);
+    notify.success("Proposta aceita", `${numero} marcada como fechada.`);
   };
 
   const calcTotal = (p: typeof propostas[number]) =>
@@ -110,13 +133,16 @@ function PropostasList() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-3">
+                        <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
+                          <Eye className="h-3.5 w-3.5" /> Visualizar
+                        </button>
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
                           </button>
                         )}
                         {p.status !== "aceita" && p.status !== "recusada" && (
-                          <button onClick={() => aceitarProposta(p.id)} className="text-xs font-semibold text-vert hover:underline">
+                          <button onClick={() => aceitar(p.id, p.numero)} className="text-xs font-semibold text-vert hover:underline">
                             Marcar aceita
                           </button>
                         )}
@@ -132,6 +158,15 @@ function PropostasList() {
           </table>
         </div>
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          url={preview.url}
+          titulo={preview.titulo}
+          onClose={() => setPreview(null)}
+          onDownload={() => baixarPdf(preview.propostaId)}
+        />
+      )}
     </div>
   );
 }
