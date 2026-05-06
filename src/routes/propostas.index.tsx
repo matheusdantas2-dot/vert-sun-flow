@@ -172,6 +172,7 @@ function PropostasList() {
           onDownload={() => baixarPdf(preview.propostaId)}
         />
       )}
+      {shareId && <CompartilharPropostaModal propostaId={shareId} onClose={() => setShareId(null)} />}
     </div>
   );
 }
