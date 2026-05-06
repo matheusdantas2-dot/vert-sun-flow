@@ -672,11 +672,11 @@ interface GerarOpts {
   consultor?: Usuario;
   produtos: Produto[];
   empresa: Empresa;
-  /** "save" baixa o arquivo, "blob" retorna URL para preview no sistema */
-  modo?: "save" | "blob";
+  /** "save" baixa o arquivo, "blob" retorna URL p/ preview, "blob-data" retorna Blob para upload */
+  modo?: "save" | "blob" | "blob-data";
 }
 
-export function gerarPdfProposta(opts: GerarOpts): string | void {
+export function gerarPdfProposta(opts: GerarOpts): string | void | Blob {
   const { proposta, cliente, consultor, produtos, empresa, modo = "save" } = opts;
 
   const valorVenda = proposta.itens.reduce((a, it) => a + it.precoUnitario * it.quantidade, 0);
