@@ -4,6 +4,7 @@ import { brl } from "@/lib/format";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Produto, ProdutoCategoria } from "@/lib/types";
+import { usePode } from "@/lib/permissoes";
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
@@ -23,6 +24,8 @@ function Produtos() {
   const addProduto = useStore((s) => s.addProduto);
   const updateProduto = useStore((s) => s.updateProduto);
   const deleteProduto = useStore((s) => s.deleteProduto);
+  const podeEditar = usePode("editar_produto");
+  const podeVerMargem = usePode("ver_margem");
 
   const [filterCat, setFilterCat] = useState<ProdutoCategoria | "">("");
   const [open, setOpen] = useState(false);
@@ -39,9 +42,11 @@ function Produtos() {
           <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Produtos & Serviços</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{produtos.length} itens no catálogo</p>
         </div>
-        <button onClick={() => { setEditing(null); setOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
-          <Plus className="h-4 w-4" /> Novo item
-        </button>
+        {podeEditar && (
+          <button onClick={() => { setEditing(null); setOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
+            <Plus className="h-4 w-4" /> Novo item
+          </button>
+        )}
       </header>
 
       <div className="flex gap-2 flex-wrap">
