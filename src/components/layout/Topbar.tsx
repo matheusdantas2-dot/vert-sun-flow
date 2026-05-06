@@ -7,7 +7,6 @@ import { initials } from "@/lib/format";
 export function Topbar() {
   const [q, setQ] = useState("");
   const clientes = useStore((s) => s.clientes);
-  const usuario = useStore((s) => s.usuarios.find((u) => u.id === s.currentUserId));
   const cards = useStore((s) => s.cards);
   const sla = useStore((s) => s.sla);
 
@@ -114,9 +113,5 @@ function UserSwitcher() {
         </>
       )}
     </div>
-  );
-}
-      </div>
-    </header>
   );
 }
