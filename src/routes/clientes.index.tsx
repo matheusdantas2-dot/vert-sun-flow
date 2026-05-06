@@ -69,7 +69,7 @@ function ClientesList() {
         SEGMENTOS_LABEL[c.segmento],
         ORIGEM_LABEL[c.origem],
         c.consumoMedio,
-        c.tarifa,
+        brlPrec(c.tarifa),
       ]),
     ];
     const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
