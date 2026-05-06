@@ -3,7 +3,6 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo } from "react";
 import { Calendar as CalIcon, Phone, MessageCircle, MapPin, Users as UsersIcon, Wrench, ClipboardCheck, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import type { Atividade } from "@/lib/types";
-import { uid } from "@/lib/format";
 
 export const Route = createFileRoute("/agenda")({
   component: Agenda,
