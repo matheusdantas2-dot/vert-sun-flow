@@ -7,6 +7,7 @@ import { KanbanCard } from "@/components/pipeline/KanbanCard";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import { useMemo, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
+import { usePode } from "@/lib/permissoes";
 
 export const Route = createFileRoute("/pipeline")({
   component: Pipeline,
@@ -19,6 +20,7 @@ function Pipeline() {
   const usuarios = useStore((s) => s.usuarios);
   const sla = useStore((s) => s.sla);
   const moveCard = useStore((s) => s.moveCard);
+  const podeMover = usePode("mover_card");
 
   const [filterConsultor, setFilterConsultor] = useState("");
   const [filterSeg, setFilterSeg] = useState("");
