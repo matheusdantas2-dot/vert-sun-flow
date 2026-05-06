@@ -72,20 +72,50 @@ export function Topbar() {
           )}
         </button>
 
-        {usuario && (
-          <div className="flex items-center gap-2 pl-2 border-l border-border">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-              style={{ backgroundColor: usuario.cor }}
-            >
-              {initials(usuario.nome)}
-            </div>
-            <div className="hidden md:block leading-tight">
-              <div className="text-sm font-semibold">{usuario.nome}</div>
-              <div className="text-[11px] text-muted-foreground capitalize">{usuario.perfil}</div>
-            </div>
+        <UserSwitcher />
+      </div>
+    </header>
+  );
+}
+
+function UserSwitcher() {
+  const usuarios = useStore((s) => s.usuarios);
+  const currentUserId = useStore((s) => s.currentUserId);
+  const setCurrentUser = useStore((s) => s.setCurrentUser);
+  const usuario = usuarios.find((u) => u.id === currentUserId);
+  const [open, setOpen] = useState(false);
+  if (!usuario) return null;
+  return (
+    <div className="relative pl-2 border-l border-border">
+      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 hover:bg-accent rounded-lg p-1 pr-2">
+        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: usuario.cor }}>
+          {initials(usuario.nome)}
+        </div>
+        <div className="hidden md:block leading-tight text-left">
+          <div className="text-sm font-semibold">{usuario.nome}</div>
+          <div className="text-[11px] text-muted-foreground capitalize">{usuario.perfil}</div>
+        </div>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-12 w-64 bg-card border border-border rounded-lg shadow-xl py-1 z-40">
+            <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">Trocar usuário (demo)</div>
+            {usuarios.filter((u) => u.ativo).map((u) => (
+              <button key={u.id} onClick={() => { setCurrentUser(u.id); setOpen(false); }} className={`flex items-center gap-2 w-full px-3 py-2 hover:bg-accent text-left ${u.id === currentUserId ? "bg-accent/50" : ""}`}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: u.cor }}>{initials(u.nome)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{u.nome}</div>
+                  <div className="text-[10px] text-muted-foreground capitalize">{u.perfil}</div>
+                </div>
+              </button>
+            ))}
           </div>
-        )}
+        </>
+      )}
+    </div>
+  );
+}
       </div>
     </header>
   );
