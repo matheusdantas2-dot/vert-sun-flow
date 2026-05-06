@@ -138,6 +138,9 @@ function PropostasList() {
                         <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
                           <Eye className="h-3.5 w-3.5" /> Visualizar
                         </button>
+                        <button onClick={() => setShareId(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
+                          <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                        </button>
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
