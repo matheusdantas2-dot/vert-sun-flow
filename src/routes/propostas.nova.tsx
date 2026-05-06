@@ -371,6 +371,14 @@ function NovaProposta() {
           </div>
         </div>
       </div>
+
+      {previewUrl && (
+        <PdfPreviewModal
+          url={previewUrl}
+          titulo={cliente ? `Prévia · ${cliente.nome}` : "Prévia da proposta"}
+          onClose={() => setPreviewUrl(null)}
+        />
+      )}
     </div>
   );
 }
