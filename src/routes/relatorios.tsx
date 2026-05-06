@@ -42,10 +42,10 @@ function Relatorios() {
       ["Etapa", "Quantidade", "Valor total"],
       ...STAGES.map((s) => {
         const cs = cards.filter((c) => c.stage === s.id);
-        return [s.nome, cs.length, cs.reduce((a, c) => a + c.valorEstimado, 0)];
+        return [s.nome, cs.length, brl(cs.reduce((a, c) => a + c.valorEstimado, 0))];
       }),
     ];
-    const csv = rows.map((r) => r.join(";")).join("\n");
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pipeline-vert-${Date.now()}.csv`; a.click();
   };

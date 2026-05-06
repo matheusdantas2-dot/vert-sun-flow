@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
-import { brl, dataBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
+import { brl, brlPrec, dataBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { Plus, Search, Phone, MessageCircle, ChevronRight } from "lucide-react";
