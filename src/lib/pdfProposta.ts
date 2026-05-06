@@ -3,6 +3,10 @@ import jsPDF from "jspdf";
 import type { Proposta, Cliente, Produto, Empresa, Usuario } from "./types";
 import { brl, brlPrec, kwh, kwp, dataBR, formatDoc, formatTel } from "./format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "./finance";
+import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
+
+// Aspect ratio of the logo PNG (577 x 351)
+const LOGO_RATIO = 577 / 351;
 
 const VERT_DARK: [number, number, number] = [13, 82, 52];
 const VERT: [number, number, number] = [45, 158, 100];
@@ -101,14 +105,14 @@ function paginaCapa(ctx: Ctx) {
   pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.circle(-10, 30, 40, "F");
 
-  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(28);
-  pdf.text("vert.energie", M, 50);
+  // Logomarca da Vert Energie (PNG branco com transparência)
+  const logoH = 22;
+  const logoW = logoH * LOGO_RATIO;
+  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", M, 36, logoW, logoH, undefined, "FAST");
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "normal");
-  pdf.text("Energia solar fotovoltaica", M, 58);
+  pdf.text("Energia solar fotovoltaica", M, 36 + logoH + 6);
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(36);

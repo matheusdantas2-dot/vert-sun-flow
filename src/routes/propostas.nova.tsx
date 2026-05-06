@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { z } from "zod";
@@ -68,7 +68,18 @@ function NovaProposta() {
   const parcelasFin = [24, 36, 48, 60].map((n) => ({ n, valor: totais.valorVenda > 0 ? tabelaPrice(totais.valorVenda, taxaFin, n) : 0 }));
   const parcelasCart = [10, 12, 18, 21].map((n) => ({ n, valor: totais.valorVenda > 0 ? tabelaPrice(totais.valorVenda, taxaCart, n) : 0 }));
 
-  const addItem = () => setItens([...itens, { produtoId: produtos[0]?.id ?? "", quantidade: 1, precoUnitario: produtos[0]?.precoVenda ?? 0 }]);
+  // Quantidade ideal de módulos para atender a potência dimensionada
+  const qtdModulosIdeal = (potenciaW: number) => {
+    if (!potenciaW || potenciaW <= 0 || dim.potenciaKwp <= 0) return 1;
+    return Math.max(1, Math.ceil((dim.potenciaKwp * 1000) / potenciaW));
+  };
+
+  const addItem = () => {
+    const prod = produtos.find((p) => p.ativo);
+    if (!prod) return;
+    const qtd = prod.categoria === "modulo" && prod.potenciaW ? qtdModulosIdeal(prod.potenciaW) : 1;
+    setItens([...itens, { produtoId: prod.id, quantidade: qtd, precoUnitario: prod.precoVenda }]);
+  };
 
   const updateItem = (i: number, patch: Partial<{ produtoId: string; quantidade: number; precoUnitario: number }>) => {
     setItens(itens.map((it, idx) => {
@@ -76,12 +87,39 @@ function NovaProposta() {
       const next = { ...it, ...patch };
       if (patch.produtoId && patch.produtoId !== it.produtoId) {
         const p = produtos.find((x) => x.id === patch.produtoId);
-        if (p) next.precoUnitario = p.precoVenda;
+        if (p) {
+          next.precoUnitario = p.precoVenda;
+          // Auto-calcula quantidade para módulos baseado no dimensionamento
+          if (p.categoria === "modulo" && p.potenciaW) {
+            next.quantidade = qtdModulosIdeal(p.potenciaW);
+          }
+        }
       }
       return next;
     }));
   };
   const removeItem = (i: number) => setItens(itens.filter((_, idx) => idx !== i));
+
+  // Recalcula automaticamente a quantidade dos módulos quando o dimensionamento muda
+  useEffect(() => {
+    if (dim.potenciaKwp <= 0) return;
+    setItens((prev) => {
+      let mudou = false;
+      const next = prev.map((it) => {
+        const p = produtos.find((x) => x.id === it.produtoId);
+        if (p?.categoria === "modulo" && p.potenciaW) {
+          const ideal = qtdModulosIdeal(p.potenciaW);
+          if (ideal !== it.quantidade) {
+            mudou = true;
+            return { ...it, quantidade: ideal };
+          }
+        }
+        return it;
+      });
+      return mudou ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dim.potenciaKwp, produtos]);
 
   const salvar = (baixarPdf = false) => {
     if (!cliente || itens.length === 0) return alert("Selecione cliente e adicione itens.");
@@ -195,13 +233,31 @@ function NovaProposta() {
               {itens.map((it, i) => {
                 const prod = produtos.find((x) => x.id === it.produtoId);
                 return (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                    <select value={it.produtoId} onChange={(e) => updateItem(i, { produtoId: e.target.value })} className={inp + " col-span-6"}>
-                      {produtos.filter((p) => p.ativo).map((p) => <option key={p.id} value={p.id}>{p.nome}{p.fabricante ? ` · ${p.fabricante}` : ""}</option>)}
-                    </select>
-                    <input type="number" step="0.01" value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: +e.target.value })} className={inp + " col-span-2"} />
-                    <input type="number" step="0.01" value={it.precoUnitario} onChange={(e) => updateItem(i, { precoUnitario: +e.target.value })} className={inp + " col-span-3"} />
-                    <button onClick={() => removeItem(i)} className="col-span-1 p-2 rounded hover:bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4 mx-auto" /></button>
+                  <div key={i} className="space-y-1">
+                    <div className="grid grid-cols-12 gap-2 items-center">
+                      <select value={it.produtoId} onChange={(e) => updateItem(i, { produtoId: e.target.value })} className={inp + " col-span-6"}>
+                        {produtos.filter((p) => p.ativo).map((p) => <option key={p.id} value={p.id}>{p.nome}{p.fabricante ? ` · ${p.fabricante}` : ""}</option>)}
+                      </select>
+                      <input type="number" step="0.01" value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: +e.target.value })} className={inp + " col-span-2"} />
+                      <input type="number" step="0.01" value={it.precoUnitario} onChange={(e) => updateItem(i, { precoUnitario: +e.target.value })} className={inp + " col-span-3"} />
+                      <button onClick={() => removeItem(i)} className="col-span-1 p-2 rounded hover:bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4 mx-auto" /></button>
+                    </div>
+                    {prod?.categoria === "modulo" && prod.potenciaW && (
+                      <div className="flex items-center gap-1.5 text-[11px] text-vert pl-1">
+                        <Zap className="h-3 w-3" />
+                        <span>
+                          Quantidade calculada para atender {kwp(dim.potenciaKwp)} ({prod.potenciaW}W cada).
+                        </span>
+                        {it.quantidade !== qtdModulosIdeal(prod.potenciaW) && (
+                          <button
+                            onClick={() => updateItem(i, { quantidade: qtdModulosIdeal(prod.potenciaW!) })}
+                            className="ml-1 underline font-semibold"
+                          >
+                            Recalcular ({qtdModulosIdeal(prod.potenciaW)})
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
