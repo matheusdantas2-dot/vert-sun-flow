@@ -3,7 +3,9 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download } from "lucide-react";
+import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { usePode } from "@/lib/permissoes";
 import { z } from "zod";
 
 const search = z.object({ clienteId: z.string().optional() });
@@ -20,8 +22,10 @@ function NovaProposta() {
   const clientes = useStore((s) => s.clientes);
   const produtos = useStore((s) => s.produtos);
   const usuarios = useStore((s) => s.usuarios);
+  const empresa = useStore((s) => s.empresa);
   const currentUserId = useStore((s) => s.currentUserId);
   const addProposta = useStore((s) => s.addProposta);
+  const podePdf = usePode("exportar_pdf");
 
   const [selCliente, setSelCliente] = useState(clienteId ?? clientes[0]?.id ?? "");
   const cliente = clientes.find((c) => c.id === selCliente);
@@ -79,7 +83,7 @@ function NovaProposta() {
   };
   const removeItem = (i: number) => setItens(itens.filter((_, idx) => idx !== i));
 
-  const salvar = () => {
+  const salvar = (baixarPdf = false) => {
     if (!cliente || itens.length === 0) return alert("Selecione cliente e adicione itens.");
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
@@ -96,6 +100,10 @@ function NovaProposta() {
       taxaFinanciamento: taxaFin,
       taxaCartao: taxaCart,
     });
+    if (baixarPdf) {
+      const consultor = usuarios.find((u) => u.id === currentUserId);
+      gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa });
+    }
     navigate({ to: "/propostas" });
   };
 
@@ -121,11 +129,16 @@ function NovaProposta() {
           <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Nova Proposta</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Monte o sistema e simule retorno financeiro</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={abrirGerador} disabled={!cliente} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-vert-dark text-vert-dark text-sm font-semibold hover:bg-vert-soft disabled:opacity-50">
-            <ExternalLink className="h-4 w-4" /> Abrir Gerador PDF
+            <ExternalLink className="h-4 w-4" /> Abrir Gerador HTML
           </button>
-          <button onClick={salvar} className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Salvar proposta</button>
+          {podePdf && (
+            <button onClick={() => salvar(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert-dark text-white text-sm font-semibold">
+              <Download className="h-4 w-4" /> Salvar e baixar PDF
+            </button>
+          )}
+          <button onClick={() => salvar(false)} className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Salvar proposta</button>
         </div>
       </header>
 
