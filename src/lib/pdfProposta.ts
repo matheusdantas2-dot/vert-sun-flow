@@ -74,13 +74,16 @@ function sectionTitle(pdf: jsPDF, y: number, texto: string) {
 }
 
 function kvBox(pdf: jsPDF, x: number, y: number, w: number, h: number, label: string, valor: string, destaque = false) {
-  pdf.setFillColor(...(destaque ? VERT_DARK : SOFT));
+  const bg: [number, number, number] = destaque ? VERT_DARK : SOFT;
+  const lc: [number, number, number] = destaque ? VERT_GLOW : MUTED;
+  const vc: [number, number, number] = destaque ? [255, 255, 255] : VERT_DARK;
+  pdf.setFillColor(bg[0], bg[1], bg[2]);
   pdf.roundedRect(x, y, w, h, 2, 2, "F");
-  pdf.setTextColor(...(destaque ? VERT_GLOW : MUTED));
+  pdf.setTextColor(lc[0], lc[1], lc[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7);
   pdf.text(label.toUpperCase(), x + 4, y + 6);
-  pdf.setTextColor(...(destaque ? [255, 255, 255] : VERT_DARK));
+  pdf.setTextColor(vc[0], vc[1], vc[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
   pdf.text(valor, x + 4, y + h - 4);
