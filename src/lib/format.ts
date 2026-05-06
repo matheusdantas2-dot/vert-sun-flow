@@ -4,7 +4,8 @@ export const brl = (v: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(v || 0);
 
 export const brlPrec = (v: number) =>
