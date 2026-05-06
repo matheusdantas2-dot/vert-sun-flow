@@ -31,9 +31,9 @@ interface Ctx {
 
 function header(ctx: Ctx, pagina: number, titulo: string) {
   const { pdf } = ctx;
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(0, 0, W, 18, "F");
-  pdf.setFillColor(...VERT_GLOW);
+  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.circle(M + 4, 9, 3, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
@@ -42,7 +42,7 @@ function header(ctx: Ctx, pagina: number, titulo: string) {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.text(titulo, W - M, 9, { align: "right" });
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.text(`Página ${pagina} de 7`, W - M, 14, { align: "right" });
 }
 
@@ -51,7 +51,7 @@ function footer(ctx: Ctx) {
   pdf.setDrawColor(220, 220, 220);
   pdf.line(M, H - 14, W - M, H - 14);
   pdf.setFontSize(7);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
   pdf.text(`${empresa.razaoSocial} · CNPJ ${empresa.cnpj}`, M, H - 9);
   pdf.text(`Proposta ${proposta.numero} · Validade ${dataBR(proposta.validadeAte)}`, W - M, H - 9, { align: "right" });
@@ -65,9 +65,9 @@ function pageFrame(ctx: Ctx, pagina: number, titulo: string) {
 }
 
 function sectionTitle(pdf: jsPDF, y: number, texto: string) {
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(M, y, 3, 7, "F");
-  pdf.setTextColor(...VERT_DARK);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
   pdf.text(texto, M + 6, y + 5.5);
@@ -93,15 +93,15 @@ function kvBox(pdf: jsPDF, x: number, y: number, w: number, h: number, label: st
 
 function paginaCapa(ctx: Ctx) {
   const { pdf, cliente, proposta, totais, consultor } = ctx;
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(0, 0, W, H, "F");
   // arc decorativo
-  pdf.setFillColor(...VERT);
+  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
   pdf.circle(W + 20, H - 30, 80, "F");
-  pdf.setFillColor(...VERT_GLOW);
+  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.circle(-10, 30, 40, "F");
 
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(28);
   pdf.text("vert.energie", M, 50);
@@ -114,33 +114,33 @@ function paginaCapa(ctx: Ctx) {
   pdf.setFontSize(36);
   pdf.text("Proposta", M, 110);
   pdf.text("Comercial", M, 124);
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFontSize(14);
   pdf.text(proposta.numero, M, 134);
 
   // Card cliente
   pdf.setFillColor(255, 255, 255);
   pdf.roundedRect(M, 160, W - 2 * M, 70, 4, 4, "F");
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFontSize(8);
   pdf.text("PREPARADA PARA", M + 6, 170);
-  pdf.setTextColor(...VERT_DARK);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(18);
   pdf.text(cliente.nome, M + 6, 180);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${formatDoc(cliente.documento)}`, M + 6, 188);
   pdf.text(`${cliente.endereco.cidade}/${cliente.endereco.uf}`, M + 6, 195);
   pdf.text(`Telefone: ${formatTel(cliente.telefone)}  ·  ${cliente.email}`, M + 6, 202);
-  pdf.setDrawColor(...SOFT);
+  pdf.setDrawColor(SOFT[0], SOFT[1], SOFT[2]);
   pdf.line(M + 6, 208, W - M - 6, 208);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFontSize(8);
   pdf.text("CONSULTOR", M + 6, 215);
   pdf.text("DATA", W - M - 50, 215);
-  pdf.setTextColor(...VERT_DARK);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
   pdf.text(consultor?.nome ?? "—", M + 6, 222);
@@ -148,7 +148,7 @@ function paginaCapa(ctx: Ctx) {
 
   // Destaques
   pdf.setFillColor(255, 255, 255, 0.1);
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFontSize(8);
   pdf.text("SISTEMA DIMENSIONADO", M, 250);
   pdf.text("INVESTIMENTO", M + 70, 250);
@@ -160,7 +160,7 @@ function paginaCapa(ctx: Ctx) {
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.text(`Validade desta proposta: ${dataBR(proposta.validadeAte)}`, M, H - 12);
 }
 
@@ -170,7 +170,7 @@ function paginaSobre(ctx: Ctx) {
   pageFrame(ctx, 2, "Sobre a Vert Energie");
 
   sectionTitle(pdf, 28, "Sobre nós");
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
   const txt = pdf.splitTextToSize(
@@ -191,13 +191,13 @@ function paginaSobre(ctx: Ctx) {
   ];
   let y = 95;
   itens.forEach(([t, d]) => {
-    pdf.setFillColor(...VERT_GLOW);
+    pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
     pdf.circle(M + 2, y - 1.5, 1.5, "F");
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.text(t, M + 7, y);
-    pdf.setTextColor(...TEXT);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.text(d, M + 7, y + 5);
@@ -230,13 +230,13 @@ function paginaConsumo(ctx: Ctx) {
   ];
   let y = 42;
   dados.forEach(([k, v]) => {
-    pdf.setFillColor(...SOFT);
+    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
     pdf.rect(M, y, W - 2 * M, 8, "F");
-    pdf.setTextColor(...MUTED);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
     pdf.text(k, M + 4, y + 5.5);
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.text(v, W - M - 4, y + 5.5, { align: "right" });
     y += 10;
@@ -254,22 +254,22 @@ function paginaConsumo(ctx: Ctx) {
     const h = (valor / max) * barMaxH;
     pdf.setFillColor(...cor);
     pdf.rect(x, baseY - h, barW, h, "F");
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(13);
     pdf.text(brl(valor), x + barW / 2, baseY - h - 3, { align: "center" });
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
-    pdf.setTextColor(...MUTED);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.text(label, x + barW / 2, baseY + 6, { align: "center" });
   };
   drawBar(M + 5, econ.faturaAtual, "Sem solar", [220, 100, 90]);
   drawBar(M + 20 + barW, econ.faturaSolar, "Com solar", VERT);
 
   // Highlight economia
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.roundedRect(M, baseY + 18, W - 2 * M, 26, 3, 3, "F");
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFontSize(8);
   pdf.text("ECONOMIA MENSAL ESTIMADA", M + 6, baseY + 27);
   pdf.setTextColor(255, 255, 255);
@@ -296,7 +296,7 @@ function paginaSistema(ctx: Ctx) {
   const head = ["Item", "Qtd", "Unit.", "Total"];
   const colX = [M + 2, M + 110, M + 135, M + 165];
   let y = 80;
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(M, y - 5, W - 2 * M, 8, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
@@ -304,7 +304,7 @@ function paginaSistema(ctx: Ctx) {
   head.forEach((h, i) => pdf.text(h, colX[i], y));
   y += 6;
 
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   proposta.itens.forEach((it, idx) => {
@@ -315,7 +315,7 @@ function paginaSistema(ctx: Ctx) {
       pdf.rect(M, y - 4, W - 2 * M, 8, "F");
     }
     const nome = `${prod.nome}${prod.fabricante ? ` · ${prod.fabricante}` : ""}`;
-    pdf.setTextColor(...TEXT);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     const nomeLines = pdf.splitTextToSize(nome, 100);
     pdf.text(nomeLines[0], colX[0], y);
     pdf.text(String(it.quantidade), colX[1], y);
@@ -329,13 +329,13 @@ function paginaSistema(ctx: Ctx) {
 
   // Total
   y += 4;
-  pdf.setDrawColor(...VERT_DARK);
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setLineWidth(0.5);
   pdf.line(M, y, W - M, y);
   y += 8;
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.roundedRect(M, y, W - 2 * M, 14, 2, 2, "F");
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
   pdf.text("INVESTIMENTO TOTAL", M + 5, y + 9);
@@ -349,12 +349,12 @@ function paginaSistema(ctx: Ctx) {
     sectionTitle(pdf, y, "Serviços inclusos");
     y += 10;
     const inc = ["Projeto técnico e ART", "Homologação na concessionária", "Instalação completa", "Configuração e testes", "Treinamento de uso do app"];
-    pdf.setTextColor(...TEXT);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     pdf.setFontSize(9);
     inc.forEach((t) => {
-      pdf.setTextColor(...VERT);
+      pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
       pdf.text("✓", M + 2, y);
-      pdf.setTextColor(...TEXT);
+      pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
       pdf.text(t, M + 8, y);
       y += 6;
     });
@@ -406,8 +406,8 @@ function paginaRetorno(ctx: Ctx) {
   });
 
   // área positiva
-  pdf.setFillColor(...VERT_GLOW);
-  pdf.setDrawColor(...VERT_DARK);
+  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setLineWidth(0.6);
   for (let i = 1; i < pontos.length; i++) {
     pdf.line(pontos[i - 1].x, pontos[i - 1].y, pontos[i].x, pontos[i].y);
@@ -418,7 +418,7 @@ function paginaRetorno(ctx: Ctx) {
   pdf.setLineDashPattern([1, 1], 0);
   pdf.line(chartX, zeroY, chartX + chartW, zeroY);
   pdf.setLineDashPattern([], 0);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFontSize(7);
   pdf.text("R$ 0", chartX + chartW + 1, zeroY + 1);
 
@@ -448,15 +448,15 @@ function paginaPagamento(ctx: Ctx) {
   pageFrame(ctx, 6, "Formas de pagamento");
 
   sectionTitle(pdf, 28, "Opções flexíveis");
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFontSize(9);
   pdf.text("Escolha a modalidade que melhor se adapta ao seu fluxo de caixa.", M, 38);
 
   // À vista
   let y = 48;
-  pdf.setFillColor(...VERT_DARK);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.roundedRect(M, y, W - 2 * M, 24, 3, 3, "F");
-  pdf.setTextColor(...VERT_GLOW);
+  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
   pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 9);
@@ -469,7 +469,7 @@ function paginaPagamento(ctx: Ctx) {
   sectionTitle(pdf, y, "Financiamento bancário");
   y += 8;
   pdf.setFontSize(8);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
   pdf.text(`Taxa simulada: ${proposta.taxaFinanciamento.toFixed(2)}% ao mês · sujeito à aprovação`, M, y);
   y += 5;
@@ -480,9 +480,9 @@ function paginaPagamento(ctx: Ctx) {
     const x = M + col * ((W - 2 * M) / 2 + 2);
     const yy = y + linha * 16;
     const w = (W - 2 * M) / 2 - 2;
-    pdf.setFillColor(...SOFT);
+    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
     pdf.roundedRect(x, yy, w, 14, 2, 2, "F");
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.text(`${n}x`, x + 5, yy + 9);
@@ -495,7 +495,7 @@ function paginaPagamento(ctx: Ctx) {
   sectionTitle(pdf, y, "Cartão de crédito");
   y += 8;
   pdf.setFontSize(8);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.text(`Taxa: ${proposta.taxaCartao.toFixed(2)}% ao mês · até 21 vezes`, M, y);
   y += 5;
   const planosCart = [10, 12, 18, 21];
@@ -505,9 +505,9 @@ function paginaPagamento(ctx: Ctx) {
     const x = M + col * ((W - 2 * M) / 2 + 2);
     const yy = y + linha * 16;
     const w = (W - 2 * M) / 2 - 2;
-    pdf.setFillColor(...SOFT);
+    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
     pdf.roundedRect(x, yy, w, 14, 2, 2, "F");
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.text(`${n}x`, x + 5, yy + 9);
@@ -532,13 +532,13 @@ function paginaContrato(ctx: Ctx) {
   ];
   let y = 42;
   etapas.forEach(([t, d]) => {
-    pdf.setFillColor(...VERT_GLOW);
+    pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
     pdf.circle(M + 3, y - 1, 2, "F");
-    pdf.setTextColor(...VERT_DARK);
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.text(t, M + 9, y);
-    pdf.setTextColor(...MUTED);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(d, M + 9, y + 5);
@@ -554,12 +554,12 @@ function paginaContrato(ctx: Ctx) {
     "Estrutura: 10 anos contra corrosão",
     "Instalação: 1 ano de garantia de serviço",
   ];
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFontSize(9);
   gs.forEach((t) => {
-    pdf.setTextColor(...VERT);
+    pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
     pdf.text("✓", M + 2, y);
-    pdf.setTextColor(...TEXT);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     pdf.text(t, M + 8, y);
     y += 6;
   });
@@ -568,15 +568,15 @@ function paginaContrato(ctx: Ctx) {
   sectionTitle(pdf, y, "Aceite da proposta");
   y += 12;
   pdf.setFontSize(9);
-  pdf.setTextColor(...TEXT);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.text(`Eu, ${cliente.nome}, declaro estar de acordo com os termos da proposta ${proposta.numero}.`, M, y);
   y += 18;
 
   const sigW = (W - 2 * M - 8) / 2;
-  pdf.setDrawColor(...VERT_DARK);
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.line(M, y, M + sigW, y);
   pdf.line(M + sigW + 8, y, W - M, y);
-  pdf.setTextColor(...MUTED);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFontSize(8);
   pdf.text(`${cliente.nome} · ${formatDoc(cliente.documento)}`, M, y + 5);
   pdf.text(`${empresa.razaoSocial}`, M + sigW + 8, y + 5);
