@@ -133,13 +133,16 @@ function PropostasList() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-3">
+                        <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
+                          <Eye className="h-3.5 w-3.5" /> Visualizar
+                        </button>
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
                           </button>
                         )}
                         {p.status !== "aceita" && p.status !== "recusada" && (
-                          <button onClick={() => aceitarProposta(p.id)} className="text-xs font-semibold text-vert hover:underline">
+                          <button onClick={() => aceitar(p.id, p.numero)} className="text-xs font-semibold text-vert hover:underline">
                             Marcar aceita
                           </button>
                         )}
@@ -155,6 +158,15 @@ function PropostasList() {
           </table>
         </div>
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          url={preview.url}
+          titulo={preview.titulo}
+          onClose={() => setPreview(null)}
+          onDownload={() => baixarPdf(preview.propostaId)}
+        />
+      )}
     </div>
   );
 }
