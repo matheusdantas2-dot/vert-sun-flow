@@ -191,7 +191,7 @@ export const useStore = create<State>()(
 
       setEmpresa: (e) => set((s) => ({ empresa: { ...s.empresa, ...e } })),
       setMetas: (m) => set((s) => ({ metas: { ...s.metas, ...m } })),
-      setSla: (sla) => set((s) => ({ sla: { ...s.sla, ...sla } })),
+      setSla: (sla) => set((s) => ({ sla: { ...s.sla, ...sla } as SlaConfig })),
       addMotivoPerda: (texto) => set((s) => ({ motivosPerda: [...s.motivosPerda, { id: uid(), texto }] })),
       removeMotivoPerda: (id) => set((s) => ({ motivosPerda: s.motivosPerda.filter((m) => m.id !== id) })),
 
