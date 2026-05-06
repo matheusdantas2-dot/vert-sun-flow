@@ -68,7 +68,18 @@ function NovaProposta() {
   const parcelasFin = [24, 36, 48, 60].map((n) => ({ n, valor: totais.valorVenda > 0 ? tabelaPrice(totais.valorVenda, taxaFin, n) : 0 }));
   const parcelasCart = [10, 12, 18, 21].map((n) => ({ n, valor: totais.valorVenda > 0 ? tabelaPrice(totais.valorVenda, taxaCart, n) : 0 }));
 
-  const addItem = () => setItens([...itens, { produtoId: produtos[0]?.id ?? "", quantidade: 1, precoUnitario: produtos[0]?.precoVenda ?? 0 }]);
+  // Quantidade ideal de módulos para atender a potência dimensionada
+  const qtdModulosIdeal = (potenciaW: number) => {
+    if (!potenciaW || potenciaW <= 0 || dim.potenciaKwp <= 0) return 1;
+    return Math.max(1, Math.ceil((dim.potenciaKwp * 1000) / potenciaW));
+  };
+
+  const addItem = () => {
+    const prod = produtos.find((p) => p.ativo);
+    if (!prod) return;
+    const qtd = prod.categoria === "modulo" && prod.potenciaW ? qtdModulosIdeal(prod.potenciaW) : 1;
+    setItens([...itens, { produtoId: prod.id, quantidade: qtd, precoUnitario: prod.precoVenda }]);
+  };
 
   const updateItem = (i: number, patch: Partial<{ produtoId: string; quantidade: number; precoUnitario: number }>) => {
     setItens(itens.map((it, idx) => {
@@ -76,12 +87,39 @@ function NovaProposta() {
       const next = { ...it, ...patch };
       if (patch.produtoId && patch.produtoId !== it.produtoId) {
         const p = produtos.find((x) => x.id === patch.produtoId);
-        if (p) next.precoUnitario = p.precoVenda;
+        if (p) {
+          next.precoUnitario = p.precoVenda;
+          // Auto-calcula quantidade para módulos baseado no dimensionamento
+          if (p.categoria === "modulo" && p.potenciaW) {
+            next.quantidade = qtdModulosIdeal(p.potenciaW);
+          }
+        }
       }
       return next;
     }));
   };
   const removeItem = (i: number) => setItens(itens.filter((_, idx) => idx !== i));
+
+  // Recalcula automaticamente a quantidade dos módulos quando o dimensionamento muda
+  useEffect(() => {
+    if (dim.potenciaKwp <= 0) return;
+    setItens((prev) => {
+      let mudou = false;
+      const next = prev.map((it) => {
+        const p = produtos.find((x) => x.id === it.produtoId);
+        if (p?.categoria === "modulo" && p.potenciaW) {
+          const ideal = qtdModulosIdeal(p.potenciaW);
+          if (ideal !== it.quantidade) {
+            mudou = true;
+            return { ...it, quantidade: ideal };
+          }
+        }
+        return it;
+      });
+      return mudou ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dim.potenciaKwp, produtos]);
 
   const salvar = (baixarPdf = false) => {
     if (!cliente || itens.length === 0) return alert("Selecione cliente e adicione itens.");
