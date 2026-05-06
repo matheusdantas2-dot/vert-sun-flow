@@ -45,7 +45,7 @@ export function ReceitaChart() {
           <YAxis tick={{ fontSize: 11 }} stroke="#888" tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)} />
           <Tooltip
             contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e0e0d8" }}
-            formatter={(v: number) => brl(v)}
+            formatter={(v) => brl(Number(v))}
             labelStyle={{ fontWeight: 600 }}
           />
           <Area type="monotone" dataKey="receita" stroke="#0d5234" strokeWidth={2.5} fill="url(#grad)" />
