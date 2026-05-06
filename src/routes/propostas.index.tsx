@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Plus, FileText, ExternalLink, Download, Eye } from "lucide-react";
+import { Plus, FileText, ExternalLink, Download, Eye, Share2 } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
 import { useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
+import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
@@ -25,6 +26,7 @@ function PropostasList() {
   const podePdf = usePode("exportar_pdf");
 
   const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
@@ -136,6 +138,9 @@ function PropostasList() {
                         <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
                           <Eye className="h-3.5 w-3.5" /> Visualizar
                         </button>
+                        <button onClick={() => setShareId(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
+                          <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                        </button>
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
@@ -167,6 +172,7 @@ function PropostasList() {
           onDownload={() => baixarPdf(preview.propostaId)}
         />
       )}
+      {shareId && <CompartilharPropostaModal propostaId={shareId} onClose={() => setShareId(null)} />}
     </div>
   );
 }
