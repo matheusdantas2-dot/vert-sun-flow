@@ -64,9 +64,9 @@ function Produtos() {
               <tr>
                 <th className="text-left font-semibold px-4 py-3">Item</th>
                 <th className="text-left font-semibold px-4 py-3 hidden md:table-cell">Categoria</th>
-                <th className="text-right font-semibold px-4 py-3 hidden md:table-cell">Custo</th>
+                <th className="text-right font-semibold px-4 py-3 hidden md:table-cell">{podeVerMargem ? "Custo" : ""}</th>
                 <th className="text-right font-semibold px-4 py-3">Venda</th>
-                <th className="text-right font-semibold px-4 py-3">Margem</th>
+                <th className="text-right font-semibold px-4 py-3">{podeVerMargem ? "Margem" : ""}</th>
                 <th className="text-left font-semibold px-4 py-3 hidden lg:table-cell">Unidade</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -81,15 +81,17 @@ function Produtos() {
                       {p.fabricante && <div className="text-[11px] text-muted-foreground">{p.fabricante}{p.potenciaW ? ` · ${p.potenciaW}W` : p.potenciaKw ? ` · ${p.potenciaKw}kW` : ""}</div>}
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{CAT_LABEL[p.categoria]}</td>
-                    <td className="px-4 py-3 hidden md:table-cell text-right tabular-nums">{brl(p.precoCusto)}</td>
+                    <td className="px-4 py-3 hidden md:table-cell text-right tabular-nums">{podeVerMargem ? brl(p.precoCusto) : ""}</td>
                     <td className="px-4 py-3 text-right tabular-nums font-semibold">{brl(p.precoVenda)}</td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      <span className={margem >= 30 ? "text-vert font-semibold" : "text-amber-700"}>{margem.toFixed(0)}%</span>
+                      {podeVerMargem ? <span className={margem >= 30 ? "text-vert font-semibold" : "text-amber-700"}>{margem.toFixed(0)}%</span> : ""}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">{p.unidade}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => { setEditing(p); setOpen(true); }} className="text-xs font-semibold text-vert hover:underline mr-2">Editar</button>
-                      <button onClick={() => { if (confirm("Excluir item?")) deleteProduto(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
+                      {podeEditar && <>
+                        <button onClick={() => { setEditing(p); setOpen(true); }} className="text-xs font-semibold text-vert hover:underline mr-2">Editar</button>
+                        <button onClick={() => { if (confirm("Excluir item?")) deleteProduto(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
+                      </>}
                     </td>
                   </tr>
                 );
