@@ -325,6 +325,3 @@ function NovaAtividadeModal({ dataInicial, clientes, usuarios, currentUserId, on
     </div>
   );
 }
-
-// uid não é mais necessário — mantemos apenas o import para evitar tree-shake removal
-void uid;
