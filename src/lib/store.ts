@@ -104,6 +104,7 @@ const initialState = {
   empresa: seedEmpresa,
   metas: seedMetas,
   sla: seedSla,
+  projetos: [] as ProjetoCliente[],
   currentUserId: "u1",
 };
 
