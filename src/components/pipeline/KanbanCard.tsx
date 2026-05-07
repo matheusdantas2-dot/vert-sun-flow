@@ -4,7 +4,7 @@ import type { PipelineCard, StageId } from "@/lib/types";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { brl, kwp, initials, diasEntre } from "@/lib/format";
-import { Phone, MessageCircle, ExternalLink, Megaphone, UserPlus, Repeat, Briefcase } from "lucide-react";
+import { Phone, MessageCircle, ExternalLink, Megaphone, UserPlus, Repeat, Briefcase, GripVertical } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
@@ -38,15 +38,21 @@ export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: num
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
+      role="button"
+      tabIndex={0}
       onClick={(e) => {
         if (isDragging) return;
         if ((e.target as HTMLElement).closest("a,button")) return;
         navigate({ to: "/pipeline/card/$cardId", params: { cardId: card.id } });
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate({ to: "/pipeline/card/$cardId", params: { cardId: card.id } });
+        }
+      }}
       className={cn(
-        "bg-card rounded-lg border p-3 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition group",
+        "bg-card rounded-lg border p-3 shadow-sm cursor-pointer hover:shadow-md transition group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vert-light",
         atrasado ? "border-l-[3px] border-l-rose-500 border-y-border border-r-border" : "border-border",
       )}
     >
@@ -66,6 +72,17 @@ export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: num
             {initials(consultor.nome)}
           </div>
         )}
+        <button
+          type="button"
+          {...listeners}
+          {...attributes}
+          className="-mr-1 p-1 rounded text-muted-foreground hover:bg-accent hover:text-foreground cursor-grab active:cursor-grabbing"
+          title="Arrastar card"
+          aria-label="Arrastar card"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="flex items-baseline gap-2 mt-2">
