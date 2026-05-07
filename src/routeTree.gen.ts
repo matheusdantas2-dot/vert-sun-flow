@@ -16,6 +16,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PropostasIndexRouteImport } from './routes/propostas.index'
+import { Route as PipelineIndexRouteImport } from './routes/pipeline.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
@@ -57,6 +58,11 @@ const PropostasIndexRoute = PropostasIndexRouteImport.update({
   id: '/propostas/',
   path: '/propostas/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PipelineIndexRoute = PipelineIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PipelineRoute,
 } as any)
 const ClientesIndexRoute = ClientesIndexRouteImport.update({
   id: '/clientes/',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
+  '/pipeline/': typeof PipelineIndexRoute
   '/propostas/': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
@@ -109,12 +116,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
   '/relatorios': typeof RelatoriosRoute
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
+  '/pipeline': typeof PipelineIndexRoute
   '/propostas': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
@@ -131,6 +138,7 @@ export interface FileRoutesById {
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
+  '/pipeline/': typeof PipelineIndexRoute
   '/propostas/': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
@@ -148,6 +156,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes/'
+    | '/pipeline/'
     | '/propostas/'
     | '/cliente/acompanhamento/$token'
     | '/pipeline/card/$cardId'
@@ -157,12 +166,12 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/configuracoes'
-    | '/pipeline'
     | '/produtos'
     | '/relatorios'
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes'
+    | '/pipeline'
     | '/propostas'
     | '/cliente/acompanhamento/$token'
     | '/pipeline/card/$cardId'
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes/'
+    | '/pipeline/'
     | '/propostas/'
     | '/cliente/acompanhamento/$token'
     | '/pipeline/card/$cardId'
@@ -250,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropostasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pipeline/': {
+      id: '/pipeline/'
+      path: '/'
+      fullPath: '/pipeline/'
+      preLoaderRoute: typeof PipelineIndexRouteImport
+      parentRoute: typeof PipelineRoute
+    }
     '/clientes/': {
       id: '/clientes/'
       path: '/clientes'
@@ -296,10 +313,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface PipelineRouteChildren {
+  PipelineIndexRoute: typeof PipelineIndexRoute
   PipelineCardCardIdRoute: typeof PipelineCardCardIdRoute
 }
 
 const PipelineRouteChildren: PipelineRouteChildren = {
+  PipelineIndexRoute: PipelineIndexRoute,
   PipelineCardCardIdRoute: PipelineCardCardIdRoute,
 }
 
