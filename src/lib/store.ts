@@ -87,6 +87,8 @@ interface State {
   resetData: () => void;
 
   criarProjetoCliente: (cardId: string) => ProjetoCliente | null;
+  regenerarProjetoCliente: (cardId: string) => ProjetoCliente | null;
+  removerProjetoCliente: (cardId: string) => void;
   getProjetoByCard: (cardId: string) => ProjetoCliente | undefined;
   getProjetoByToken: (token: string) => ProjetoCliente | undefined;
   updateEtapaProjeto: (projetoId: string, etapaId: EtapaProjetoId, patch: Partial<EtapaProjeto>) => void;
