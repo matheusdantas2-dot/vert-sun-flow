@@ -13,6 +13,9 @@ import type {
   SlaConfig,
   Interacao,
   StageId,
+  ProjetoCliente,
+  EtapaProjeto,
+  EtapaProjetoId,
 } from "./types";
 import {
   seedClientes,
@@ -28,6 +31,7 @@ import {
   seedInteracoes,
 } from "./seed";
 import { uid } from "./format";
+import { etapasIniciais } from "./portalCliente";
 
 interface State {
   clientes: Cliente[];
