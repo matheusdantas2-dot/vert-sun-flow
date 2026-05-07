@@ -91,6 +91,10 @@ function Pipeline() {
         window.open(`/gerador-proposta.html?${params.toString()}`, "_blank");
       }
     }
+
+    if (newStage === "contrato") {
+      setContratoCardId(cardId);
+    }
   };
 
   return (
