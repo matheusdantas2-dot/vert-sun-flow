@@ -181,6 +181,12 @@ function Pipeline() {
           setPendingMove(null);
         }}
       />
+
+      <GerarLinkProjetoModal
+        open={!!contratoCardId}
+        onClose={() => setContratoCardId(null)}
+        cardId={contratoCardId}
+      />
     </div>
   );
 }
