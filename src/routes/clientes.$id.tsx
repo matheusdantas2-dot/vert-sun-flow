@@ -177,6 +177,11 @@ function ClienteDetalhe() {
             )}
           </div>
 
+          {/* Cronograma do Projeto */}
+          {cards.filter((c) => ["contrato", "homologacao", "instalacao", "ativado"].includes(c.stage)).map((c) => (
+            <CronogramaProjetoAdmin key={c.id} cardId={c.id} />
+          ))}
+
           {/* Adicionar nota */}
           <div className="bg-card rounded-xl border border-border p-5">
             <h2 className="font-display font-bold text-base mb-3">Registrar interação</h2>
