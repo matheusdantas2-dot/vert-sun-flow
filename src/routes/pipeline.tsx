@@ -30,6 +30,7 @@ function Pipeline() {
   const [busca, setBusca] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingMove, setPendingMove] = useState<{ cardId: string; stage: StageId } | null>(null);
+  const [contratoCardId, setContratoCardId] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
