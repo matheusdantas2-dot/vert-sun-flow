@@ -5,7 +5,7 @@ import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { brl, kwp, initials, diasEntre } from "@/lib/format";
 import { Phone, MessageCircle, ExternalLink, Megaphone, UserPlus, Repeat, Briefcase } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 const ORIGEM_ICON = {
@@ -19,6 +19,7 @@ const ORIGEM_ICON = {
 export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: number }) {
   const cliente = useStore((s) => s.clientes.find((c) => c.id === card.clienteId));
   const consultor = useStore((s) => s.usuarios.find((u) => u.id === card.consultorId));
+  const navigate = useNavigate();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
 
@@ -39,6 +40,11 @@ export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: num
       style={style}
       {...listeners}
       {...attributes}
+      onClick={(e) => {
+        if (isDragging) return;
+        if ((e.target as HTMLElement).closest("a,button")) return;
+        navigate({ to: "/pipeline/card/$cardId", params: { cardId: card.id } });
+      }}
       className={cn(
         "bg-card rounded-lg border p-3 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition group",
         atrasado ? "border-l-[3px] border-l-rose-500 border-y-border border-r-border" : "border-border",

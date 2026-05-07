@@ -87,6 +87,8 @@ interface State {
   resetData: () => void;
 
   criarProjetoCliente: (cardId: string) => ProjetoCliente | null;
+  regenerarProjetoCliente: (cardId: string) => ProjetoCliente | null;
+  removerProjetoCliente: (cardId: string) => void;
   getProjetoByCard: (cardId: string) => ProjetoCliente | undefined;
   getProjetoByToken: (token: string) => ProjetoCliente | undefined;
   updateEtapaProjeto: (projetoId: string, etapaId: EtapaProjetoId, patch: Partial<EtapaProjeto>) => void;
@@ -228,6 +230,12 @@ export const useStore = create<State>()(
         set((s) => ({ projetos: [novo, ...s.projetos] }));
         return novo;
       },
+      regenerarProjetoCliente: (cardId) => {
+        set((s) => ({ projetos: s.projetos.filter((p) => p.cardId !== cardId) }));
+        return get().criarProjetoCliente(cardId);
+      },
+      removerProjetoCliente: (cardId) =>
+        set((s) => ({ projetos: s.projetos.filter((p) => p.cardId !== cardId) })),
       getProjetoByCard: (cardId) => get().projetos.find((p) => p.cardId === cardId),
       getProjetoByToken: (token) => get().projetos.find((p) => p.id === token),
       updateEtapaProjeto: (projetoId, etapaId, patch) =>

@@ -19,6 +19,7 @@ import { Route as PropostasIndexRouteImport } from './routes/propostas.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
+import { Route as PipelineCardCardIdRouteImport } from './routes/pipeline.card.$cardId'
 import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
 import { Route as ApiPublicPTokenRouteImport } from './routes/api/public/p.$token'
 
@@ -72,6 +73,11 @@ const ClientesIdRoute = ClientesIdRouteImport.update({
   path: '/clientes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PipelineCardCardIdRoute = PipelineCardCardIdRouteImport.update({
+  id: '/card/$cardId',
+  path: '/card/$cardId',
+  getParentRoute: () => PipelineRoute,
+} as any)
 const ClienteAcompanhamentoTokenRoute =
   ClienteAcompanhamentoTokenRouteImport.update({
     id: '/cliente/acompanhamento/$token',
@@ -88,7 +94,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/pipeline': typeof PipelineRoute
+  '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
   '/relatorios': typeof RelatoriosRoute
   '/clientes/$id': typeof ClientesIdRoute
@@ -96,13 +102,14 @@ export interface FileRoutesByFullPath {
   '/clientes/': typeof ClientesIndexRoute
   '/propostas/': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
+  '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/pipeline': typeof PipelineRoute
+  '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
   '/relatorios': typeof RelatoriosRoute
   '/clientes/$id': typeof ClientesIdRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof ClientesIndexRoute
   '/propostas': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
+  '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRoutesById {
@@ -117,7 +125,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/pipeline': typeof PipelineRoute
+  '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
   '/relatorios': typeof RelatoriosRoute
   '/clientes/$id': typeof ClientesIdRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/clientes/': typeof ClientesIndexRoute
   '/propostas/': typeof PropostasIndexRoute
   '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
+  '/pipeline/card/$cardId': typeof PipelineCardCardIdRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRouteTypes {
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/clientes/'
     | '/propostas/'
     | '/cliente/acompanhamento/$token'
+    | '/pipeline/card/$cardId'
     | '/api/public/p/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/propostas'
     | '/cliente/acompanhamento/$token'
+    | '/pipeline/card/$cardId'
     | '/api/public/p/$token'
   id:
     | '__root__'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/clientes/'
     | '/propostas/'
     | '/cliente/acompanhamento/$token'
+    | '/pipeline/card/$cardId'
     | '/api/public/p/$token'
   fileRoutesById: FileRoutesById
 }
@@ -176,7 +188,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
-  PipelineRoute: typeof PipelineRoute
+  PipelineRoute: typeof PipelineRouteWithChildren
   ProdutosRoute: typeof ProdutosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   ClientesIdRoute: typeof ClientesIdRoute
@@ -259,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pipeline/card/$cardId': {
+      id: '/pipeline/card/$cardId'
+      path: '/card/$cardId'
+      fullPath: '/pipeline/card/$cardId'
+      preLoaderRoute: typeof PipelineCardCardIdRouteImport
+      parentRoute: typeof PipelineRoute
+    }
     '/cliente/acompanhamento/$token': {
       id: '/cliente/acompanhamento/$token'
       path: '/cliente/acompanhamento/$token'
@@ -276,11 +295,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PipelineRouteChildren {
+  PipelineCardCardIdRoute: typeof PipelineCardCardIdRoute
+}
+
+const PipelineRouteChildren: PipelineRouteChildren = {
+  PipelineCardCardIdRoute: PipelineCardCardIdRoute,
+}
+
+const PipelineRouteWithChildren = PipelineRoute._addFileChildren(
+  PipelineRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
-  PipelineRoute: PipelineRoute,
+  PipelineRoute: PipelineRouteWithChildren,
   ProdutosRoute: ProdutosRoute,
   RelatoriosRoute: RelatoriosRoute,
   ClientesIdRoute: ClientesIdRoute,
@@ -293,12 +324,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
