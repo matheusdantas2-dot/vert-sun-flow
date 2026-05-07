@@ -11,7 +11,7 @@ import { Search, ExternalLink } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
 
-export const Route = createFileRoute("/pipeline")({
+export const Route = createFileRoute("/pipeline/")({
   component: Pipeline,
   head: () => ({ meta: [{ title: "Pipeline — Vert CRM" }] }),
 });
