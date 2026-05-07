@@ -230,6 +230,12 @@ export const useStore = create<State>()(
         set((s) => ({ projetos: [novo, ...s.projetos] }));
         return novo;
       },
+      regenerarProjetoCliente: (cardId) => {
+        set((s) => ({ projetos: s.projetos.filter((p) => p.cardId !== cardId) }));
+        return get().criarProjetoCliente(cardId);
+      },
+      removerProjetoCliente: (cardId) =>
+        set((s) => ({ projetos: s.projetos.filter((p) => p.cardId !== cardId) })),
       getProjetoByCard: (cardId) => get().projetos.find((p) => p.cardId === cardId),
       getProjetoByToken: (token) => get().projetos.find((p) => p.id === token),
       updateEtapaProjeto: (projetoId, etapaId, patch) =>
