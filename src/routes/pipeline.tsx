@@ -5,6 +5,7 @@ import { STAGES, type StageId } from "@/lib/types";
 import { KanbanColumn } from "@/components/pipeline/KanbanColumn";
 import { KanbanCard } from "@/components/pipeline/KanbanCard";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
+import { GerarLinkProjetoModal } from "@/components/pipeline/GerarLinkProjetoModal";
 import { useMemo, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
