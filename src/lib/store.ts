@@ -252,7 +252,17 @@ export const useStore = create<State>()(
           ),
         })),
     }),
-    { name: "vert-crm-v1" },
+    {
+      name: "vert-crm-v1",
+      version: 2,
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as object),
+        // Garante que campos novos (adicionados após persistência inicial) existam
+        projetos:
+          (persisted as Partial<State> | undefined)?.projetos ?? current.projetos ?? [],
+      }),
+    },
   ),
 );
 
