@@ -208,6 +208,41 @@ export const useStore = create<State>()(
 
       setCurrentUser: (id) => set({ currentUserId: id }),
       resetData: () => set({ ...initialState }),
+
+      criarProjetoCliente: (cardId) => {
+        const existente = get().projetos.find((p) => p.cardId === cardId);
+        if (existente) return existente;
+        const card = get().cards.find((c) => c.id === cardId);
+        if (!card) return null;
+        const cliente = get().clientes.find((c) => c.id === card.clienteId);
+        const novo: ProjetoCliente = {
+          id: uid() + uid(),
+          cardId,
+          clienteId: card.clienteId,
+          consultorId: card.consultorId,
+          potenciaKwp: card.potenciaKwp,
+          valorInvestimento: card.valorEstimado,
+          criadoEm: new Date().toISOString(),
+          etapas: etapasIniciais(cliente?.concessionaria),
+        };
+        set((s) => ({ projetos: [novo, ...s.projetos] }));
+        return novo;
+      },
+      getProjetoByCard: (cardId) => get().projetos.find((p) => p.cardId === cardId),
+      getProjetoByToken: (token) => get().projetos.find((p) => p.id === token),
+      updateEtapaProjeto: (projetoId, etapaId, patch) =>
+        set((s) => ({
+          projetos: s.projetos.map((p) =>
+            p.id !== projetoId
+              ? p
+              : {
+                  ...p,
+                  etapas: p.etapas.map((e) =>
+                    e.id === etapaId ? { ...e, ...patch, extra: { ...(e.extra ?? {}), ...(patch.extra ?? {}) } } : e,
+                  ),
+                },
+          ),
+        })),
     }),
     { name: "vert-crm-v1" },
   ),
