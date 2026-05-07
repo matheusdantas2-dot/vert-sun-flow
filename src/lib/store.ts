@@ -85,6 +85,11 @@ interface State {
 
   setCurrentUser: (id: string) => void;
   resetData: () => void;
+
+  criarProjetoCliente: (cardId: string) => ProjetoCliente | null;
+  getProjetoByCard: (cardId: string) => ProjetoCliente | undefined;
+  getProjetoByToken: (token: string) => ProjetoCliente | undefined;
+  updateEtapaProjeto: (projetoId: string, etapaId: EtapaProjetoId, patch: Partial<EtapaProjeto>) => void;
 }
 
 const initialState = {
