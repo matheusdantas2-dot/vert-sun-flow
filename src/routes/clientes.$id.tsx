@@ -1,9 +1,9 @@
-import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { brl, brlPrec, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Phone, MessageCircle, Pencil, FileText, Calendar, ArrowLeft, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
 
@@ -15,9 +15,9 @@ export const Route = createFileRoute("/clientes/$id")({
 function ClienteDetalhe() {
   const { id } = Route.useParams();
   const cliente = useStore((s) => s.clientes.find((c) => c.id === id));
-  const interacoes = useStore((s) => s.interacoes.filter((i) => i.clienteId === id));
-  const propostas = useStore((s) => s.propostas.filter((p) => p.clienteId === id));
-  const cards = useStore((s) => s.cards.filter((c) => c.clienteId === id));
+  const todasInteracoes = useStore((s) => s.interacoes);
+  const todasPropostas = useStore((s) => s.propostas);
+  const todosCards = useStore((s) => s.cards);
   const produtos = useStore((s) => s.produtos);
   const addInteracao = useStore((s) => s.addInteracao);
   const updateCliente = useStore((s) => s.updateCliente);
@@ -26,6 +26,10 @@ function ClienteDetalhe() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [novaNota, setNovaNota] = useState("");
+
+  const interacoes = useMemo(() => todasInteracoes.filter((i) => i.clienteId === id), [todasInteracoes, id]);
+  const propostas = useMemo(() => todasPropostas.filter((p) => p.clienteId === id), [todasPropostas, id]);
+  const cards = useMemo(() => todosCards.filter((c) => c.clienteId === id), [todosCards, id]);
 
   if (!cliente) {
     return (
