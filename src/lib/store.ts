@@ -45,6 +45,7 @@ interface State {
   empresa: Empresa;
   metas: Metas;
   sla: SlaConfig;
+  projetos: ProjetoCliente[];
   currentUserId: string;
 
   // actions
