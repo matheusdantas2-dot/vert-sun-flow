@@ -1,94 +1,104 @@
-## Vert CRM — Sistema completo de gestão para Vert Energie
+## Portal do Cliente — Plano de Implementação
 
-CRM inspirado no Ploomes, com 8 módulos integrados, foco em energia solar fotovoltaica. Visual limpo na identidade Vert (verde escuro #0d5234 + verde claro #5ee89a), tipografia Syne + DM Sans.
+Funcionalidade de portal público de acompanhamento de projeto, ativada quando um card do pipeline vai para "Contrato Assinado".
 
-### Estratégia de entrega
+### 1. Modelo de dados (local — Zustand store)
 
-Por ser um sistema muito grande, vou entregar em **2 fases**:
+Estender `Proposta`/`PipelineCard` ou criar novo tipo `ProjetoCronograma` no `src/lib/types.ts`:
 
-**FASE 1 (esta entrega) — Core do CRM funcional ponta-a-ponta:**
-1. Layout base: sidebar fixa colapsável + header com busca/notificações
-2. Dashboard executiva com KPIs, gráficos e alertas
-3. Pipeline Kanban com drag-and-drop completo (10 etapas)
-4. Clientes — CRUD completo + perfil com timeline
-5. Propostas — listagem + criação com simulador financeiro (Tabela Price)
-6. Produtos & Serviços — catálogo com cálculo de margem
-7. Configurações básicas (empresa, usuários, motivos de perda, SLA, metas)
-8. Persistência total via **localStorage** (com seed inicial de demonstração)
-9. Integração com o gerador de proposta enviado: copio o HTML para `public/gerador-proposta.html` e abro em nova aba pré-preenchido com query string do cliente
+```ts
+type EtapaStatus = "pendente" | "em_andamento" | "concluida";
 
-**FASE 2 (próxima mensagem, se aprovado):**
-- Agenda/Atividades com calendário (mês/semana/dia)
-- Relatórios avançados com exportação CSV
-- Geração de PDF da proposta nas 7 páginas (jsPDF + html2canvas)
-- Permissões granulares por perfil (admin/consultor/instalador)
+type EtapaProjeto = {
+  id: "contrato" | "compra" | "homologacao" | "agendamento" | "instalacao" | "ativacao" | "posvenda";
+  status: EtapaStatus;
+  dataPrevista?: string;
+  dataReal?: string;
+  observacoesInternas?: string;
+  // campos específicos por etapa (fornecedor, protocolo, periodo, lider, fotos[], modulos, medidor, geracaoEstimada, pendencia, concessionariaNome)
+  extra?: Record<string, any>;
+};
 
-Essa divisão garante que tudo entregue na Fase 1 funciona de verdade — não ficam telas pela metade.
-
-### Arquitetura técnica
-
-```text
-src/
-  styles.css                    → tokens Vert (verde, Syne+DM Sans), classes utilitárias
-  routes/
-    __root.tsx                  → SidebarProvider + Topbar + Outlet
-    index.tsx                   → Dashboard
-    pipeline.tsx                → Kanban
-    clientes.tsx                → Lista de clientes
-    clientes.$id.tsx            → Perfil do cliente
-    propostas.tsx               → Lista de propostas
-    propostas.nova.tsx          → Criar proposta (simulador)
-    propostas.$id.tsx           → Detalhe/edição
-    produtos.tsx                → Catálogo
-    relatorios.tsx              → Stub Fase 2
-    agenda.tsx                  → Stub Fase 2
-    configuracoes.tsx           → Empresa/usuários/SLA/metas
-  components/
-    layout/AppSidebar.tsx, Topbar.tsx
-    dashboard/KpiCard.tsx, FunilChart.tsx, ReceitaChart.tsx,
-              SegmentoPie.tsx, RankingConsultores.tsx, Alertas.tsx
-    pipeline/KanbanBoard.tsx, KanbanColumn.tsx, KanbanCard.tsx,
-              MotivoPerdaModal.tsx, FiltrosPipeline.tsx
-    clientes/ClienteForm.tsx, ClienteTimeline.tsx, ClienteAcoesRapidas.tsx
-    propostas/SimuladorFinanceiro.tsx, MontagemSistema.tsx,
-              ParcelasTable.tsx
-    produtos/ProdutoForm.tsx, ProdutoTabela.tsx
-    ui/EmptyState.tsx, ConfirmDialog.tsx, AvatarInicial.tsx
-  lib/
-    store.ts                    → Zustand + persist (localStorage chave "vert-crm-v1")
-    seed.ts                     → Dados de demonstração realistas
-    finance.ts                  → Tabela Price, payback, ROI 20 anos, dimensionamento
-    format.ts                   → BRL, kWh, kWp, datas pt-BR, CPF/CNPJ
-    types.ts                    → Tipos: Cliente, Card, Proposta, Produto, Usuario, Atividade
-public/
-  gerador-proposta.html         → Cópia do HTML enviado pelo usuário
+type ProjetoCliente = {
+  id: string;            // = token do link
+  cardId: string;
+  clienteId: string;
+  consultorId: string;
+  potenciaKwp: number;
+  valorInvestimento: number;
+  criadoEm: string;
+  etapas: EtapaProjeto[];
+};
 ```
 
-### Decisões técnicas-chave
+Persistido no Zustand (já usa `persist` em localStorage). Ações: `criarProjetoCliente(cardId)`, `updateEtapa(projetoId, etapaId, patch)`.
 
-- **Estado**: Zustand + middleware `persist` no localStorage. Uma única store com slices por domínio. Hidratação automática no boot.
-- **Drag-and-drop Kanban**: `@dnd-kit/core` + `@dnd-kit/sortable` (leves, acessíveis, sem react-beautiful-dnd que está deprecado).
-- **Gráficos**: `recharts` (já no stack shadcn). Funil = BarChart horizontal; receita = LineChart; segmento = PieChart.
-- **Formulários**: react-hook-form + zod (já instalados).
-- **Datas**: `date-fns` com locale pt-BR.
-- **Cálculos financeiros**: módulo `finance.ts` puro com Tabela Price, payback, projeção 20 anos com inflação energética.
-- **Integração com gerador**: o HTML enviado vira `public/gerador-proposta.html`. Botão "Abrir Gerador" passa dados via querystring (`?nome=&consumo=&tarifa=&kwp=&valor=`) — o HTML já é autocontido.
-- **Seed**: ao primeiro boot, popula 12 clientes, 18 cards distribuídos no funil, 6 propostas, 24 produtos do catálogo, 3 consultores. Botão "Resetar dados" em Configurações.
-- **Mobile**: sidebar colapsa para ícones; Kanban vira scroll horizontal; tabelas viram cards empilhados.
+### 2. Trigger ao mover para "Contrato Assinado"
 
-### Identidade visual aplicada
+Em `src/components/pipeline/KanbanColumn.tsx` (ou onde `moveCard` é chamado no DndContext do `pipeline.tsx`), interceptar quando `stage === "contrato"` e o card ainda não tem projeto associado:
 
-- Sidebar `#0d5234` com logo "vert.⚡energie" no topo, item ativo com barra `#5ee89a` à esquerda
-- Cards Kanban brancos com badge colorido por etapa (10 cores distintas no design system)
-- KPIs com número em Syne 32px, label em DM Sans uppercase
-- Alerta de SLA: borda esquerda vermelha + ícone relógio
-- Ícone de origem do lead: 4 ícones distintos (Megaphone/UserPlus/Phone/RefreshCw)
+- Abrir `GerarLinkProjetoModal` com:
+  - Texto "Projeto confirmado! Gerar link de acompanhamento para o cliente?"
+  - Botão "Gerar Link" → chama `criarProjetoCliente(card.id)`, gera token (`uid()`), retorna URL `/cliente/acompanhamento/{token}`
+  - Mostra link + botão "Copiar Link" + botão "Enviar via WhatsApp" (abre `https://wa.me/55{tel}?text=...` com mensagem pronta)
+- Botão "Pular" (caso o admin não queira gerar agora) — link pode ser gerado depois pela aba Cronograma.
 
-### O que NÃO entrego nesta fase (e por quê)
+### 3. Página pública do portal
 
-- **Geração de PDF da proposta nas 7 páginas**: complexa, melhor isolar na Fase 2 reaproveitando o layout do HTML enviado.
-- **Calendário completo de agenda**: precisa lib pesada (FullCalendar ou react-big-calendar) — fica para Fase 2.
-- **Permissões granulares por perfil**: nesta fase todos os usuários veem tudo (modo admin). Estrutura de perfis já fica no cadastro.
-- **Supabase/multi-usuário real**: localStorage atende perfeitamente para uso individual/POC. Migração para Cloud quando o usuário pedir.
+Criar rota `src/routes/cliente.acompanhamento.$token.tsx` (TanStack file-based routing, dot-separated).
 
-Após aprovação, começo pela base (styles + store + seed + layout) e vou módulo por módulo.
+- Sem autenticação (usa store local — funciona pois é app single-tenant local; o token serve como chave de busca).
+- Layout sem `AppSidebar`/`Topbar` — header próprio só com logo Vert.
+- Componentes:
+  - `<HeaderPortal>` — logo, "Olá, {nome}!", subtítulo
+  - `<ResumoProjeto>` — kWp, valor (brl com 2 casas), consultor + telefone
+  - `<TimelineEtapas>` — stepper vertical, 7 etapas, cada uma com ícone, título, descrição, badge de status, data, campos visíveis ao cliente
+  - `<BotaoWhatsAppFlutuante>` — fixed bottom-right verde
+- Cores: usa tokens existentes (`vert`, `vert-dark`) já definidos no design system.
+- Reativo: como usa `useStore` (Zustand), atualiza automaticamente quando admin edita.
+
+### 4. Aba "Cronograma do Projeto" no CRM
+
+Adicionar em `src/routes/clientes.$id.tsx` (e/ou modal a partir do card do pipeline) uma nova aba/seção `<CronogramaProjetoAdmin projetoId={...} />`:
+
+- Listagem das 7 etapas em accordion ou cards expansíveis
+- Cada etapa: dropdown de status, inputs de data (date), campos específicos, textarea de observações internas
+- Validação: status só vai para "concluida" se `dataReal` preenchida (mostrar toast caso contrário)
+- Barra de progresso geral (`x de 7 — y%`) usando `<Progress>`
+- Botões topo: "Copiar link do cliente", "Enviar atualização via WhatsApp"
+- Upload de fotos da instalação: usar input file local convertendo para base64 e armazenando no `extra.fotos[]` do etapa "instalacao" (mantém tudo client-side, consistente com o resto do app)
+
+### 5. Estilo visual
+
+- Etapa concluída: fundo `bg-vert/10`, borda `border-vert`, ícone check verde
+- Etapa atual (em_andamento): borda `border-vert-light` + animação `animate-pulse` sutil
+- Etapa pendente: cinza (`text-muted-foreground`, `border-border`)
+- Mobile-first: timeline vertical em coluna única, padding generoso, botões grandes
+
+### 6. Helpers
+
+`src/lib/portalCliente.ts`:
+- `gerarMensagemWhatsAppInicial(cliente, link, consultor)`
+- `gerarMensagemWhatsAppAtualizacao(cliente, link, consultor)`
+- `etapasIniciais()` — retorna array com 7 etapas em status "pendente" (exceto "contrato" já "concluida" com data atual)
+- `progressoProjeto(projeto)` — `{ concluidas, total, pct }`
+
+### 7. Arquivos a criar/editar
+
+**Criar:**
+- `src/lib/portalCliente.ts`
+- `src/components/pipeline/GerarLinkProjetoModal.tsx`
+- `src/components/projeto/TimelineEtapas.tsx`
+- `src/components/projeto/CronogramaProjetoAdmin.tsx`
+- `src/routes/cliente.acompanhamento.$token.tsx`
+
+**Editar:**
+- `src/lib/types.ts` — adicionar tipos
+- `src/lib/store.ts` — adicionar `projetos`, ações
+- `src/lib/seed.ts` — opcional, deixar vazio
+- `src/routes/pipeline.tsx` — interceptar mudança para "contrato"
+- `src/routes/clientes.$id.tsx` — adicionar aba Cronograma
+
+### Observações técnicas
+
+- O acesso "sem login" funciona porque o app inteiro é client-side (Zustand + localStorage). O cliente abrindo o link pelo navegador **dele** não terá os dados — para um portal real cross-device seria preciso backend (Supabase). Vou implementar usando o storage local existente para manter consistência com o restante do CRM (propostas, clientes etc. todos no Zustand). Se quiser sincronia entre dispositivos, posso migrar para Supabase em uma segunda etapa.

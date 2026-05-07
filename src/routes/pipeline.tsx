@@ -5,6 +5,7 @@ import { STAGES, type StageId } from "@/lib/types";
 import { KanbanColumn } from "@/components/pipeline/KanbanColumn";
 import { KanbanCard } from "@/components/pipeline/KanbanCard";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
+import { GerarLinkProjetoModal } from "@/components/pipeline/GerarLinkProjetoModal";
 import { useMemo, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
@@ -29,6 +30,7 @@ function Pipeline() {
   const [busca, setBusca] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingMove, setPendingMove] = useState<{ cardId: string; stage: StageId } | null>(null);
+  const [contratoCardId, setContratoCardId] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -88,6 +90,10 @@ function Pipeline() {
         });
         window.open(`/gerador-proposta.html?${params.toString()}`, "_blank");
       }
+    }
+
+    if (newStage === "contrato") {
+      setContratoCardId(cardId);
     }
   };
 
@@ -174,6 +180,12 @@ function Pipeline() {
           }
           setPendingMove(null);
         }}
+      />
+
+      <GerarLinkProjetoModal
+        open={!!contratoCardId}
+        onClose={() => setContratoCardId(null)}
+        cardId={contratoCardId}
       />
     </div>
   );

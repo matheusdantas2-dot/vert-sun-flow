@@ -19,6 +19,7 @@ import { Route as PropostasIndexRouteImport } from './routes/propostas.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
+import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
 import { Route as ApiPublicPTokenRouteImport } from './routes/api/public/p.$token'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -71,6 +72,12 @@ const ClientesIdRoute = ClientesIdRouteImport.update({
   path: '/clientes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClienteAcompanhamentoTokenRoute =
+  ClienteAcompanhamentoTokenRouteImport.update({
+    id: '/cliente/acompanhamento/$token',
+    path: '/cliente/acompanhamento/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPTokenRoute = ApiPublicPTokenRouteImport.update({
   id: '/api/public/p/$token',
   path: '/api/public/p/$token',
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
   '/propostas/': typeof PropostasIndexRoute
+  '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
   '/propostas': typeof PropostasIndexRoute
+  '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRoutesById {
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
   '/propostas/': typeof PropostasIndexRoute
+  '/cliente/acompanhamento/$token': typeof ClienteAcompanhamentoTokenRoute
   '/api/public/p/$token': typeof ApiPublicPTokenRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/propostas/nova'
     | '/clientes/'
     | '/propostas/'
+    | '/cliente/acompanhamento/$token'
     | '/api/public/p/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/propostas/nova'
     | '/clientes'
     | '/propostas'
+    | '/cliente/acompanhamento/$token'
     | '/api/public/p/$token'
   id:
     | '__root__'
@@ -156,6 +168,7 @@ export interface FileRouteTypes {
     | '/propostas/nova'
     | '/clientes/'
     | '/propostas/'
+    | '/cliente/acompanhamento/$token'
     | '/api/public/p/$token'
   fileRoutesById: FileRoutesById
 }
@@ -170,6 +183,7 @@ export interface RootRouteChildren {
   PropostasNovaRoute: typeof PropostasNovaRoute
   ClientesIndexRoute: typeof ClientesIndexRoute
   PropostasIndexRoute: typeof PropostasIndexRoute
+  ClienteAcompanhamentoTokenRoute: typeof ClienteAcompanhamentoTokenRoute
   ApiPublicPTokenRoute: typeof ApiPublicPTokenRoute
 }
 
@@ -245,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cliente/acompanhamento/$token': {
+      id: '/cliente/acompanhamento/$token'
+      path: '/cliente/acompanhamento/$token'
+      fullPath: '/cliente/acompanhamento/$token'
+      preLoaderRoute: typeof ClienteAcompanhamentoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/p/$token': {
       id: '/api/public/p/$token'
       path: '/api/public/p/$token'
@@ -266,17 +287,9 @@ const rootRouteChildren: RootRouteChildren = {
   PropostasNovaRoute: PropostasNovaRoute,
   ClientesIndexRoute: ClientesIndexRoute,
   PropostasIndexRoute: PropostasIndexRoute,
+  ClienteAcompanhamentoTokenRoute: ClienteAcompanhamentoTokenRoute,
   ApiPublicPTokenRoute: ApiPublicPTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

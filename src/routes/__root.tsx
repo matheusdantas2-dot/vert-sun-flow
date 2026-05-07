@@ -1,4 +1,4 @@
-import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Topbar } from "@/components/layout/Topbar";
@@ -63,6 +63,18 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+  const isPublic = location.pathname.startsWith("/cliente/acompanhamento/");
+
+  if (isPublic) {
+    return (
+      <>
+        <Outlet />
+        <Toaster position="top-right" richColors closeButton />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <AppSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />

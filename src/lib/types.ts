@@ -92,6 +92,38 @@ export interface Produto {
   ativo: boolean;
 }
 
+export type EtapaProjetoId =
+  | "contrato"
+  | "compra"
+  | "homologacao"
+  | "agendamento"
+  | "instalacao"
+  | "ativacao"
+  | "posvenda";
+
+export type EtapaStatus = "pendente" | "em_andamento" | "concluida";
+
+export interface EtapaProjeto {
+  id: EtapaProjetoId;
+  status: EtapaStatus;
+  dataPrevista?: string;
+  dataReal?: string;
+  observacoesInternas?: string;
+  // campos por etapa: fornecedor, protocolo, periodo, lider, fotos[], modulos, medidor, geracaoEstimada, pendencia, concessionariaNome, mensagemCliente
+  extra?: Record<string, any>;
+}
+
+export interface ProjetoCliente {
+  id: string;       // token público
+  cardId: string;
+  clienteId: string;
+  consultorId: string;
+  potenciaKwp: number;
+  valorInvestimento: number;
+  criadoEm: string;
+  etapas: EtapaProjeto[];
+}
+
 export interface PropostaItem {
   produtoId: string;
   quantidade: number;

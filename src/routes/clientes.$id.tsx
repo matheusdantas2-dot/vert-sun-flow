@@ -5,6 +5,7 @@ import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/
 import { Phone, MessageCircle, Pencil, FileText, Calendar, ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
+import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
 
 export const Route = createFileRoute("/clientes/$id")({
   component: ClienteDetalhe,
@@ -175,6 +176,11 @@ function ClienteDetalhe() {
               </div>
             )}
           </div>
+
+          {/* Cronograma do Projeto */}
+          {cards.filter((c) => ["contrato", "homologacao", "instalacao", "ativado"].includes(c.stage)).map((c) => (
+            <CronogramaProjetoAdmin key={c.id} cardId={c.id} />
+          ))}
 
           {/* Adicionar nota */}
           <div className="bg-card rounded-xl border border-border p-5">
