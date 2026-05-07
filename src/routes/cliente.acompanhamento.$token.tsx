@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { TimelineEtapas } from "@/components/projeto/TimelineEtapas";
 import { brl, formatTel, kwp } from "@/lib/format";
