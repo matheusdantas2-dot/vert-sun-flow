@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { brl, brlPrec, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Phone, MessageCircle, Pencil, FileText, Calendar, ArrowLeft, Plus } from "lucide-react";
+import { Phone, MessageCircle, Pencil, FileText, ArrowLeft, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
