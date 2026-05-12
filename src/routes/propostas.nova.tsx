@@ -184,6 +184,9 @@ function NovaProposta() {
         inflacao,
         taxaFinanciamento: taxaFin,
         taxaCartao: taxaCart,
+        kitNome: kitNome || undefined,
+        kitConsumoKwh: kitConsumo,
+        mostrarComoKit,
       });
       const consultor = profileToConsultor(currentUserId);
 
