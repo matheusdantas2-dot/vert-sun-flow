@@ -23,6 +23,7 @@ import { Route as PropostasIndexRouteImport } from './routes/propostas.index'
 import { Route as PipelineIndexRouteImport } from './routes/pipeline.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
+import { Route as PropostasIdRouteImport } from './routes/propostas.$id'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
 import { Route as PipelineCardCardIdRouteImport } from './routes/pipeline.card.$cardId'
 import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
@@ -98,6 +99,11 @@ const PropostasNovaRoute = PropostasNovaRouteImport.update({
   path: '/propostas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropostasIdRoute = PropostasIdRouteImport.update({
+  id: '/propostas/$id',
+  path: '/propostas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientesIdRoute = ClientesIdRouteImport.update({
   id: '/clientes/$id',
   path: '/clientes/$id',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
   '/pipeline/': typeof PipelineIndexRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
   '/pipeline': typeof PipelineIndexRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
   '/pipeline/': typeof PipelineIndexRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
     | '/pipeline/'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes'
     | '/pipeline'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
     | '/pipeline/'
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ClientesIdRoute: typeof ClientesIdRoute
+  PropostasIdRoute: typeof PropostasIdRoute
   PropostasNovaRoute: typeof PropostasNovaRoute
   ClientesIndexRoute: typeof ClientesIndexRoute
   PropostasIndexRoute: typeof PropostasIndexRoute
@@ -361,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropostasNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/propostas/$id': {
+      id: '/propostas/$id'
+      path: '/propostas/$id'
+      fullPath: '/propostas/$id'
+      preLoaderRoute: typeof PropostasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clientes/$id': {
       id: '/clientes/$id'
       path: '/clientes/$id'
@@ -418,6 +438,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ClientesIdRoute: ClientesIdRoute,
+  PropostasIdRoute: PropostasIdRoute,
   PropostasNovaRoute: PropostasNovaRoute,
   ClientesIndexRoute: ClientesIndexRoute,
   PropostasIndexRoute: PropostasIndexRoute,

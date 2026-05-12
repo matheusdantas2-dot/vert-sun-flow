@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { brl, dataBR } from "@/lib/format";
-import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Plus, FileText, ExternalLink, Download, Eye, Share2 } from "lucide-react";
+import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
+import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
