@@ -17,10 +17,13 @@ export interface Notificacao {
 
 interface State {
   itens: Notificacao[];
+  dispensados: string[]; // ids de alertas virtuais (SLA/propostas/visitas) marcados como concluídos
   push: (n: Omit<Notificacao, "id" | "criadoEm" | "lida"> & { silent?: boolean }) => void;
   marcarTodasLidas: () => void;
   marcarLida: (id: string) => void;
   limpar: () => void;
+  dispensar: (id: string) => void;
+  restaurarDispensados: () => void;
 }
 
 export const useNotificacoes = create<State>((set) => ({
