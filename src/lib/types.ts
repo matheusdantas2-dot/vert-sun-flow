@@ -156,6 +156,10 @@ export interface Proposta {
   taxaCartao: number; // % ao mês
   versao: number;
   observacoes?: string;
+  // kit de geração (opcional)
+  kitNome?: string;
+  kitConsumoKwh?: number;
+  mostrarComoKit?: boolean;
 }
 
 export type UsuarioPerfil = "admin" | "consultor" | "instalador";
