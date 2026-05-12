@@ -1,10 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { brl } from "@/lib/format";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Produto, ProdutoCategoria } from "@/lib/types";
 import { usePode } from "@/lib/permissoes";
+import {
+  useProdutosQuery,
+  useAddProduto,
+  useUpdateProduto,
+  useDeleteProduto,
+} from "@/lib/produtos.api";
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
