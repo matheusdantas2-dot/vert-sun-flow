@@ -1,5 +1,8 @@
-import { useStore } from "@/lib/store";
-import { ETAPAS_INFO, ETAPA_ORDEM, mensagemWhatsAppAtualizacao, progressoProjeto, urlPortal, whatsappLink } from "@/lib/portalCliente";
+import { useProjetoByCardId, useCriarProjeto, useUpdateEtapa, type EtapaRow } from "@/lib/projetos.api";
+import { useCardsQuery } from "@/lib/cards.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { ETAPAS_INFO, ETAPA_ORDEM, mensagemWhatsAppAtualizacao, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import type { EtapaProjetoId } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -15,13 +18,16 @@ const STATUS_OPTS: { v: "pendente" | "em_andamento" | "concluida"; label: string
 ];
 
 export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
-  const projeto = useStore((s) => s.projetos.find((p) => p.cardId === cardId));
-  const cliente = useStore((s) => (projeto ? s.clientes.find((c) => c.id === projeto.clienteId) : undefined));
-  const consultor = useStore((s) => (projeto ? s.usuarios.find((u) => u.id === projeto.consultorId) : undefined));
-  const criarProjetoCliente = useStore((s) => s.criarProjetoCliente);
-  const updateEtapa = useStore((s) => s.updateEtapaProjeto);
+  const { data } = useProjetoByCardId(cardId);
+  const { data: cards = [] } = useCardsQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: profiles = [] } = useProfilesQuery();
+  const criarMut = useCriarProjeto();
 
-  if (!projeto) {
+  const card = cards.find((c) => c.id === cardId);
+  const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
+
+  if (!data) {
     return (
       <div className="bg-card rounded-xl border border-border p-5 text-center">
         <p className="text-sm text-muted-foreground mb-3">
@@ -29,10 +35,21 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
         </p>
         <button
           onClick={() => {
-            const novo = criarProjetoCliente(cardId);
-            if (novo) notify.success("Portal criado", "Cronograma do projeto iniciado");
+            if (!card || !cliente) return;
+            criarMut.mutate(
+              {
+                cardId,
+                clienteId: cliente.id,
+                consultorId: card.consultorId || null,
+                potenciaKwp: card.potenciaKwp,
+                valorInvestimento: card.valorEstimado,
+                concessionariaNome: cliente.concessionaria,
+              },
+              { onSuccess: () => notify.success("Portal criado", "Cronograma do projeto iniciado") },
+            );
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
+          disabled={criarMut.isPending}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
         >
           <Link2 className="h-4 w-4" /> Criar portal do cliente
         </button>
@@ -40,8 +57,12 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
     );
   }
 
-  const link = urlPortal(projeto.id);
-  const prog = progressoProjeto(projeto);
+  const { projeto, etapas } = data;
+  const consultor = profiles.find((p) => p.id === projeto.consultor_id);
+  const link = urlPortal(projeto.token_publico);
+  const concluidas = etapas.filter((e) => e.status === "concluida").length;
+  const total = etapas.length;
+  const pct = total ? Math.round((concluidas / total) * 100) : 0;
 
   const copiar = async () => {
     await navigator.clipboard.writeText(link);
@@ -49,7 +70,10 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
   };
 
   const wa = cliente
-    ? whatsappLink(cliente.whatsapp || cliente.telefone, mensagemWhatsAppAtualizacao(cliente, link, consultor))
+    ? whatsappLink(
+        cliente.whatsapp || cliente.telefone,
+        mensagemWhatsAppAtualizacao(cliente, link, consultor as any),
+      )
     : "#";
 
   return (
@@ -59,7 +83,7 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
           <div>
             <h3 className="font-display font-bold">Cronograma do Projeto</h3>
             <div className="text-xs text-muted-foreground">
-              {prog.concluidas} de {prog.total} etapas concluídas — {prog.pct}%
+              {concluidas} de {total} etapas concluídas — {pct}%
             </div>
           </div>
           <div className="flex gap-2">
@@ -71,7 +95,7 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
             </a>
           </div>
         </div>
-        <Progress value={prog.pct} className="h-2" />
+        <Progress value={pct} className="h-2" />
         <a href={link} target="_blank" rel="noreferrer" className="text-[11px] text-vert hover:underline break-all block mt-2">
           {link}
         </a>
@@ -79,7 +103,8 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
 
       <div className="space-y-3">
         {ETAPA_ORDEM.map((id) => {
-          const etapa = projeto.etapas.find((e) => e.id === id)!;
+          const etapa = etapas.find((e) => e.etapa_id === id);
+          if (!etapa) return null;
           const info = ETAPAS_INFO[id];
           return (
             <details key={id} open={etapa.status === "em_andamento"} className="bg-card rounded-xl border border-border">
@@ -97,7 +122,7 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
                 </span>
               </summary>
               <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border">
-                <EtapaForm projetoId={projeto.id} etapaId={id} etapa={etapa} updateEtapa={updateEtapa} />
+                <EtapaForm etapa={etapa} etapaId={id} />
               </div>
             </details>
           );
@@ -107,28 +132,20 @@ export function CronogramaProjetoAdmin({ cardId }: { cardId: string }) {
   );
 }
 
-function EtapaForm({
-  projetoId,
-  etapaId,
-  etapa,
-  updateEtapa,
-}: {
-  projetoId: string;
-  etapaId: EtapaProjetoId;
-  etapa: any;
-  updateEtapa: ReturnType<typeof useStore.getState>["updateEtapaProjeto"];
-}) {
+function EtapaForm({ etapa, etapaId }: { etapa: EtapaRow; etapaId: EtapaProjetoId }) {
+  const updateMut = useUpdateEtapa();
   const x = etapa.extra ?? {};
+  const update = (patch: Parameters<typeof updateMut.mutate>[0]["patch"], extra?: Record<string, any>) =>
+    updateMut.mutate({ etapaRowId: etapa.id, patch, mergeExtra: extra });
 
   const setStatus = (status: any) => {
-    if (status === "concluida" && !etapa.dataReal) {
+    if (status === "concluida" && !etapa.data_real) {
       notify.warning("Data necessária", "Preencha a data real de conclusão antes de concluir esta etapa.");
       return;
     }
-    updateEtapa(projetoId, etapaId, { status });
+    update({ status });
   };
-
-  const setExtra = (k: string, v: any) => updateEtapa(projetoId, etapaId, { extra: { [k]: v } });
+  const setExtra = (k: string, v: any) => update(undefined, { [k]: v });
 
   return (
     <>
@@ -145,10 +162,18 @@ function EtapaForm({
           </select>
         </Field>
         <Field label="Data prevista">
-          <Input type="date" value={etapa.dataPrevista?.slice(0, 10) ?? ""} onChange={(e) => updateEtapa(projetoId, etapaId, { dataPrevista: e.target.value || undefined })} />
+          <Input
+            type="date"
+            value={etapa.data_prevista?.slice(0, 10) ?? ""}
+            onChange={(e) => update({ data_prevista: e.target.value || null })}
+          />
         </Field>
         <Field label="Data real">
-          <Input type="date" value={etapa.dataReal?.slice(0, 10) ?? ""} onChange={(e) => updateEtapa(projetoId, etapaId, { dataReal: e.target.value || undefined })} />
+          <Input
+            type="date"
+            value={etapa.data_real?.slice(0, 10) ?? ""}
+            onChange={(e) => update({ data_real: e.target.value || null })}
+          />
         </Field>
       </div>
 
@@ -228,7 +253,11 @@ function EtapaForm({
       )}
 
       <Field label="Observações internas">
-        <Textarea value={etapa.observacoesInternas ?? ""} onChange={(e) => updateEtapa(projetoId, etapaId, { observacoesInternas: e.target.value })} placeholder="Notas visíveis apenas no CRM…" />
+        <Textarea
+          value={etapa.observacoes_internas ?? ""}
+          onChange={(e) => update({ observacoes_internas: e.target.value })}
+          placeholder="Notas visíveis apenas no CRM…"
+        />
       </Field>
     </>
   );
