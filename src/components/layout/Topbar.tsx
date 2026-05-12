@@ -264,7 +264,7 @@ export function Topbar() {
   );
 }
 
-function NotifRow({ n }: { n: { id: string; tipo: string; titulo: string; mensagem?: string; criadoEm: string; link?: string } }) {
+function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
   const Icon = n.tipo === "error" ? AlertCircle
     : n.tipo === "warning" ? AlertTriangle
     : n.tipo === "success" ? CheckCircle2
@@ -273,8 +273,11 @@ function NotifRow({ n }: { n: { id: string; tipo: string; titulo: string; mensag
     : n.tipo === "warning" ? "text-amber-700 bg-amber-50"
     : n.tipo === "success" ? "text-vert bg-vert-soft"
     : "text-blue-600 bg-blue-50";
-  return (
-    <div className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40">
+  const borda = n.urgencia >= 3 ? "border-l-2 border-l-rose-500"
+    : n.urgencia === 2 ? "border-l-2 border-l-amber-500"
+    : "";
+  const conteudo = (
+    <>
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cor}`}>
         <Icon className="h-4 w-4" />
       </div>
@@ -283,8 +286,13 @@ function NotifRow({ n }: { n: { id: string; tipo: string; titulo: string; mensag
         {n.mensagem && <div className="text-xs text-muted-foreground line-clamp-2">{n.mensagem}</div>}
         <div className="text-[10px] text-muted-foreground mt-1">{dataHoraBR(n.criadoEm)}</div>
       </div>
-    </div>
+    </>
   );
+  const className = `flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40 ${borda}`;
+  if (n.link) {
+    return <Link to={n.link} onClick={onClose} className={className}>{conteudo}</Link>;
+  }
+  return <div className={className}>{conteudo}</div>;
 }
 
 function UserSwitcher() {
