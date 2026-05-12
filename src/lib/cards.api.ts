@@ -134,7 +134,10 @@ export function useUpdateCard() {
       if (patch.consultorId !== undefined) out.consultor_id = patch.consultorId;
       if (patch.origem !== undefined) out.origem = patch.origem;
       if (patch.motivoPerda !== undefined) out.motivo_perda = patch.motivoPerda;
-      const { error } = await supabase.from("cards_pipeline").update(out).eq("id", id);
+      const { error } = await supabase
+        .from("cards_pipeline")
+        .update(out as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cards_pipeline"] }),
