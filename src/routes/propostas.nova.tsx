@@ -8,6 +8,11 @@ import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProdutosQuery } from "@/lib/produtos.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { useAddProposta } from "@/lib/propostas.api";
+import { useAuth } from "@/lib/auth";
 import { z } from "zod";
 
 const search = z.object({ clienteId: z.string().optional() });
