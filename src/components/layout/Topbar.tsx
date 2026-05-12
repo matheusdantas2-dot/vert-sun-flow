@@ -203,7 +203,7 @@ export function Topbar() {
 
         <div className="relative">
           <button
-            onClick={() => { setOpenNotif((v) => !v); if (!openNotif) marcarTodasLidas(); }}
+            onClick={() => setOpenNotif((v) => !v)}
             className="relative p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             aria-label="Notificações"
           >
