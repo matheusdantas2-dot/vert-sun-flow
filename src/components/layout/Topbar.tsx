@@ -263,7 +263,17 @@ export function Topbar() {
                       Nenhuma notificação nesta categoria.
                     </div>
                   ) : (
-                    visiveis.map((n) => <NotifRow key={n.id} n={n} onClose={() => setOpenNotif(false)} />)
+                    visiveis.map((n) => (
+                      <NotifRow
+                        key={n.id}
+                        n={n}
+                        onClose={() => setOpenNotif(false)}
+                        onMarcarLida={() => {
+                          if (n.categoria === "geral") marcarLida(n.id);
+                        }}
+                        onConcluir={() => dispensar(n.id)}
+                      />
+                    ))
                   )}
                 </div>
               </div>
