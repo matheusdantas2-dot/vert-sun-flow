@@ -24,6 +24,32 @@ const empty: Omit<Cliente, "id" | "criadoEm"> = {
 
 const inp = "w-full h-9 px-3 rounded-lg bg-muted border border-transparent focus:bg-card focus:border-vert-light text-sm outline-none";
 
+function maskCPF(v: string) {
+  return v.replace(/\D/g, "").slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+function maskCNPJ(v: string) {
+  return v.replace(/\D/g, "").slice(0, 14)
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+}
+function maskPhone(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 10) {
+    return d.replace(/^(\d{0,2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) =>
+      [a && `(${a}`, a?.length === 2 ? ") " : "", b, c && `-${c}`].filter(Boolean).join("")
+    );
+  }
+  return d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, "($1) $2-$3");
+}
+function maskCEP(v: string) {
+  return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -87,15 +113,15 @@ export function ClienteFormModal({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
           <div className="md:col-span-2"><Field label="Nome / Razão Social"><input className={inp} value={data.nome} onChange={(e) => setData({ ...data, nome: e.target.value })} required /></Field></div>
           <Field label="Tipo"><select className={inp} value={data.tipo} onChange={(e) => setData({ ...data, tipo: e.target.value as "pf" | "pj" })}><option value="pf">Pessoa Física</option><option value="pj">Pessoa Jurídica</option></select></Field>
-          <Field label={data.tipo === "pf" ? "CPF" : "CNPJ"}><input className={inp} value={data.documento} onChange={(e) => setData({ ...data, documento: e.target.value })} /></Field>
-          <Field label="Telefone"><input className={inp} value={data.telefone} onChange={(e) => setData({ ...data, telefone: e.target.value, whatsapp: data.whatsapp || e.target.value })} /></Field>
-          <Field label="WhatsApp"><input className={inp} value={data.whatsapp} onChange={(e) => setData({ ...data, whatsapp: e.target.value })} /></Field>
+          <Field label={data.tipo === "pf" ? "CPF" : "CNPJ"}><input className={inp} value={data.documento} onChange={(e) => setData({ ...data, documento: data.tipo === "pf" ? maskCPF(e.target.value) : maskCNPJ(e.target.value) })} /></Field>
+          <Field label="Telefone"><input className={inp} value={data.telefone} onChange={(e) => { const m = maskPhone(e.target.value); setData({ ...data, telefone: m, whatsapp: data.whatsapp || m }); }} /></Field>
+          <Field label="WhatsApp"><input className={inp} value={data.whatsapp} onChange={(e) => setData({ ...data, whatsapp: maskPhone(e.target.value) })} /></Field>
           <div className="md:col-span-3"><Field label="E-mail"><input type="email" className={inp} value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} /></Field></div>
         </div>
 
         <h3 className="font-semibold text-sm mb-3 text-vert">Endereço</h3>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
-          <Field label="CEP"><input className={inp} value={data.endereco.cep} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, cep: e.target.value } })} /></Field>
+          <Field label="CEP"><input className={inp} value={data.endereco.cep} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, cep: maskCEP(e.target.value) } })} /></Field>
           <div className="col-span-3"><Field label="Rua"><input className={inp} value={data.endereco.rua} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, rua: e.target.value } })} /></Field></div>
           <Field label="Número"><input className={inp} value={data.endereco.numero} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, numero: e.target.value } })} /></Field>
           <Field label="UF"><input className={inp} maxLength={2} value={data.endereco.uf} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, uf: e.target.value.toUpperCase() } })} /></Field>
