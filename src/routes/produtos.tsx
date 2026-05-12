@@ -25,10 +25,10 @@ const CAT_LABEL: Record<ProdutoCategoria, string> = {
 };
 
 function Produtos() {
-  const produtos = useStore((s) => s.produtos);
-  const addProduto = useStore((s) => s.addProduto);
-  const updateProduto = useStore((s) => s.updateProduto);
-  const deleteProduto = useStore((s) => s.deleteProduto);
+  const { data: produtos = [] } = useProdutosQuery();
+  const addProdutoM = useAddProduto();
+  const updateProdutoM = useUpdateProduto();
+  const deleteProdutoM = useDeleteProduto();
   const podeEditar = usePode("editar_produto");
   const podeVerMargem = usePode("ver_margem");
 
