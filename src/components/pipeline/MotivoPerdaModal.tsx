@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStore } from "@/lib/store";
+import { useMotivosPerdaQuery } from "@/lib/motivosPerda.api";
 
 export function MotivoPerdaModal({
   open,
@@ -10,7 +10,7 @@ export function MotivoPerdaModal({
   onClose: () => void;
   onConfirm: (motivo: string) => void;
 }) {
-  const motivos = useStore((s) => s.motivosPerda);
+  const { data: motivos = [] } = useMotivosPerdaQuery();
   const [sel, setSel] = useState("");
   const [outro, setOutro] = useState("");
 
