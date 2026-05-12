@@ -95,7 +95,7 @@ function Produtos() {
                     <td className="px-4 py-3 text-right">
                       {podeEditar && <>
                         <button onClick={() => { setEditing(p); setOpen(true); }} className="text-xs font-semibold text-vert hover:underline mr-2">Editar</button>
-                        <button onClick={() => { if (confirm("Excluir item?")) deleteProduto(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
+                        <button onClick={() => { if (confirm("Excluir item?")) deleteProdutoM.mutate(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
                       </>}
                     </td>
                   </tr>
