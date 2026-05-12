@@ -1,5 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
-import type { PipelineCard, StageId } from "@/lib/types";
+import type { PipelineCard, StageId, Cliente } from "@/lib/types";
+import type { Profile } from "@/lib/profiles.api";
 import { STAGES } from "@/lib/types";
 import { KanbanCard } from "./KanbanCard";
 import { brl } from "@/lib/format";
@@ -9,10 +10,14 @@ export function KanbanColumn({
   stageId,
   cards,
   slaDias,
+  clientesMap,
+  profilesMap,
 }: {
   stageId: StageId;
   cards: PipelineCard[];
   slaDias: number;
+  clientesMap: Map<string, Cliente>;
+  profilesMap: Map<string, Profile>;
 }) {
   const stage = STAGES.find((s) => s.id === stageId)!;
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
@@ -36,7 +41,13 @@ export function KanbanColumn({
         )}
       >
         {cards.map((c) => (
-          <KanbanCard key={c.id} card={c} slaDias={slaDias} />
+          <KanbanCard
+            key={c.id}
+            card={c}
+            slaDias={slaDias}
+            cliente={clientesMap.get(c.clienteId)}
+            consultor={profilesMap.get(c.consultorId)}
+          />
         ))}
         {cards.length === 0 && (
           <div className="text-center text-xs text-muted-foreground py-8 border-2 border-dashed border-border rounded-lg">
