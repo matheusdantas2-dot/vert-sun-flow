@@ -1,49 +1,154 @@
-import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2 } from "lucide-react";
+import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useNotificacoes } from "@/lib/notificacoes";
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { initials, dataHoraBR } from "@/lib/format";
 
+type Categoria = "sla" | "propostas" | "visitas" | "instalacoes" | "geral";
+type NotifItem = {
+  id: string;
+  tipo: "info" | "success" | "warning" | "error";
+  titulo: string;
+  mensagem?: string;
+  criadoEm: string;
+  lida: boolean;
+  link?: string;
+  categoria: Categoria;
+  urgencia: number; // 3=crítico, 2=alto, 1=médio, 0=info
+};
+
+const CATS: { id: "todas" | Categoria; label: string; icon: typeof Bell }[] = [
+  { id: "todas", label: "Todas", icon: Inbox },
+  { id: "sla", label: "SLA", icon: Clock },
+  { id: "propostas", label: "Propostas", icon: FileText },
+  { id: "visitas", label: "Visitas", icon: CalendarClock },
+  { id: "instalacoes", label: "Instalação", icon: Wrench },
+  { id: "geral", label: "Geral", icon: Info },
+];
+
 export function Topbar() {
   const [q, setQ] = useState("");
   const clientes = useStore((s) => s.clientes);
   const cards = useStore((s) => s.cards);
   const sla = useStore((s) => s.sla);
+  const propostas = useStore((s) => s.propostas);
+  const atividades = useStore((s) => s.atividades);
 
-  // Alertas SLA convertidos em "notificações" virtuais
-  const alertasSla = useMemo(() => {
-    return cards
-      .filter((c) => {
-        if (c.stage === "ativado" || c.stage === "perdido") return false;
-        const limite = sla[c.stage] ?? 999;
-        const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
-        return dias > limite;
-      })
-      .map((c) => {
+  const alertasVirtuais = useMemo<NotifItem[]>(() => {
+    const lista: NotifItem[] = [];
+
+    // SLA estourado
+    cards.forEach((c) => {
+      if (c.stage === "ativado" || c.stage === "perdido") return;
+      const limite = sla[c.stage] ?? 999;
+      const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
+      if (dias > limite) {
         const cliente = clientes.find((x) => x.id === c.clienteId);
-        const dias = Math.floor((Date.now() - new Date(c.diasNaEtapaDesde).getTime()) / 86400000);
-        return {
+        const excesso = dias - limite;
+        lista.push({
           id: `sla-${c.id}`,
-          tipo: "warning" as const,
+          tipo: excesso > limite ? "error" : "warning",
           titulo: `SLA estourado · ${cliente?.nome ?? "Lead"}`,
-          mensagem: `${dias} dias na etapa ${c.stage}`,
+          mensagem: `${dias} dias em ${c.stage} (limite ${limite}d)`,
           criadoEm: c.diasNaEtapaDesde,
           lida: false,
-          link: undefined,
-        };
-      });
-  }, [cards, sla, clientes]);
+          link: cliente ? `/clientes/${cliente.id}` : undefined,
+          categoria: c.stage === "instalacao" ? "instalacoes" : "sla",
+          urgencia: excesso > limite ? 3 : 2,
+        });
+      }
+    });
+
+    // Propostas vencidas / a vencer
+    const agora = Date.now();
+    propostas.forEach((p) => {
+      if (p.status === "aceita" || p.status === "recusada" || p.status === "expirada") return;
+      const venc = new Date(p.validadeAte).getTime();
+      const cliente = clientes.find((x) => x.id === p.clienteId);
+      const diasRest = Math.floor((venc - agora) / 86400000);
+      if (venc < agora) {
+        lista.push({
+          id: `prop-venc-${p.id}`,
+          tipo: "error",
+          titulo: `Proposta ${p.numero} vencida`,
+          mensagem: `${cliente?.nome ?? "—"} · venceu há ${Math.abs(diasRest)}d`,
+          criadoEm: p.validadeAte,
+          lida: false,
+          link: "/propostas",
+          categoria: "propostas",
+          urgencia: 3,
+        });
+      } else if (diasRest <= 3) {
+        lista.push({
+          id: `prop-vencer-${p.id}`,
+          tipo: "warning",
+          titulo: `Proposta ${p.numero} vence em ${diasRest}d`,
+          mensagem: cliente?.nome,
+          criadoEm: new Date().toISOString(),
+          lida: false,
+          link: "/propostas",
+          categoria: "propostas",
+          urgencia: 2,
+        });
+      }
+    });
+
+    // Visitas hoje/amanhã
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const limiteAmanha = new Date(hoje.getTime() + 2 * 86400000);
+    atividades.forEach((a) => {
+      if (a.tipo !== "visita" || a.status !== "pendente") return;
+      const dt = new Date(a.data);
+      if (dt >= hoje && dt < limiteAmanha) {
+        const isHoje = dt < new Date(hoje.getTime() + 86400000);
+        lista.push({
+          id: `visita-${a.id}`,
+          tipo: "info",
+          titulo: a.titulo,
+          mensagem: isHoje ? "Visita técnica hoje" : "Visita técnica amanhã",
+          criadoEm: a.data,
+          lida: false,
+          link: "/agenda",
+          categoria: "visitas",
+          urgencia: isHoje ? 2 : 1,
+        });
+      }
+    });
+
+    return lista;
+  }, [cards, sla, clientes, propostas, atividades]);
 
   const notifs = useNotificacoes((s) => s.itens);
   const marcarTodasLidas = useNotificacoes((s) => s.marcarTodasLidas);
   const limpar = useNotificacoes((s) => s.limpar);
 
-  const todas = useMemo(
-    () => [...alertasSla, ...notifs].sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime()),
-    [alertasSla, notifs],
-  );
+  const todas = useMemo<NotifItem[]>(() => {
+    const geral: NotifItem[] = notifs.map((n) => ({
+      id: n.id,
+      tipo: n.tipo,
+      titulo: n.titulo,
+      mensagem: n.mensagem,
+      criadoEm: n.criadoEm,
+      lida: n.lida,
+      link: n.link,
+      categoria: "geral",
+      urgencia: n.tipo === "error" ? 3 : n.tipo === "warning" ? 2 : n.tipo === "success" ? 1 : 0,
+    }));
+    return [...alertasVirtuais, ...geral].sort((a, b) => {
+      if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
+      return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+    });
+  }, [alertasVirtuais, notifs]);
+
   const naoLidas = todas.filter((n) => !n.lida).length;
+  const [aba, setAba] = useState<"todas" | Categoria>("todas");
+  const visiveis = useMemo(() => aba === "todas" ? todas : todas.filter((n) => n.categoria === aba), [todas, aba]);
+  const contagens = useMemo(() => {
+    const m: Record<string, number> = { todas: todas.length };
+    todas.forEach((n) => { m[n.categoria] = (m[n.categoria] ?? 0) + 1; });
+    return m;
+  }, [todas]);
 
   const [openNotif, setOpenNotif] = useState(false);
 
