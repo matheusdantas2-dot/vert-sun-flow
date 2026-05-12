@@ -111,8 +111,8 @@ function Produtos() {
           produto={editing}
           onClose={() => setOpen(false)}
           onSave={(data) => {
-            if (editing) updateProduto(editing.id, data);
-            else addProduto(data);
+            if (editing) updateProdutoM.mutate({ id: editing.id, patch: data });
+            else addProdutoM.mutate(data);
             setOpen(false);
           }}
         />
