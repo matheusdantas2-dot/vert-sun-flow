@@ -14,6 +14,10 @@ import {
 import { notify } from "@/lib/notificacoes";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { useStore } from "@/lib/store";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProdutosQuery } from "@/lib/produtos.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
 
 interface Props {
   propostaId: string;
@@ -47,15 +51,18 @@ function dispositivo(ua: string | null) {
 }
 
 export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
-  const propostas = useStore((s) => s.propostas);
-  const clientes = useStore((s) => s.clientes);
-  const usuarios = useStore((s) => s.usuarios);
-  const produtos = useStore((s) => s.produtos);
+  const { data: propostas = [] } = usePropostasQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: produtos = [] } = useProdutosQuery();
+  const { data: profiles = [] } = useProfilesQuery();
   const empresa = useStore((s) => s.empresa);
 
   const proposta = propostas.find((p) => p.id === propostaId);
   const cliente = clientes.find((c) => c.id === proposta?.clienteId);
-  const consultor = usuarios.find((u) => u.id === proposta?.consultorId);
+  const profile = profiles.find((u) => u.id === proposta?.consultorId);
+  const consultor = profile
+    ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+    : undefined;
 
   const [shares, setShares] = useState<ShareRow[]>([]);
   const [aberturas, setAberturas] = useState<AberturaRow[]>([]);

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { brl, dataBR } from "@/lib/format";
-import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
-import { Plus, FileText, ExternalLink, Download, Eye, Share2 } from "lucide-react";
+import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
+import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
@@ -55,10 +55,12 @@ function PropostasList() {
     }
   };
 
-  const aceitar = (id: string, numero: string) => {
-    updateStatus.mutate({ id, status: "aceita" });
-    notify.success("Proposta aceita", `${numero} marcada como fechada.`);
+  const mudarStatus = (id: string, status: PropostaStatus) => {
+    updateStatus.mutate({ id, status });
+    notify.success("Status atualizado", STATUS_PROPOSTA_LABEL[status]);
   };
+
+  const STATUS_LIST: PropostaStatus[] = ["rascunho", "enviada", "negociacao", "aceita", "recusada", "expirada"];
 
   const calcTotal = (p: typeof propostas[number]) =>
     p.itens.reduce((a, it) => {
@@ -138,10 +140,22 @@ function PropostasList() {
                     <td className="px-4 py-3 text-right tabular-nums font-semibold text-vert">{brl(calcTotal(p))}</td>
                     <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">{dataBR(p.validadeAte)}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`badge-stage ${statusColor[p.status]}`}>{STATUS_PROPOSTA_LABEL[p.status]}</span>
+                      <select
+                        value={p.status}
+                        onChange={(e) => mudarStatus(p.id, e.target.value as PropostaStatus)}
+                        className={`badge-stage cursor-pointer border-0 outline-none ${statusColor[p.status]}`}
+                        title="Alterar status"
+                      >
+                        {STATUS_LIST.map((s) => (
+                          <option key={s} value={s}>{STATUS_PROPOSTA_LABEL[s]}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-3">
+                        <Link to="/propostas/$id" params={{ id: p.id }} className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-vert">
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </Link>
                         <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
                           <Eye className="h-3.5 w-3.5" /> Visualizar
                         </button>
@@ -151,11 +165,6 @@ function PropostasList() {
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
-                          </button>
-                        )}
-                        {p.status !== "aceita" && p.status !== "recusada" && (
-                          <button onClick={() => aceitar(p.id, p.numero)} className="text-xs font-semibold text-vert hover:underline">
-                            Marcar aceita
                           </button>
                         )}
                       </div>
