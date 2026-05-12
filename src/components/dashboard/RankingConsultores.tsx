@@ -1,16 +1,16 @@
-import { useStore } from "@/lib/store";
 import { brl, initials } from "@/lib/format";
 import { useMemo } from "react";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { useCardsQuery } from "@/lib/cards.api";
+import { usePropostasQuery } from "@/lib/propostas.api";
 
 export function RankingConsultores() {
-  const usuarios = useStore((s) => s.usuarios);
-  const cards = useStore((s) => s.cards);
-  const propostas = useStore((s) => s.propostas);
-  const produtos = useStore((s) => s.produtos);
+  const { data: usuarios = [] } = useProfilesQuery();
+  const { data: cards = [] } = useCardsQuery();
+  const { data: propostas = [] } = usePropostasQuery();
 
   const ranking = useMemo(() => {
     return usuarios
-      .filter((u) => u.perfil === "consultor" || u.perfil === "admin")
       .map((u) => {
         const meusCards = cards.filter((c) => c.consultorId === u.id);
         const minhasPropostas = propostas.filter((p) => p.consultorId === u.id);
@@ -18,17 +18,20 @@ export function RankingConsultores() {
         const conv = minhasPropostas.length > 0 ? (aceitas / minhasPropostas.length) * 100 : 0;
         const receita = minhasPropostas
           .filter((p) => p.status === "aceita")
-          .reduce((acc, p) => {
-            const total = p.itens.reduce((a, it) => {
-              const prod = produtos.find((x) => x.id === it.produtoId);
-              return a + (it.precoUnitario ?? prod?.precoVenda ?? 0) * it.quantidade;
-            }, 0);
-            return acc + total;
-          }, 0);
+          .reduce(
+            (acc, p) =>
+              acc + p.itens.reduce((a, it) => a + (it.precoUnitario ?? 0) * it.quantidade, 0),
+            0,
+          );
         return { u, propostas: minhasPropostas.length, conv, receita, cards: meusCards.length };
       })
+      .filter((r) => r.propostas > 0 || r.cards > 0)
       .sort((a, b) => b.receita - a.receita);
-  }, [usuarios, cards, propostas, produtos]);
+  }, [usuarios, cards, propostas]);
+
+  if (ranking.length === 0) {
+    return <div className="text-sm text-muted-foreground py-6 text-center">Sem dados de equipe ainda.</div>;
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -54,7 +57,7 @@ export function RankingConsultores() {
                   </div>
                   <div>
                     <div className="font-medium leading-tight">{r.u.nome}</div>
-                    <div className="text-[11px] text-muted-foreground capitalize">{r.u.perfil}</div>
+                    <div className="text-[11px] text-muted-foreground">{r.cards} cards</div>
                   </div>
                 </div>
               </td>

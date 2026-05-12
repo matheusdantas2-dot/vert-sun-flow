@@ -1,9 +1,9 @@
-import { useStore } from "@/lib/store";
 import { STAGES } from "@/lib/types";
 import { useMemo } from "react";
+import { useCardsQuery } from "@/lib/cards.api";
 
 export function FunilChart() {
-  const cards = useStore((s) => s.cards);
+  const { data: cards = [] } = useCardsQuery();
 
   const data = useMemo(() => {
     return STAGES.filter((s) => s.id !== "perdido").map((s) => ({

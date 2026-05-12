@@ -1,11 +1,10 @@
-import { useStore } from "@/lib/store";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useMemo } from "react";
 import { brl } from "@/lib/format";
+import { usePropostasQuery } from "@/lib/propostas.api";
 
 export function ReceitaChart() {
-  const propostas = useStore((s) => s.propostas);
-  const produtos = useStore((s) => s.produtos);
+  const { data: propostas = [] } = usePropostasQuery();
 
   const data = useMemo(() => {
     const months = Array.from({ length: 12 }).map((_, i) => {
@@ -19,16 +18,12 @@ export function ReceitaChart() {
         (m) => m.d.getMonth() === dt.getMonth() && m.d.getFullYear() === dt.getFullYear(),
       );
       if (idx === -1) return;
-      const total = p.itens.reduce((acc, it) => {
-        const prod = produtos.find((x) => x.id === it.produtoId);
-        const preco = it.precoUnitario ?? prod?.precoVenda ?? 0;
-        return acc + preco * it.quantidade;
-      }, 0);
+      const total = p.itens.reduce((acc, it) => acc + (it.precoUnitario ?? 0) * it.quantidade, 0);
       months[idx].propostas += 1;
       if (p.status === "aceita") months[idx].receita += total;
     });
     return months.map((m) => ({ mes: m.label, receita: m.receita, propostas: m.propostas }));
-  }, [propostas, produtos]);
+  }, [propostas]);
 
   return (
     <div className="h-64">

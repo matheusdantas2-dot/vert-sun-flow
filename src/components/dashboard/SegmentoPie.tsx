@@ -1,12 +1,12 @@
-import { useStore } from "@/lib/store";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { useMemo } from "react";
 import { SEGMENTOS_LABEL } from "@/lib/types";
+import { useClientesQuery } from "@/lib/clientes.api";
 
 const COLORS = ["#0d5234", "#2d9e64", "#5ee89a", "#a8e6c2"];
 
 export function SegmentoPie() {
-  const clientes = useStore((s) => s.clientes);
+  const { data: clientes = [] } = useClientesQuery();
 
   const data = useMemo(() => {
     const map = new Map<string, number>();
