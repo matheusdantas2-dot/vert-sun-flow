@@ -13,6 +13,7 @@ import { useProdutosQuery } from "@/lib/produtos.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
 import { useAddProposta } from "@/lib/propostas.api";
 import { useAuth } from "@/lib/auth";
+import { KITS_PRESETS, escolherProdutosParaKit, type KitPreset } from "@/lib/kits";
 import { z } from "zod";
 
 const search = z.object({ clienteId: z.string().optional() });
@@ -50,6 +51,24 @@ function NovaProposta() {
   const [validadeDias, setValidadeDias] = useState(30);
 
   const [itens, setItens] = useState<{ produtoId: string; quantidade: number; precoUnitario: number }[]>([]);
+  const [kitNome, setKitNome] = useState<string>("");
+  const [kitConsumo, setKitConsumo] = useState<number | undefined>(undefined);
+  const [mostrarComoKit, setMostrarComoKit] = useState<boolean>(false);
+
+  const aplicarKit = (kit: KitPreset) => {
+    const { modulo, inversor, qtdModulos } = escolherProdutosParaKit(kit, produtos);
+    if (!modulo || !inversor) {
+      notify.warning("Catálogo incompleto", "Cadastre ao menos um módulo e um inversor antes de aplicar um kit.");
+      return;
+    }
+    setItens([
+      { produtoId: modulo.id, quantidade: qtdModulos, precoUnitario: modulo.precoVenda },
+      { produtoId: inversor.id, quantidade: 1, precoUnitario: inversor.precoVenda },
+    ]);
+    setKitNome(kit.nome);
+    setKitConsumo(kit.consumoKwh);
+    setMostrarComoKit(true);
+  };
 
   const dim = cliente ? dimensionarSistema(cliente.consumoMedio, irradiacao, eficiencia, cobertura) : { potenciaKwp: 0, geracaoMensal: 0 };
 
