@@ -1,10 +1,24 @@
-import { Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
-import { useState } from "react";
+import { Outlet, createRootRoute, HeadContent, Scripts, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
 
 import appCss from "../styles.css?url";
+
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/cadastro",
+  "/recuperar-senha",
+  "/reset-password",
+  "/cliente/acompanhamento/",
+];
+
+function isPublicPath(path: string) {
+  return PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(p));
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -62,16 +76,38 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const [collapsed, setCollapsed] = useState(false);
-  const location = useLocation();
-  const isPublic = location.pathname.startsWith("/cliente/acompanhamento/");
+  return (
+    <AuthProvider>
+      <AppShell />
+      <Toaster position="top-right" richColors closeButton />
+    </AuthProvider>
+  );
+}
 
-  if (isPublic) {
+function AppShell() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const publico = isPublicPath(location.pathname);
+
+  useEffect(() => {
+    if (!loading && !user && !publico) {
+      navigate({
+        to: "/login",
+        search: { redirect: location.pathname + location.search },
+      });
+    }
+  }, [loading, user, publico, location.pathname, location.search, navigate]);
+
+  if (publico) return <Outlet />;
+
+  if (loading || !user) {
     return (
-      <>
-        <Outlet />
-        <Toaster position="top-right" richColors closeButton />
-      </>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-vert" />
+      </div>
     );
   }
 
@@ -84,7 +120,6 @@ function RootComponent() {
           <Outlet />
         </main>
       </div>
-      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }
