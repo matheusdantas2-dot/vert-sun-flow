@@ -327,6 +327,37 @@ function NovaProposta() {
 
         {/* Coluna direita */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Kits de geração */}
+          <div className="bg-card rounded-xl border border-border p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-bold text-sm uppercase tracking-wider text-vert">Kit de geração</h2>
+              <label className="inline-flex items-center gap-2 text-xs font-medium">
+                <input type="checkbox" checked={mostrarComoKit} onChange={(e) => setMostrarComoKit(e.target.checked)} className="h-4 w-4 accent-[hsl(var(--vert))]" />
+                Mostrar como kit na proposta
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {KITS_PRESETS.map((k) => (
+                <button key={k.id} onClick={() => aplicarKit(k)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${kitNome === k.nome ? "bg-vert-dark text-white border-vert-dark" : "border-border hover:bg-accent"}`}>
+                  {k.nome}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <label className="block text-xs">Nome do kit (exibido na proposta)
+                <input className={inp + " mt-1"} value={kitNome} onChange={(e) => setKitNome(e.target.value)} placeholder="Ex.: Kit Solar 500 kWh" />
+              </label>
+              <label className="block text-xs">Consumo de referência (kWh/mês)
+                <input type="number" className={inp + " mt-1"} value={kitConsumo ?? ""} onChange={(e) => setKitConsumo(e.target.value ? +e.target.value : undefined)} />
+              </label>
+            </div>
+            {mostrarComoKit && itens.length > 0 && (
+              <div className="text-[11px] text-muted-foreground bg-muted rounded-lg p-2">
+                No PDF o cliente verá apenas <strong className="text-foreground">{kitNome || "o kit"}</strong> com quantidade <strong>1</strong> e total de <strong>{brl(totais.valorVenda)}</strong>. Os componentes abaixo permanecem editáveis internamente.
+              </div>
+            )}
+          </div>
+
           <div className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display font-bold text-sm uppercase tracking-wider text-vert">Sistema (itens do catálogo)</h2>
