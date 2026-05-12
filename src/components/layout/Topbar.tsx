@@ -211,11 +211,11 @@ export function Topbar() {
           {openNotif && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setOpenNotif(false)} />
-              <div className="absolute right-0 top-12 w-[360px] max-w-[calc(100vw-1rem)] bg-card border border-border rounded-xl shadow-xl z-40 overflow-hidden">
+              <div className="absolute right-0 top-12 w-[400px] max-w-[calc(100vw-1rem)] bg-card border border-border rounded-xl shadow-xl z-40 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                   <div>
                     <div className="font-display font-bold text-sm">Notificações</div>
-                    <div className="text-[11px] text-muted-foreground">{todas.length} no total</div>
+                    <div className="text-[11px] text-muted-foreground">{todas.length} no total · ordenadas por urgência</div>
                   </div>
                   {notifs.length > 0 && (
                     <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
@@ -223,14 +223,34 @@ export function Topbar() {
                     </button>
                   )}
                 </div>
+                <div className="flex gap-1 px-2 py-2 border-b border-border overflow-x-auto">
+                  {CATS.map((c) => {
+                    const n = contagens[c.id] ?? 0;
+                    if (c.id !== "todas" && n === 0) return null;
+                    const ativo = aba === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setAba(c.id)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                          ativo ? "bg-vert text-white" : "text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        <c.icon className="h-3 w-3" />
+                        {c.label}
+                        <span className={`text-[10px] px-1 rounded ${ativo ? "bg-white/20" : "bg-muted"}`}>{n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="max-h-[420px] overflow-y-auto">
-                  {todas.length === 0 ? (
+                  {visiveis.length === 0 ? (
                     <div className="px-4 py-12 text-center text-sm text-muted-foreground">
                       <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                      Nenhuma notificação no momento.
+                      Nenhuma notificação nesta categoria.
                     </div>
                   ) : (
-                    todas.map((n) => <NotifRow key={n.id} n={n} />)
+                    visiveis.map((n) => <NotifRow key={n.id} n={n} onClose={() => setOpenNotif(false)} />)
                   )}
                 </div>
               </div>
