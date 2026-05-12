@@ -1,8 +1,9 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import type { PipelineCard, StageId } from "@/lib/types";
+import type { PipelineCard } from "@/lib/types";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import type { Cliente } from "@/lib/types";
+import type { Profile } from "@/lib/profiles.api";
 import { brl, kwp, initials, diasEntre } from "@/lib/format";
 import { Phone, MessageCircle, ExternalLink, Megaphone, UserPlus, Repeat, Briefcase, GripVertical } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -16,9 +17,17 @@ const ORIGEM_ICON = {
   licitacao: Briefcase,
 };
 
-export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: number }) {
-  const cliente = useStore((s) => s.clientes.find((c) => c.id === card.clienteId));
-  const consultor = useStore((s) => s.usuarios.find((u) => u.id === card.consultorId));
+export function KanbanCard({
+  card,
+  slaDias,
+  cliente,
+  consultor,
+}: {
+  card: PipelineCard;
+  slaDias: number;
+  cliente?: Cliente;
+  consultor?: Profile;
+}) {
   const navigate = useNavigate();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
@@ -103,22 +112,26 @@ export function KanbanCard({ card, slaDias }: { card: PipelineCard; slaDias: num
           className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <a
-            href={`tel:+55${cliente.telefone.replace(/\D/g, "")}`}
-            className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-vert"
-            title="Ligar"
-          >
-            <Phone className="h-3.5 w-3.5" />
-          </a>
-          <a
-            href={`https://wa.me/55${cliente.whatsapp.replace(/\D/g, "")}`}
-            target="_blank"
-            rel="noreferrer"
-            className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-vert"
-            title="WhatsApp"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-          </a>
+          {cliente.telefone && (
+            <a
+              href={`tel:+55${cliente.telefone.replace(/\D/g, "")}`}
+              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+              title="Ligar"
+            >
+              <Phone className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {cliente.whatsapp && (
+            <a
+              href={`https://wa.me/55${cliente.whatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+              title="WhatsApp"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </a>
+          )}
           <Link
             to="/clientes/$id"
             params={{ id: cliente.id }}
