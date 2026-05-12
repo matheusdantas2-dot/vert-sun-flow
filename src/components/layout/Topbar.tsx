@@ -1,8 +1,9 @@
-import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox, Check } from "lucide-react";
+import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox, Check, Settings, LogOut } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useNotificacoes } from "@/lib/notificacoes";
+import { useAuth } from "@/lib/auth";
 import { useState, useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { initials, dataHoraBR } from "@/lib/format";
 
 type Categoria = "sla" | "propostas" | "visitas" | "instalacoes" | "geral";
