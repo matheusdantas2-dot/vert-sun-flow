@@ -20,12 +20,12 @@ export const Route = createFileRoute("/propostas/")({
 });
 
 function PropostasList() {
-  const propostas = useStore((s) => s.propostas);
-  const clientes = useStore((s) => s.clientes);
-  const usuarios = useStore((s) => s.usuarios);
-  const produtos = useStore((s) => s.produtos);
+  const { data: propostas = [] } = usePropostasQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: produtos = [] } = useProdutosQuery();
+  const { data: profiles = [] } = useProfilesQuery();
   const empresa = useStore((s) => s.empresa);
-  const aceitarProposta = useStore((s) => s.aceitarProposta);
+  const updateStatus = useUpdatePropostaStatus();
   const podeCriar = usePode("criar_proposta");
   const podePdf = usePode("exportar_pdf");
 
@@ -35,7 +35,10 @@ function PropostasList() {
   const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
     const cliente = clientes.find((c) => c.id === p?.clienteId);
-    const consultor = usuarios.find((u) => u.id === p?.consultorId);
+    const profile = profiles.find((u) => u.id === p?.consultorId);
+    const consultor = profile
+      ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+      : undefined;
     if (!p || !cliente) return null;
     return { result: gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
   };
