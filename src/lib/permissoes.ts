@@ -1,4 +1,4 @@
-import { useStore } from "./store";
+import { useAuth, type AppRole } from "./auth";
 import type { UsuarioPerfil } from "./types";
 
 export type Acao =
@@ -35,8 +35,18 @@ const MATRIZ: Record<UsuarioPerfil, Acao[]> = {
   ],
 };
 
+// Mapeia papéis do banco (app_role) para perfis usados na UI legada.
+// admin/gestor → admin; consultor → consultor; tecnico → instalador.
+function rolesParaPerfil(roles: AppRole[]): UsuarioPerfil {
+  if (roles.includes("admin") || roles.includes("gestor")) return "admin";
+  if (roles.includes("consultor")) return "consultor";
+  if (roles.includes("tecnico")) return "instalador";
+  return "consultor";
+}
+
 export function usePerfil(): UsuarioPerfil {
-  return useStore((s) => s.usuarios.find((u) => u.id === s.currentUserId)?.perfil ?? "admin");
+  const { roles } = useAuth();
+  return rolesParaPerfil(roles);
 }
 
 export function usePode(acao: Acao): boolean {
