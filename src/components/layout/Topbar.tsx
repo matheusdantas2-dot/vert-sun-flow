@@ -223,11 +223,18 @@ export function Topbar() {
                     <div className="font-display font-bold text-sm">Notificações</div>
                     <div className="text-[11px] text-muted-foreground">{todas.length} no total · ordenadas por urgência</div>
                   </div>
-                  {notifs.length > 0 && (
-                    <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
-                      <Trash2 className="h-3 w-3" /> limpar
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {dispensados.length > 0 && (
+                      <button onClick={restaurarDispensados} className="text-xs text-muted-foreground hover:text-vert">
+                        restaurar ({dispensados.length})
+                      </button>
+                    )}
+                    {notifs.length > 0 && (
+                      <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
+                        <Trash2 className="h-3 w-3" /> limpar
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1 px-2 py-2 border-b border-border overflow-x-auto">
                   {CATS.map((c) => {
