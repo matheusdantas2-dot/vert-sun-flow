@@ -186,6 +186,9 @@ function ClienteDetalhe() {
             )}
           </div>
 
+          {/* Mensagens WhatsApp */}
+          <MensagensWhatsApp cliente={cliente} />
+
           {/* Cronograma do Projeto */}
           {cards.filter((c) => ["contrato", "homologacao", "instalacao", "ativado"].includes(c.stage)).map((c) => (
             <CronogramaProjetoAdmin key={c.id} cardId={c.id} />
