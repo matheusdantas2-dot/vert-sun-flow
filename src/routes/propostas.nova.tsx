@@ -134,7 +134,14 @@ function NovaProposta() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const salvar = (acao: "save" | "savePdf" | "preview" = "save") => {
+  const profileToConsultor = (id: string) => {
+    const profile = profiles.find((u) => u.id === id);
+    return profile
+      ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+      : undefined;
+  };
+
+  const salvar = async (acao: "save" | "savePdf" | "preview" = "save") => {
     if (!cliente) {
       notify.warning("Selecione um cliente", "Escolha o cliente antes de salvar a proposta.");
       return;
@@ -145,35 +152,40 @@ function NovaProposta() {
     }
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
-    const nova = addProposta({
-      clienteId: cliente.id,
-      consultorId: currentUserId,
-      validadeAte: validade.toISOString(),
-      status: "rascunho",
-      itens,
-      irradiacao,
-      eficiencia,
-      cobertura,
-      inflacao,
-      taxaFinanciamento: taxaFin,
-      taxaCartao: taxaCart,
-    });
-    const consultor = usuarios.find((u) => u.id === currentUserId);
+    try {
+      const nova = await addPropostaM.mutateAsync({
+        clienteId: cliente.id,
+        consultorId: currentUserId,
+        validadeAte: validade.toISOString(),
+        status: "rascunho",
+        itens,
+        irradiacao,
+        eficiencia,
+        cobertura,
+        inflacao,
+        taxaFinanciamento: taxaFin,
+        taxaCartao: taxaCart,
+      });
+      const consultor = profileToConsultor(currentUserId);
 
-    if (acao === "savePdf") {
-      gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "save" });
-      notify.success("Proposta salva", `${nova.numero} criada e PDF baixado.`);
+      if (acao === "savePdf") {
+        gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "save" });
+        notify.success("Proposta salva", `${nova.numero} criada e PDF baixado.`);
+        navigate({ to: "/propostas" });
+        return;
+      }
+      if (acao === "preview") {
+        const url = gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "blob" });
+        if (typeof url === "string") setPreviewUrl(url);
+        notify.success("Proposta salva", `${nova.numero} pronta para visualização.`);
+        return;
+      }
+      notify.success("Proposta salva", `${nova.numero} criada como rascunho.`);
       navigate({ to: "/propostas" });
-      return;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro ao salvar proposta.";
+      notify.error("Falha ao salvar", msg);
     }
-    if (acao === "preview") {
-      const url = gerarPdfProposta({ proposta: nova, cliente, consultor, produtos, empresa, modo: "blob" });
-      if (typeof url === "string") setPreviewUrl(url);
-      notify.success("Proposta salva", `${nova.numero} pronta para visualização.`);
-      return;
-    }
-    notify.success("Proposta salva", `${nova.numero} criada como rascunho.`);
-    navigate({ to: "/propostas" });
   };
 
   const visualizarPreviewSemSalvar = () => {
