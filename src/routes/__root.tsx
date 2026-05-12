@@ -82,10 +82,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <AppShell />
-      <Toaster position="top-right" richColors closeButton />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppShell />
+        <Toaster position="top-right" richColors closeButton />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
