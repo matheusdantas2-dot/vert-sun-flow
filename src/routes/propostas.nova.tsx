@@ -26,15 +26,19 @@ export const Route = createFileRoute("/propostas/nova")({
 function NovaProposta() {
   const { clienteId } = Route.useSearch();
   const navigate = useNavigate();
-  const clientes = useStore((s) => s.clientes);
-  const produtos = useStore((s) => s.produtos);
-  const usuarios = useStore((s) => s.usuarios);
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: produtos = [] } = useProdutosQuery();
+  const { data: profiles = [] } = useProfilesQuery();
   const empresa = useStore((s) => s.empresa);
-  const currentUserId = useStore((s) => s.currentUserId);
-  const addProposta = useStore((s) => s.addProposta);
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? "";
+  const addPropostaM = useAddProposta();
   const podePdf = usePode("exportar_pdf");
 
-  const [selCliente, setSelCliente] = useState(clienteId ?? clientes[0]?.id ?? "");
+  const [selCliente, setSelCliente] = useState(clienteId ?? "");
+  useEffect(() => {
+    if (!selCliente && clientes.length > 0) setSelCliente(clientes[0].id);
+  }, [clientes, selCliente]);
   const cliente = clientes.find((c) => c.id === selCliente);
 
   const [irradiacao, setIrradiacao] = useState(5.2);
