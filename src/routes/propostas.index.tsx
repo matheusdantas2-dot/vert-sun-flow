@@ -60,6 +60,13 @@ function PropostasList() {
     notify.success("Proposta aceita", `${numero} marcada como fechada.`);
   };
 
+  const mudarStatus = (id: string, status: PropostaStatus) => {
+    updateStatus.mutate({ id, status });
+    notify.success("Status atualizado", STATUS_PROPOSTA_LABEL[status]);
+  };
+
+  const STATUS_LIST: PropostaStatus[] = ["rascunho", "enviada", "negociacao", "aceita", "recusada", "expirada"];
+
   const calcTotal = (p: typeof propostas[number]) =>
     p.itens.reduce((a, it) => {
       const prod = produtos.find((x) => x.id === it.produtoId);
