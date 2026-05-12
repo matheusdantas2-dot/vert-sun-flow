@@ -8,6 +8,7 @@ import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/
 import { Phone, MessageCircle, Pencil, FileText, ArrowLeft, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
+import { MensagensWhatsApp } from "@/components/clientes/MensagensWhatsApp";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
 
 export const Route = createFileRoute("/clientes/$id")({
