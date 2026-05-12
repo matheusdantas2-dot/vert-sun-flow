@@ -144,6 +144,54 @@ export function useAddProposta() {
   });
 }
 
+export function useUpdateProposta() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<Omit<Proposta, "id" | "criadoEm" | "numero" | "versao">>;
+    }) => {
+      const upd: Record<string, unknown> = {};
+      if (patch.clienteId !== undefined) upd.cliente_id = patch.clienteId;
+      if (patch.consultorId !== undefined) upd.consultor_id = patch.consultorId || null;
+      if (patch.status !== undefined) upd.status = patch.status;
+      if (patch.validadeAte !== undefined) upd.validade_ate = patch.validadeAte;
+      if (patch.irradiacao !== undefined) upd.irradiacao = patch.irradiacao;
+      if (patch.eficiencia !== undefined) upd.eficiencia = patch.eficiencia;
+      if (patch.cobertura !== undefined) upd.cobertura = patch.cobertura;
+      if (patch.inflacao !== undefined) upd.inflacao = patch.inflacao;
+      if (patch.taxaFinanciamento !== undefined) upd.taxa_financiamento = patch.taxaFinanciamento;
+      if (patch.taxaCartao !== undefined) upd.taxa_cartao = patch.taxaCartao;
+      if (patch.observacoes !== undefined) upd.observacoes = patch.observacoes ?? null;
+      if (patch.kitNome !== undefined) upd.kit_nome = patch.kitNome ?? null;
+      if (patch.kitConsumoKwh !== undefined) upd.kit_consumo_kwh = patch.kitConsumoKwh ?? null;
+      if (patch.mostrarComoKit !== undefined) upd.mostrar_como_kit = patch.mostrarComoKit;
+      if (Object.keys(upd).length > 0) {
+        const { error } = await supabase.from("propostas").update(upd as never).eq("id", id);
+        if (error) throw error;
+      }
+      if (patch.itens) {
+        await supabase.from("proposta_itens").delete().eq("proposta_id", id);
+        if (patch.itens.length > 0) {
+          const rows = patch.itens.map((it, idx) => ({
+            proposta_id: id,
+            produto_id: it.produtoId,
+            quantidade: it.quantidade,
+            preco_unitario: it.precoUnitario,
+            ordem: idx,
+          }));
+          const { error: iErr } = await supabase.from("proposta_itens").insert(rows as never);
+          if (iErr) throw iErr;
+        }
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
 export function useUpdatePropostaStatus() {
   const qc = useQueryClient();
   return useMutation({
