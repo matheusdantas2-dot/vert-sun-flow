@@ -18,6 +18,9 @@ type DbProposta = {
   observacoes: string | null;
   versao: number;
   created_at: string;
+  kit_nome: string | null;
+  kit_consumo_kwh: number | null;
+  mostrar_como_kit: boolean | null;
 };
 
 type DbPropostaItem = {
@@ -54,6 +57,9 @@ function dbToProposta(p: DbProposta, items: DbPropostaItem[]): Proposta {
     taxaCartao: Number(p.taxa_cartao ?? 2.99),
     versao: p.versao,
     observacoes: p.observacoes ?? undefined,
+    kitNome: p.kit_nome ?? undefined,
+    kitConsumoKwh: p.kit_consumo_kwh ?? undefined,
+    mostrarComoKit: p.mostrar_como_kit ?? false,
   };
 }
 
@@ -109,6 +115,9 @@ export function useAddProposta() {
           taxa_cartao: input.taxaCartao,
           observacoes: input.observacoes ?? null,
           versao: 1,
+          kit_nome: input.kitNome ?? null,
+          kit_consumo_kwh: input.kitConsumoKwh ?? null,
+          mostrar_como_kit: input.mostrarComoKit ?? false,
         } as never)
         .select("*")
         .single();
