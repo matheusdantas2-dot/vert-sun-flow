@@ -239,6 +239,9 @@ function NovaProposta() {
       inflacao,
       taxaFinanciamento: taxaFin,
       taxaCartao: taxaCart,
+      kitNome: kitNome || undefined,
+      kitConsumoKwh: kitConsumo,
+      mostrarComoKit,
     };
     const url = gerarPdfProposta({ proposta: temp, cliente, consultor, produtos, empresa, modo: "blob" });
     if (typeof url === "string") setPreviewUrl(url);
