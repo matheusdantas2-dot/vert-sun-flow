@@ -113,9 +113,9 @@ export function ClienteFormModal({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
           <div className="md:col-span-2"><Field label="Nome / Razão Social"><input className={inp} value={data.nome} onChange={(e) => setData({ ...data, nome: e.target.value })} required /></Field></div>
           <Field label="Tipo"><select className={inp} value={data.tipo} onChange={(e) => setData({ ...data, tipo: e.target.value as "pf" | "pj" })}><option value="pf">Pessoa Física</option><option value="pj">Pessoa Jurídica</option></select></Field>
-          <Field label={data.tipo === "pf" ? "CPF" : "CNPJ"}><input className={inp} value={data.documento} onChange={(e) => setData({ ...data, documento: e.target.value })} /></Field>
-          <Field label="Telefone"><input className={inp} value={data.telefone} onChange={(e) => setData({ ...data, telefone: e.target.value, whatsapp: data.whatsapp || e.target.value })} /></Field>
-          <Field label="WhatsApp"><input className={inp} value={data.whatsapp} onChange={(e) => setData({ ...data, whatsapp: e.target.value })} /></Field>
+          <Field label={data.tipo === "pf" ? "CPF" : "CNPJ"}><input className={inp} value={data.documento} onChange={(e) => setData({ ...data, documento: data.tipo === "pf" ? maskCPF(e.target.value) : maskCNPJ(e.target.value) })} /></Field>
+          <Field label="Telefone"><input className={inp} value={data.telefone} onChange={(e) => { const m = maskPhone(e.target.value); setData({ ...data, telefone: m, whatsapp: data.whatsapp || m }); }} /></Field>
+          <Field label="WhatsApp"><input className={inp} value={data.whatsapp} onChange={(e) => setData({ ...data, whatsapp: maskPhone(e.target.value) })} /></Field>
           <div className="md:col-span-3"><Field label="E-mail"><input type="email" className={inp} value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} /></Field></div>
         </div>
 
