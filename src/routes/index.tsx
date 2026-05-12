@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { brl, num } from "@/lib/format";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { FunilChart } from "@/components/dashboard/FunilChart";
@@ -9,6 +8,10 @@ import { RankingConsultores } from "@/components/dashboard/RankingConsultores";
 import { Alertas } from "@/components/dashboard/Alertas";
 import { DollarSign, FileText, TrendingUp, Zap, Wrench, Target } from "lucide-react";
 import { useMemo } from "react";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import { useCardsQuery, useCardsRealtime } from "@/lib/cards.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useConfigGlobalQuery } from "@/lib/config.api";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -16,11 +19,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const propostas = useStore((s) => s.propostas);
-  const produtos = useStore((s) => s.produtos);
-  const cards = useStore((s) => s.cards);
-  const clientes = useStore((s) => s.clientes);
-  const metas = useStore((s) => s.metas);
+  const { data: propostas = [] } = usePropostasQuery();
+  const { data: cards = [] } = useCardsQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: cfg } = useConfigGlobalQuery();
+  useCardsRealtime();
+
+  const metas = {
+    faturamentoMensal: 0,
+    propostasMensais: 0,
+    projetosMensais: 0,
+    kwpMensais: 0,
+    ...(cfg?.metas ?? {}),
+  };
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -32,22 +43,11 @@ function Dashboard() {
     });
     const aceitas = propostasMes.filter((p) => p.status === "aceita");
     const calcTotal = (p: typeof propostas[number]) =>
-      p.itens.reduce((acc, it) => {
-        const prod = produtos.find((x) => x.id === it.produtoId);
-        return acc + (it.precoUnitario ?? prod?.precoVenda ?? 0) * it.quantidade;
-      }, 0);
+      p.itens.reduce((acc, it) => acc + (it.precoUnitario ?? 0) * it.quantidade, 0);
     const faturamento = aceitas.reduce((a, p) => a + calcTotal(p), 0);
     const conversao = propostasMes.length > 0 ? (aceitas.length / propostasMes.length) * 100 : 0;
     const ticketResid = (() => {
       const list = aceitas.filter((p) => clientes.find((c) => c.id === p.clienteId)?.segmento === "residencial");
-      if (!list.length) return 0;
-      return list.reduce((a, p) => a + calcTotal(p), 0) / list.length;
-    })();
-    const ticketCom = (() => {
-      const list = aceitas.filter((p) => {
-        const seg = clientes.find((c) => c.id === p.clienteId)?.segmento;
-        return seg === "comercial" || seg === "industrial" || seg === "agronegocio";
-      });
       if (!list.length) return 0;
       return list.reduce((a, p) => a + calcTotal(p), 0) / list.length;
     })();
@@ -62,16 +62,10 @@ function Dashboard() {
       ["contrato", "homologacao", "instalacao"].includes(c.stage),
     ).length;
 
-    return {
-      faturamento,
-      propostasMes: propostasMes.length,
-      conversao,
-      ticketResid,
-      ticketCom,
-      kwpMes,
-      projetosAndamento,
-    };
-  }, [propostas, produtos, cards, clientes]);
+    return { faturamento, propostasMes: propostasMes.length, conversao, ticketResid, kwpMes, projetosAndamento };
+  }, [propostas, cards, clientes]);
+
+  const safePerc = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
 
   return (
     <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -85,7 +79,7 @@ function Dashboard() {
           label="Faturamento do mês"
           value={brl(stats.faturamento)}
           sub={`Meta ${brl(metas.faturamentoMensal)}`}
-          progress={(stats.faturamento / metas.faturamentoMensal) * 100}
+          progress={safePerc(stats.faturamento, metas.faturamentoMensal)}
           icon={DollarSign}
           accent="vert"
         />
@@ -93,7 +87,7 @@ function Dashboard() {
           label="Propostas do mês"
           value={num(stats.propostasMes)}
           sub={`Meta ${metas.propostasMensais}`}
-          progress={(stats.propostasMes / metas.propostasMensais) * 100}
+          progress={safePerc(stats.propostasMes, metas.propostasMensais)}
           icon={FileText}
         />
         <KpiCard
@@ -107,7 +101,7 @@ function Dashboard() {
           label="kWp instalados"
           value={`${num(stats.kwpMes, 1)}`}
           sub={`Meta ${metas.kwpMensais} kWp`}
-          progress={(stats.kwpMes / metas.kwpMensais) * 100}
+          progress={safePerc(stats.kwpMes, metas.kwpMensais)}
           icon={Zap}
         />
         <KpiCard label="Projetos em andamento" value={num(stats.projetosAndamento)} icon={Wrench} />
