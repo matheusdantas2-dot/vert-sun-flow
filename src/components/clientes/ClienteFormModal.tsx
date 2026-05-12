@@ -121,7 +121,7 @@ export function ClienteFormModal({
 
         <h3 className="font-semibold text-sm mb-3 text-vert">Endereço</h3>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
-          <Field label="CEP"><input className={inp} value={data.endereco.cep} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, cep: e.target.value } })} /></Field>
+          <Field label="CEP"><input className={inp} value={data.endereco.cep} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, cep: maskCEP(e.target.value) } })} /></Field>
           <div className="col-span-3"><Field label="Rua"><input className={inp} value={data.endereco.rua} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, rua: e.target.value } })} /></Field></div>
           <Field label="Número"><input className={inp} value={data.endereco.numero} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, numero: e.target.value } })} /></Field>
           <Field label="UF"><input className={inp} maxLength={2} value={data.endereco.uf} onChange={(e) => setData({ ...data, endereco: { ...data.endereco, uf: e.target.value.toUpperCase() } })} /></Field>
