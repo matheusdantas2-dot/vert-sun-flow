@@ -356,6 +356,37 @@ function paginaSistema(ctx: Ctx) {
   pdf.text("TOTAL", colX.total, y, { align: "right" });
   y += 6;
 
+  // Modo "kit": exibe apenas uma linha agregada
+  if (proposta.mostrarComoKit) {
+    const totalKit = proposta.itens.reduce((a, it) => a + it.precoUnitario * it.quantidade, 0);
+    const nomeKit = proposta.kitNome || "Kit Solar";
+    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+    pdf.rect(M, y - 4, W - 2 * M, 7, "F");
+    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8);
+    pdf.text("KIT DE GERAÇÃO", M + 4, y);
+    y += 9;
+
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.text(nomeKit, colX.item, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.text("1", colX.qtd, y, { align: "right" });
+    pdf.text(brlPrec(totalKit), colX.unit, y, { align: "right" });
+    pdf.setFont("helvetica", "bold");
+    pdf.text(brlPrec(totalKit), colX.total, y, { align: "right" });
+    y += 6;
+    if (proposta.kitConsumoKwh) {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Sistema dimensionado para ~${proposta.kitConsumoKwh} kWh/mês de consumo`, colX.item, y);
+      y += 6;
+    }
+  } else {
   // Agrupar por categoria
   const ordem: Record<string, number> = { modulo: 1, inversor: 2, estrutura: 3, cabeamento: 4, servico: 5 };
   const labels: Record<string, string> = {
@@ -407,6 +438,8 @@ function paginaSistema(ctx: Ctx) {
       if (y > H - 50) return;
     });
   });
+  }
+
 
   // Total
   y += 4;
