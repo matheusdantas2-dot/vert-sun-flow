@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { useClienteQuery, useUpdateCliente, useDeleteCliente } from "@/lib/clientes.api";
+import { useInteracoesByClienteQuery, useAddInteracao, useInteracoesRealtime } from "@/lib/interacoes.api";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import { useCardsQuery } from "@/lib/cards.api";
 import { brl, brlPrec, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Phone, MessageCircle, Pencil, FileText, ArrowLeft, Plus } from "lucide-react";
@@ -10,17 +12,17 @@ import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAd
 
 export const Route = createFileRoute("/clientes/$id")({
   component: ClienteDetalhe,
-  head: ({ loaderData }) => ({ meta: [{ title: `Cliente — Vert CRM` }] }),
+  head: () => ({ meta: [{ title: `Cliente — Vert CRM` }] }),
 });
 
 function ClienteDetalhe() {
   const { id } = Route.useParams();
   const { data: cliente, isLoading } = useClienteQuery(id);
-  const todasInteracoes = useStore((s) => s.interacoes);
-  const todasPropostas = useStore((s) => s.propostas);
-  const todosCards = useStore((s) => s.cards);
-  const produtos = useStore((s) => s.produtos);
-  const addInteracao = useStore((s) => s.addInteracao);
+  const { data: interacoes = [] } = useInteracoesByClienteQuery(id);
+  useInteracoesRealtime(id);
+  const { data: todasPropostas = [] } = usePropostasQuery();
+  const { data: todosCards = [] } = useCardsQuery();
+  const addInteracao = useAddInteracao();
   const updateClienteMut = useUpdateCliente();
   const deleteClienteMut = useDeleteCliente();
   const navigate = useNavigate();
@@ -28,7 +30,6 @@ function ClienteDetalhe() {
   const [editOpen, setEditOpen] = useState(false);
   const [novaNota, setNovaNota] = useState("");
 
-  const interacoes = useMemo(() => todasInteracoes.filter((i) => i.clienteId === id), [todasInteracoes, id]);
   const propostas = useMemo(() => todasPropostas.filter((p) => p.clienteId === id), [todasPropostas, id]);
   const cards = useMemo(() => todosCards.filter((c) => c.clienteId === id), [todosCards, id]);
 
