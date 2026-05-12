@@ -287,7 +287,17 @@ export function Topbar() {
   );
 }
 
-function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
+function NotifRow({
+  n,
+  onClose,
+  onMarcarLida,
+  onConcluir,
+}: {
+  n: NotifItem;
+  onClose?: () => void;
+  onMarcarLida?: () => void;
+  onConcluir?: () => void;
+}) {
   const Icon = n.tipo === "error" ? AlertCircle
     : n.tipo === "warning" ? AlertTriangle
     : n.tipo === "success" ? CheckCircle2
@@ -299,8 +309,19 @@ function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
   const borda = n.urgencia >= 3 ? "border-l-2 border-l-rose-500"
     : n.urgencia === 2 ? "border-l-2 border-l-amber-500"
     : "";
+  const handleClick = () => {
+    onMarcarLida?.();
+    onClose?.();
+  };
+  const handleConcluir = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onConcluir?.();
+  };
+  const className = `group relative flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40 ${borda} ${n.lida ? "opacity-60" : ""}`;
   const conteudo = (
     <>
+      {!n.lida && <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-vert" aria-hidden />}
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cor}`}>
         <Icon className="h-4 w-4" />
       </div>
@@ -309,13 +330,21 @@ function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
         {n.mensagem && <div className="text-xs text-muted-foreground line-clamp-2">{n.mensagem}</div>}
         <div className="text-[10px] text-muted-foreground mt-1">{dataHoraBR(n.criadoEm)}</div>
       </div>
+      {onConcluir && (
+        <button
+          onClick={handleConcluir}
+          title="Marcar como concluído"
+          className="opacity-0 group-hover:opacity-100 transition-opacity self-center p-1.5 rounded-md hover:bg-vert hover:text-white text-muted-foreground"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+      )}
     </>
   );
-  const className = `flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40 ${borda}`;
   if (n.link) {
-    return <Link to={n.link} onClick={onClose} className={className}>{conteudo}</Link>;
+    return <Link to={n.link} onClick={handleClick} className={className}>{conteudo}</Link>;
   }
-  return <div className={className}>{conteudo}</div>;
+  return <div onClick={handleClick} className={className}>{conteudo}</div>;
 }
 
 function UserSwitcher() {
