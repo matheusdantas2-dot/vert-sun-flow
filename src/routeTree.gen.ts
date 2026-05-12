@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ProdutosRouteImport } from './routes/produtos'
@@ -27,6 +28,11 @@ import { Route as PipelineCardCardIdRouteImport } from './routes/pipeline.card.$
 import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
 import { Route as ApiPublicPTokenRouteImport } from './routes/api/public/p.$token'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/produtos': typeof ProdutosRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/produtos': typeof ProdutosRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/produtos': typeof ProdutosRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/recuperar-senha'
     | '/relatorios'
+    | '/reset-password'
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/recuperar-senha'
     | '/relatorios'
+    | '/reset-password'
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/recuperar-senha'
     | '/relatorios'
+    | '/reset-password'
     | '/clientes/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   ProdutosRoute: typeof ProdutosRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ClientesIdRoute: typeof ClientesIdRoute
   PropostasNovaRoute: typeof PropostasNovaRoute
   ClientesIndexRoute: typeof ClientesIndexRoute
@@ -250,6 +263,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -396,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProdutosRoute: ProdutosRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ClientesIdRoute: ClientesIdRoute,
   PropostasNovaRoute: PropostasNovaRoute,
   ClientesIndexRoute: ClientesIndexRoute,
