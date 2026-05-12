@@ -46,15 +46,14 @@ function ClienteDetalhe() {
   }
 
   const calcProposta = (p: typeof propostas[number]) =>
-    p.itens.reduce((a, it) => {
-      const prod = produtos.find((x) => x.id === it.produtoId);
-      return a + (it.precoUnitario ?? prod?.precoVenda ?? 0) * it.quantidade;
-    }, 0);
+    p.itens.reduce((a, it) => a + (it.precoUnitario ?? 0) * it.quantidade, 0);
 
   const registrarNota = () => {
     if (!novaNota.trim()) return;
-    addInteracao({ clienteId: id, tipo: "nota", titulo: "Nota interna", descricao: novaNota, data: new Date().toISOString() });
-    setNovaNota("");
+    addInteracao.mutate(
+      { cliente_id: id, tipo: "nota", titulo: "Nota interna", descricao: novaNota },
+      { onSuccess: () => setNovaNota("") },
+    );
   };
 
   return (
