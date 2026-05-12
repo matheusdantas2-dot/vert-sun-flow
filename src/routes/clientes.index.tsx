@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
+import { useClientesQuery } from "@/lib/clientes.api";
 import { brl, brlPrec, dataBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { useState, useMemo } from "react";
-import { Plus, Search, Phone, MessageCircle, ChevronRight } from "lucide-react";
+import { Plus, Search, Phone, MessageCircle, ChevronRight, Loader2 } from "lucide-react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
 
 export const Route = createFileRoute("/clientes/")({
@@ -12,7 +13,8 @@ export const Route = createFileRoute("/clientes/")({
 });
 
 function ClientesList() {
-  const clientes = useStore((s) => s.clientes);
+  const { data: clientesData, isLoading } = useClientesQuery();
+  const clientes = clientesData ?? [];
   const cards = useStore((s) => s.cards);
   const propostas = useStore((s) => s.propostas);
   const produtos = useStore((s) => s.produtos);
@@ -165,7 +167,9 @@ function ClientesList() {
                 </tr>
               ))}
               {paginated.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">Nenhum cliente encontrado.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">
+                  {isLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Carregando…</span> : "Nenhum cliente encontrado."}
+                </td></tr>
               )}
             </tbody>
           </table>
