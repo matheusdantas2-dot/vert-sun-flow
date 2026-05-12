@@ -119,7 +119,7 @@ function PropostasList() {
             <tbody>
               {propostas.map((p) => {
                 const cliente = clientes.find((c) => c.id === p.clienteId);
-                const consultor = usuarios.find((u) => u.id === p.consultorId);
+                const consultor = profiles.find((u) => u.id === p.consultorId);
                 return (
                   <tr key={p.id} className="border-t border-border hover:bg-accent/40">
                     <td className="px-4 py-3">
