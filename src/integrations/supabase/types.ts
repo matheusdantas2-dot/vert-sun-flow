@@ -681,6 +681,9 @@ export type Database = {
           id: string
           inflacao: number | null
           irradiacao: number | null
+          kit_consumo_kwh: number | null
+          kit_nome: string | null
+          mostrar_como_kit: boolean
           numero: string
           observacoes: string | null
           status: string
@@ -699,6 +702,9 @@ export type Database = {
           id?: string
           inflacao?: number | null
           irradiacao?: number | null
+          kit_consumo_kwh?: number | null
+          kit_nome?: string | null
+          mostrar_como_kit?: boolean
           numero: string
           observacoes?: string | null
           status?: string
@@ -717,6 +723,9 @@ export type Database = {
           id?: string
           inflacao?: number | null
           irradiacao?: number | null
+          kit_consumo_kwh?: number | null
+          kit_nome?: string | null
+          mostrar_como_kit?: boolean
           numero?: string
           observacoes?: string | null
           status?: string
