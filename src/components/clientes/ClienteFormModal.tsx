@@ -113,6 +113,16 @@ export function ClienteFormModal({
       notify.warning("Informe o nome", "O nome do cliente é obrigatório.");
       return;
     }
+    if (data.documento.trim()) {
+      const ok = data.tipo === "pf" ? isValidCPF(data.documento) : isValidCNPJ(data.documento);
+      if (!ok) {
+        notify.warning(
+          data.tipo === "pf" ? "CPF inválido" : "CNPJ inválido",
+          "Verifique os dígitos verificadores e tente novamente."
+        );
+        return;
+      }
+    }
     try {
       if (cliente) {
         await updateCliente.mutateAsync({ id: cliente.id, patch: data });
