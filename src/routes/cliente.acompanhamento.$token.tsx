@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
+import { useProjetoPublico } from "@/lib/projetos.api";
 import { TimelineEtapas } from "@/components/projeto/TimelineEtapas";
 import { brl, formatTel, kwp } from "@/lib/format";
-import { progressoProjeto } from "@/lib/portalCliente";
 import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
 import { MessageCircle, Phone } from "lucide-react";
 
@@ -18,12 +17,17 @@ export const Route = createFileRoute("/cliente/acompanhamento/$token")({
 
 function PortalCliente() {
   const { token } = Route.useParams();
-  const projeto = useStore((s) => s.projetos.find((p) => p.id === token));
-  const cliente = useStore((s) => (projeto ? s.clientes.find((c) => c.id === projeto.clienteId) : undefined));
-  const consultor = useStore((s) => (projeto ? s.usuarios.find((u) => u.id === projeto.consultorId) : undefined));
-  const empresa = useStore((s) => s.empresa);
+  const { data, isLoading } = useProjetoPublico(token);
 
-  if (!projeto || !cliente) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f6faf7] flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      </div>
+    );
+  }
+
+  if (!data) {
     return (
       <div className="min-h-screen bg-[#f6faf7] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
@@ -37,13 +41,21 @@ function PortalCliente() {
     );
   }
 
-  const prog = progressoProjeto(projeto);
-  const waEmpresa = empresa.telefone?.replace(/\D/g, "") || consultor?.email || "";
-  const waConsultor = consultor ? `https://wa.me/55${(empresa.telefone || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Sou ${cliente.nome}, gostaria de tirar uma dúvida sobre meu projeto.`)}` : "#";
+  const { projeto, cliente, consultor, etapas, empresa } = data;
+  const concluidas = etapas.filter((e) => e.status === "concluida").length;
+  const total = etapas.length;
+  const pct = total ? Math.round((concluidas / total) * 100) : 0;
+
+  const empresaTel = (empresa?.telefone as string) || "";
+  const empresaNome = (empresa?.razaoSocial as string) || "Vert Energie";
+  const waConsultor = empresaTel
+    ? `https://wa.me/55${empresaTel.replace(/\D/g, "")}?text=${encodeURIComponent(
+        `Olá! Sou ${cliente.nome}, gostaria de tirar uma dúvida sobre meu projeto.`,
+      )}`
+    : "#";
 
   return (
     <div className="min-h-screen bg-[#f6faf7] pb-24">
-      {/* Header */}
       <header className="bg-gradient-to-r from-[#0d5234] to-[#2d9e64] text-white">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center justify-between">
           <img src={VERT_LOGO_PNG_BASE64} alt="Vert Energie" className="h-10 brightness-0 invert" />
@@ -52,69 +64,66 @@ function PortalCliente() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Saudação */}
         <section>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0d5234]">
-            Olá, {cliente.nome.split(" ")[0]}!
+            Olá, {String(cliente.nome).split(" ")[0]}!
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Acompanhe abaixo o andamento do seu projeto solar.
           </p>
         </section>
 
-        {/* Resumo */}
         <section className="bg-white rounded-2xl border border-[#2d9e64]/20 p-5 shadow-sm">
           <div className="grid grid-cols-2 gap-4">
-            <ResumoItem label="Potência do sistema" valor={kwp(projeto.potenciaKwp)} />
-            <ResumoItem label="Investimento" valor={brl(projeto.valorInvestimento)} />
+            <ResumoItem label="Potência do sistema" valor={kwp(Number(projeto.potencia_kwp))} />
+            <ResumoItem label="Investimento" valor={brl(Number(projeto.valor_investimento))} />
           </div>
           {consultor && (
             <div className="mt-4 pt-4 border-t border-border flex items-center justify-between gap-2 flex-wrap">
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Consultor responsável</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  Consultor responsável
+                </div>
                 <div className="font-semibold">{consultor.nome}</div>
               </div>
-              {empresa.telefone && (
+              {empresaTel && (
                 <a
-                  href={`tel:+55${empresa.telefone.replace(/\D/g, "")}`}
+                  href={`tel:+55${empresaTel.replace(/\D/g, "")}`}
                   className="inline-flex items-center gap-1.5 text-sm text-[#0d5234] font-semibold"
                 >
-                  <Phone className="h-4 w-4" /> {formatTel(empresa.telefone)}
+                  <Phone className="h-4 w-4" /> {formatTel(empresaTel)}
                 </a>
               )}
             </div>
           )}
         </section>
 
-        {/* Progresso */}
         <section className="bg-white rounded-2xl border border-border p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-bold text-[#0d5234]">Progresso geral</h2>
-            <span className="text-sm font-semibold text-[#2d9e64]">{prog.pct}%</span>
+            <span className="text-sm font-semibold text-[#2d9e64]">{pct}%</span>
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-[#2d9e64] to-[#5ee89a] transition-all"
-              style={{ width: `${prog.pct}%` }}
+              style={{ width: `${pct}%` }}
             />
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            {prog.concluidas} de {prog.total} etapas concluídas
+            {concluidas} de {total} etapas concluídas
           </div>
         </section>
 
-        {/* Timeline */}
         <section>
           <h2 className="font-bold text-[#0d5234] mb-3">Cronograma do projeto</h2>
-          <TimelineEtapas projeto={projeto} />
+          <TimelineEtapas etapas={etapas} />
         </section>
 
         <p className="text-center text-xs text-muted-foreground pt-6">
-          {empresa.razaoSocial || "Vert Energie"} · Energia solar para o seu futuro 🌱
+          {empresaNome} · Energia solar para o seu futuro 🌱
         </p>
       </main>
 
-      {/* WhatsApp flutuante */}
       <a
         href={waConsultor}
         target="_blank"

@@ -1,8 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useStore } from "@/lib/store";
+import { useCardsQuery } from "@/lib/cards.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { useCriarProjeto, useProjetoByCardId } from "@/lib/projetos.api";
 import { mensagemWhatsAppInicial, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import { Copy, MessageCircle, Link2, CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { notify } from "@/lib/notificacoes";
 
 export function GerarLinkProjetoModal({
@@ -14,24 +17,35 @@ export function GerarLinkProjetoModal({
   onClose: () => void;
   cardId: string | null;
 }) {
-  const card = useStore((s) => (cardId ? s.cards.find((c) => c.id === cardId) : undefined));
-  const cliente = useStore((s) => (card ? s.clientes.find((c) => c.id === card.clienteId) : undefined));
-  const consultor = useStore((s) => (card ? s.usuarios.find((u) => u.id === card.consultorId) : undefined));
-  const projetoExistente = useStore((s) => (cardId ? s.projetos.find((p) => p.cardId === cardId) : undefined));
-  const criarProjetoCliente = useStore((s) => s.criarProjetoCliente);
+  const { data: cards = [] } = useCardsQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: profiles = [] } = useProfilesQuery();
+  const { data: projetoData } = useProjetoByCardId(cardId ?? undefined);
+  const criarMut = useCriarProjeto();
 
-  const [gerado, setGerado] = useState<string | null>(null);
-  const token = projetoExistente?.id ?? gerado;
+  const card = cardId ? cards.find((c) => c.id === cardId) : undefined;
+  const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
+  const consultor = card ? profiles.find((u) => u.id === card.consultorId) : undefined;
+
+  const token = projetoData?.projeto.token_publico;
   const link = useMemo(() => (token ? urlPortal(token) : ""), [token]);
 
   if (!card || !cliente) return null;
 
   const handleGerar = () => {
-    const novo = criarProjetoCliente(card.id);
-    if (novo) {
-      setGerado(novo.id);
-      notify.success("Link gerado", `Portal do cliente criado para ${cliente.nome}`);
-    }
+    criarMut.mutate(
+      {
+        cardId: card.id,
+        clienteId: cliente.id,
+        consultorId: card.consultorId || null,
+        potenciaKwp: card.potenciaKwp,
+        valorInvestimento: card.valorEstimado,
+        concessionariaNome: cliente.concessionaria,
+      },
+      {
+        onSuccess: () => notify.success("Link gerado", `Portal do cliente criado para ${cliente.nome}`),
+      },
+    );
   };
 
   const handleCopiar = async () => {
@@ -39,7 +53,7 @@ export function GerarLinkProjetoModal({
     notify.success("Link copiado");
   };
 
-  const msg = mensagemWhatsAppInicial(cliente, link, consultor);
+  const msg = mensagemWhatsAppInicial(cliente, link, consultor as any);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -68,9 +82,10 @@ export function GerarLinkProjetoModal({
               </button>
               <button
                 onClick={handleGerar}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
+                disabled={criarMut.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
               >
-                <Link2 className="h-4 w-4" /> Gerar Link
+                <Link2 className="h-4 w-4" /> {criarMut.isPending ? "Gerando…" : "Gerar Link"}
               </button>
             </div>
           </div>

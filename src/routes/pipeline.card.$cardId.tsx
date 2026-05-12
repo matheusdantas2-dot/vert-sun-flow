@@ -1,5 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
+import { useCardsQuery } from "@/lib/cards.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import {
+  useProjetoByCardId,
+  useCriarProjeto,
+  useRegenerarToken,
+  useRemoverProjeto,
+  useProjetosRealtime,
+} from "@/lib/projetos.api";
 import { brl, kwp, dataBR, formatTel } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES } from "@/lib/types";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
@@ -25,14 +34,20 @@ export const Route = createFileRoute("/pipeline/card/$cardId")({
 function CardDetalhe() {
   const { cardId } = Route.useParams();
   const navigate = useNavigate();
+  useProjetosRealtime();
 
-  const card = useStore((s) => s.cards.find((c) => c.id === cardId));
-  const cliente = useStore((s) => (card ? s.clientes.find((c) => c.id === card.clienteId) : undefined));
-  const consultor = useStore((s) => (card ? s.usuarios.find((u) => u.id === card.consultorId) : undefined));
-  const projeto = useStore((s) => s.projetos.find((p) => p.cardId === cardId));
-  const criar = useStore((s) => s.criarProjetoCliente);
-  const regenerar = useStore((s) => s.regenerarProjetoCliente);
-  const remover = useStore((s) => s.removerProjetoCliente);
+  const { data: cards = [] } = useCardsQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: profiles = [] } = useProfilesQuery();
+  const { data: projetoData } = useProjetoByCardId(cardId);
+  const criarMut = useCriarProjeto();
+  const regenerarMut = useRegenerarToken();
+  const removerMut = useRemoverProjeto();
+
+  const card = cards.find((c) => c.id === cardId);
+  const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
+  const consultor = card ? profiles.find((u) => u.id === card.consultorId) : undefined;
+  const projeto = projetoData?.projeto;
 
   if (!card || !cliente) {
     return (
@@ -46,7 +61,7 @@ function CardDetalhe() {
   }
 
   const stage = STAGES.find((s) => s.id === card.stage);
-  const link = projeto ? urlPortal(projeto.id) : "";
+  const link = projeto ? urlPortal(projeto.token_publico) : "";
 
   const handleCopiar = async () => {
     if (!link) return;
@@ -55,20 +70,29 @@ function CardDetalhe() {
   };
 
   const handleGerar = () => {
-    const novo = criar(card.id);
-    if (novo) notify.success("Portal criado", `Link gerado para ${cliente.nome}`);
+    criarMut.mutate(
+      {
+        cardId: card.id,
+        clienteId: cliente.id,
+        consultorId: card.consultorId || null,
+        potenciaKwp: card.potenciaKwp,
+        valorInvestimento: card.valorEstimado,
+        concessionariaNome: cliente.concessionaria,
+      },
+      { onSuccess: () => notify.success("Portal criado", `Link gerado para ${cliente.nome}`) },
+    );
   };
 
   const handleRegenerar = () => {
+    if (!projeto) return;
     if (!confirm("Gerar um novo link invalidará o atual. Continuar?")) return;
-    const novo = regenerar(card.id);
-    if (novo) notify.success("Novo link gerado");
+    regenerarMut.mutate(projeto.id, { onSuccess: () => notify.success("Novo link gerado") });
   };
 
   const handleRemover = () => {
+    if (!projeto) return;
     if (!confirm("Remover o portal de acompanhamento deste cliente?")) return;
-    remover(card.id);
-    notify.warning("Portal removido");
+    removerMut.mutate(projeto.id, { onSuccess: () => notify.warning("Portal removido") });
   };
 
   return (
@@ -80,7 +104,6 @@ function CardDetalhe() {
         <ArrowLeft className="h-4 w-4" /> Voltar para o pipeline
       </button>
 
-      {/* Header */}
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -131,7 +154,6 @@ function CardDetalhe() {
         </div>
       </div>
 
-      {/* Link de acompanhamento */}
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
@@ -149,7 +171,8 @@ function CardDetalhe() {
             </p>
             <button
               onClick={handleGerar}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
+              disabled={criarMut.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
             >
               <Link2 className="h-4 w-4" /> Gerar link agora
             </button>
@@ -175,7 +198,7 @@ function CardDetalhe() {
               <a
                 href={whatsappLink(
                   cliente.whatsapp || cliente.telefone,
-                  mensagemWhatsAppInicial(cliente, link, consultor),
+                  mensagemWhatsAppInicial(cliente, link, consultor as any),
                 )}
                 target="_blank"
                 rel="noreferrer"
@@ -200,10 +223,8 @@ function CardDetalhe() {
         )}
       </div>
 
-      {/* Cronograma */}
       {projeto && <CronogramaProjetoAdmin cardId={card.id} />}
 
-      {/* Contato */}
       <div className="bg-card rounded-xl border border-border p-5">
         <h2 className="font-display font-bold text-lg mb-3">Contato</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
