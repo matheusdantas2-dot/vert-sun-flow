@@ -1,4 +1,4 @@
-import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox } from "lucide-react";
+import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox, Check } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useNotificacoes } from "@/lib/notificacoes";
 import { useState, useMemo } from "react";
