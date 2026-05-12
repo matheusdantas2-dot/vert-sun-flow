@@ -120,8 +120,11 @@ export function Topbar() {
   }, [cards, sla, clientes, propostas, atividades]);
 
   const notifs = useNotificacoes((s) => s.itens);
-  const marcarTodasLidas = useNotificacoes((s) => s.marcarTodasLidas);
+  const dispensados = useNotificacoes((s) => s.dispensados);
+  const marcarLida = useNotificacoes((s) => s.marcarLida);
   const limpar = useNotificacoes((s) => s.limpar);
+  const dispensar = useNotificacoes((s) => s.dispensar);
+  const restaurarDispensados = useNotificacoes((s) => s.restaurarDispensados);
 
   const todas = useMemo<NotifItem[]>(() => {
     const geral: NotifItem[] = notifs.map((n) => ({
@@ -135,11 +138,14 @@ export function Topbar() {
       categoria: "geral",
       urgencia: n.tipo === "error" ? 3 : n.tipo === "warning" ? 2 : n.tipo === "success" ? 1 : 0,
     }));
-    return [...alertasVirtuais, ...geral].sort((a, b) => {
-      if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
-      return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
-    });
-  }, [alertasVirtuais, notifs]);
+    const dispensadosSet = new Set(dispensados);
+    return [...alertasVirtuais, ...geral]
+      .filter((n) => !dispensadosSet.has(n.id))
+      .sort((a, b) => {
+        if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
+        return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+      });
+  }, [alertasVirtuais, notifs, dispensados]);
 
   const naoLidas = todas.filter((n) => !n.lida).length;
   const [aba, setAba] = useState<"todas" | Categoria>("todas");
