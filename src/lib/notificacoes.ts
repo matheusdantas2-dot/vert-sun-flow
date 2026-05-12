@@ -28,6 +28,7 @@ interface State {
 
 export const useNotificacoes = create<State>((set) => ({
   itens: [],
+  dispensados: [],
   push: ({ silent, ...n }) => {
     const item: Notificacao = {
       id: uid(),
