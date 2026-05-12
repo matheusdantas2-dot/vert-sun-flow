@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useAddCliente, useUpdateCliente } from "@/lib/clientes.api";
 import { notify } from "@/lib/notificacoes";
 import type { Cliente } from "@/lib/types";
 
@@ -31,9 +31,10 @@ export function ClienteFormModal({
   onClose: () => void;
   cliente?: Cliente;
 }) {
-  const addCliente = useStore((s) => s.addCliente);
-  const updateCliente = useStore((s) => s.updateCliente);
+  const addCliente = useAddCliente();
+  const updateCliente = useUpdateCliente();
   const [data, setData] = useState<Omit<Cliente, "id" | "criadoEm">>(empty);
+  const saving = addCliente.isPending || updateCliente.isPending;
 
   useEffect(() => {
     if (cliente) {
@@ -44,20 +45,25 @@ export function ClienteFormModal({
 
   if (!open) return null;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data.nome.trim()) {
       notify.warning("Informe o nome", "O nome do cliente é obrigatório.");
       return;
     }
-    if (cliente) {
-      updateCliente(cliente.id, data);
-      notify.success("Cliente atualizado", data.nome);
-    } else {
-      addCliente(data);
-      notify.success("Cliente cadastrado", data.nome);
+    try {
+      if (cliente) {
+        await updateCliente.mutateAsync({ id: cliente.id, patch: data });
+        notify.success("Cliente atualizado", data.nome);
+      } else {
+        await addCliente.mutateAsync(data);
+        notify.success("Cliente cadastrado", data.nome);
+      }
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar";
+      notify.warning("Falha ao salvar", msg);
     }
-    onClose();
   };
 
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -111,8 +117,8 @@ export function ClienteFormModal({
         </div>
 
         <div className="flex gap-2 justify-end pt-3 border-t border-border">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent">Cancelar</button>
-          <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Salvar</button>
+          <button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent disabled:opacity-50">Cancelar</button>
+          <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60">{saving ? "Salvando…" : "Salvar"}</button>
         </div>
       </form>
     </div>
