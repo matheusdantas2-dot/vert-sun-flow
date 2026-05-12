@@ -1,20 +1,24 @@
-import { useStore } from "@/lib/store";
 import { dataBR, diasEntre } from "@/lib/format";
 import { AlertTriangle, Clock, CalendarClock, Wrench } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useCardsQuery } from "@/lib/cards.api";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import { useAtividadesQuery } from "@/lib/atividades.api";
+import { useConfigGlobalQuery } from "@/lib/config.api";
 
 export function Alertas() {
-  const cards = useStore((s) => s.cards);
-  const clientes = useStore((s) => s.clientes);
-  const propostas = useStore((s) => s.propostas);
-  const atividades = useStore((s) => s.atividades);
-  const sla = useStore((s) => s.sla);
+  const { data: cards = [] } = useCardsQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: propostas = [] } = usePropostasQuery();
+  const { data: atividades = [] } = useAtividadesQuery();
+  const { data: cfg } = useConfigGlobalQuery();
+  const sla = cfg?.sla ?? {};
 
   const items = useMemo(() => {
     const list: { icon: typeof AlertTriangle; cor: string; titulo: string; sub: string; link: string }[] = [];
 
-    // Leads sem contato > 3 dias (em prospecção/qualificação)
     cards.forEach((c) => {
       if (c.stage === "ativado" || c.stage === "perdido") return;
       const dias = diasEntre(c.diasNaEtapaDesde);
@@ -31,7 +35,6 @@ export function Alertas() {
       }
     });
 
-    // Propostas vencidas
     propostas.forEach((p) => {
       if (p.status === "aceita" || p.status === "recusada" || p.status === "expirada") return;
       const venc = new Date(p.validadeAte);
@@ -47,7 +50,6 @@ export function Alertas() {
       }
     });
 
-    // Visitas hoje/amanhã
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     const limiteAmanha = new Date(hoje.getTime() + 2 * 86400000);
     atividades.forEach((a) => {
@@ -64,7 +66,6 @@ export function Alertas() {
       }
     });
 
-    // Instalações em atraso (em "instalacao" > SLA)
     cards.forEach((c) => {
       if (c.stage !== "instalacao") return;
       const dias = diasEntre(c.diasNaEtapaDesde);
