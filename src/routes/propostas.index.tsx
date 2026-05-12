@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Plus, FileText, ExternalLink, Download, Eye, Share2 } from "lucide-react";
@@ -9,6 +8,11 @@ import { notify } from "@/lib/notificacoes";
 import { useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProdutosQuery } from "@/lib/produtos.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
