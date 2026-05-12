@@ -348,37 +348,52 @@ function NotifRow({
 }
 
 function UserSwitcher() {
-  const usuarios = useStore((s) => s.usuarios);
-  const currentUserId = useStore((s) => s.currentUserId);
-  const setCurrentUser = useStore((s) => s.setCurrentUser);
-  const usuario = usuarios.find((u) => u.id === currentUserId);
+  const { profile, roles, signOut } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  if (!usuario) return null;
+  if (!profile) return null;
+  const papelLabel = roles.includes("admin") ? "admin"
+    : roles.includes("gestor") ? "gestor"
+    : roles.includes("consultor") ? "consultor"
+    : roles.includes("tecnico") ? "técnico"
+    : "—";
+  const handleLogout = async () => {
+    setOpen(false);
+    await signOut();
+    navigate({ to: "/login" });
+  };
   return (
     <div className="relative pl-2 border-l border-border">
       <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 hover:bg-accent rounded-lg p-1 pr-2">
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: usuario.cor }}>
-          {initials(usuario.nome)}
+        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: profile.cor }}>
+          {initials(profile.nome)}
         </div>
         <div className="hidden md:block leading-tight text-left">
-          <div className="text-sm font-semibold">{usuario.nome}</div>
-          <div className="text-[11px] text-muted-foreground capitalize">{usuario.perfil}</div>
+          <div className="text-sm font-semibold">{profile.nome}</div>
+          <div className="text-[11px] text-muted-foreground capitalize">{papelLabel}</div>
         </div>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-12 w-64 bg-card border border-border rounded-lg shadow-xl py-1 z-40">
-            <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">Trocar usuário (demo)</div>
-            {usuarios.filter((u) => u.ativo).map((u) => (
-              <button key={u.id} onClick={() => { setCurrentUser(u.id); setOpen(false); }} className={`flex items-center gap-2 w-full px-3 py-2 hover:bg-accent text-left ${u.id === currentUserId ? "bg-accent/50" : ""}`}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: u.cor }}>{initials(u.nome)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{u.nome}</div>
-                  <div className="text-[10px] text-muted-foreground capitalize">{u.perfil}</div>
-                </div>
-              </button>
-            ))}
+            <div className="px-3 py-2 border-b border-border">
+              <div className="text-sm font-semibold truncate">{profile.nome}</div>
+              <div className="text-[11px] text-muted-foreground truncate">{profile.email}</div>
+              <div className="text-[10px] text-muted-foreground capitalize mt-0.5">Papel: {papelLabel}</div>
+            </div>
+            <button
+              onClick={() => { setOpen(false); navigate({ to: "/configuracoes" }); }}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-accent text-sm text-left"
+            >
+              <Settings className="h-4 w-4" /> Configurações
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-destructive/10 hover:text-destructive text-sm text-left"
+            >
+              <LogOut className="h-4 w-4" /> Sair
+            </button>
           </div>
         </>
       )}
