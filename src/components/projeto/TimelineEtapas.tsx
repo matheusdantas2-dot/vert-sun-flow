@@ -1,5 +1,6 @@
-import type { ProjetoCliente } from "@/lib/types";
 import { ETAPAS_INFO, ETAPA_ORDEM } from "@/lib/portalCliente";
+import type { EtapaProjetoId } from "@/lib/types";
+import type { EtapaRow } from "@/lib/projetos.api";
 import { dataBR } from "@/lib/format";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,11 +11,12 @@ const STATUS_LABEL = {
   concluida: "Concluído",
 } as const;
 
-export function TimelineEtapas({ projeto }: { projeto: ProjetoCliente }) {
+export function TimelineEtapas({ etapas }: { etapas: EtapaRow[] }) {
   return (
     <ol className="relative space-y-4">
       {ETAPA_ORDEM.map((id, idx) => {
-        const etapa = projeto.etapas.find((e) => e.id === id)!;
+        const etapa = etapas.find((e) => e.etapa_id === id);
+        if (!etapa) return null;
         const info = ETAPAS_INFO[id];
         const concluida = etapa.status === "concluida";
         const ativa = etapa.status === "em_andamento";
@@ -22,7 +24,6 @@ export function TimelineEtapas({ projeto }: { projeto: ProjetoCliente }) {
 
         return (
           <li key={id} className="relative pl-12">
-            {/* linha vertical */}
             {!isLast && (
               <span
                 className={cn(
@@ -31,7 +32,6 @@ export function TimelineEtapas({ projeto }: { projeto: ProjetoCliente }) {
                 )}
               />
             )}
-            {/* círculo */}
             <span
               className={cn(
                 "absolute left-0 top-1 w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm",
@@ -73,15 +73,14 @@ export function TimelineEtapas({ projeto }: { projeto: ProjetoCliente }) {
                 </span>
               </div>
 
-              {/* Detalhes específicos visíveis ao cliente */}
-              <EtapaDetalhesCliente etapa={etapa} />
+              <EtapaDetalhesCliente etapaId={id} extra={etapa.extra ?? {}} dataPrevista={etapa.data_prevista} />
 
-              {(etapa.dataReal || etapa.dataPrevista) && (
+              {(etapa.data_real || etapa.data_prevista) && (
                 <div className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/60">
-                  {etapa.dataReal ? (
-                    <span>Concluído em <strong className="text-foreground">{dataBR(etapa.dataReal)}</strong></span>
+                  {etapa.data_real ? (
+                    <span>Concluído em <strong className="text-foreground">{dataBR(etapa.data_real)}</strong></span>
                   ) : (
-                    <span>Previsão: <strong className="text-foreground">{dataBR(etapa.dataPrevista)}</strong></span>
+                    <span>Previsão: <strong className="text-foreground">{dataBR(etapa.data_prevista!)}</strong></span>
                   )}
                 </div>
               )}
@@ -93,9 +92,10 @@ export function TimelineEtapas({ projeto }: { projeto: ProjetoCliente }) {
   );
 }
 
-function EtapaDetalhesCliente({ etapa }: { etapa: ProjetoCliente["etapas"][number] }) {
-  const x = etapa.extra ?? {};
-  if (etapa.id === "homologacao" && (x.protocolo || x.previsaoAprovacao)) {
+function EtapaDetalhesCliente({
+  etapaId, extra: x, dataPrevista,
+}: { etapaId: EtapaProjetoId; extra: Record<string, any>; dataPrevista: string | null }) {
+  if (etapaId === "homologacao" && (x.protocolo || x.previsaoAprovacao)) {
     return (
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
         {x.protocolo && (
@@ -118,18 +118,18 @@ function EtapaDetalhesCliente({ etapa }: { etapa: ProjetoCliente["etapas"][numbe
       </div>
     );
   }
-  if (etapa.id === "agendamento" && (x.periodo || x.lider)) {
+  if (etapaId === "agendamento" && (x.periodo || x.lider)) {
     return (
       <div className="mt-3 text-sm space-y-1">
-        {etapa.dataPrevista && (
-          <div>Sua instalação está prevista para <strong>{dataBR(etapa.dataPrevista)}</strong>{x.periodo ? ` — ${x.periodo}` : ""}</div>
+        {dataPrevista && (
+          <div>Sua instalação está prevista para <strong>{dataBR(dataPrevista)}</strong>{x.periodo ? ` — ${x.periodo}` : ""}</div>
         )}
         {x.lider && <div>Líder técnico responsável: <strong>{x.lider}</strong></div>}
         {x.mensagemCliente && <div className="text-muted-foreground">{x.mensagemCliente}</div>}
       </div>
     );
   }
-  if (etapa.id === "instalacao" && Array.isArray(x.fotos) && x.fotos.length > 0) {
+  if (etapaId === "instalacao" && Array.isArray(x.fotos) && x.fotos.length > 0) {
     return (
       <div className="mt-3">
         <div className="text-[10px] uppercase text-muted-foreground mb-1">Fotos da instalação</div>
@@ -143,7 +143,7 @@ function EtapaDetalhesCliente({ etapa }: { etapa: ProjetoCliente["etapas"][numbe
       </div>
     );
   }
-  if (etapa.id === "ativacao" && (x.medidor || x.geracaoEstimada)) {
+  if (etapaId === "ativacao" && (x.medidor || x.geracaoEstimada)) {
     return (
       <div className="mt-3 text-sm space-y-1">
         {x.geracaoEstimada && (
@@ -153,7 +153,7 @@ function EtapaDetalhesCliente({ etapa }: { etapa: ProjetoCliente["etapas"][numbe
       </div>
     );
   }
-  if (etapa.id === "posvenda") {
+  if (etapaId === "posvenda") {
     return (
       <div className="mt-3 text-xs text-muted-foreground bg-muted/60 rounded-md p-2">
         <strong className="text-foreground">Garantias:</strong> módulos 25 anos · inversor 5 anos · mão de obra 1 ano
