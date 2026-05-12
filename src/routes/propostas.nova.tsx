@@ -199,7 +199,7 @@ function NovaProposta() {
     }
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
-    const consultor = usuarios.find((u) => u.id === currentUserId);
+    const consultor = profileToConsultor(currentUserId);
     // Proposta temporária só para preview
     const temp = {
       id: "preview",
