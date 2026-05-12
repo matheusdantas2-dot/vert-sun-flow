@@ -17,14 +17,18 @@ export interface Notificacao {
 
 interface State {
   itens: Notificacao[];
+  dispensados: string[]; // ids de alertas virtuais (SLA/propostas/visitas) marcados como concluídos
   push: (n: Omit<Notificacao, "id" | "criadoEm" | "lida"> & { silent?: boolean }) => void;
   marcarTodasLidas: () => void;
   marcarLida: (id: string) => void;
   limpar: () => void;
+  dispensar: (id: string) => void;
+  restaurarDispensados: () => void;
 }
 
 export const useNotificacoes = create<State>((set) => ({
   itens: [],
+  dispensados: [],
   push: ({ silent, ...n }) => {
     const item: Notificacao = {
       id: uid(),
@@ -44,6 +48,8 @@ export const useNotificacoes = create<State>((set) => ({
   marcarTodasLidas: () => set((s) => ({ itens: s.itens.map((i) => ({ ...i, lida: true })) })),
   marcarLida: (id) => set((s) => ({ itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
   limpar: () => set({ itens: [] }),
+  dispensar: (id) => set((s) => s.dispensados.includes(id) ? s : ({ dispensados: [...s.dispensados, id], itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
+  restaurarDispensados: () => set({ dispensados: [] }),
 }));
 
 // Atalhos

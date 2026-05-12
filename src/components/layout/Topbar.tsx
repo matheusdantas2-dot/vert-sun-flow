@@ -1,4 +1,4 @@
-import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox } from "lucide-react";
+import { Bell, Search, AlertTriangle, CheckCircle2, Info, AlertCircle, Trash2, Clock, FileText, CalendarClock, Wrench, Inbox, Check } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useNotificacoes } from "@/lib/notificacoes";
 import { useState, useMemo } from "react";
@@ -120,8 +120,11 @@ export function Topbar() {
   }, [cards, sla, clientes, propostas, atividades]);
 
   const notifs = useNotificacoes((s) => s.itens);
-  const marcarTodasLidas = useNotificacoes((s) => s.marcarTodasLidas);
+  const dispensados = useNotificacoes((s) => s.dispensados);
+  const marcarLida = useNotificacoes((s) => s.marcarLida);
   const limpar = useNotificacoes((s) => s.limpar);
+  const dispensar = useNotificacoes((s) => s.dispensar);
+  const restaurarDispensados = useNotificacoes((s) => s.restaurarDispensados);
 
   const todas = useMemo<NotifItem[]>(() => {
     const geral: NotifItem[] = notifs.map((n) => ({
@@ -135,11 +138,14 @@ export function Topbar() {
       categoria: "geral",
       urgencia: n.tipo === "error" ? 3 : n.tipo === "warning" ? 2 : n.tipo === "success" ? 1 : 0,
     }));
-    return [...alertasVirtuais, ...geral].sort((a, b) => {
-      if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
-      return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
-    });
-  }, [alertasVirtuais, notifs]);
+    const dispensadosSet = new Set(dispensados);
+    return [...alertasVirtuais, ...geral]
+      .filter((n) => !dispensadosSet.has(n.id))
+      .sort((a, b) => {
+        if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
+        return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+      });
+  }, [alertasVirtuais, notifs, dispensados]);
 
   const naoLidas = todas.filter((n) => !n.lida).length;
   const [aba, setAba] = useState<"todas" | Categoria>("todas");
@@ -197,7 +203,7 @@ export function Topbar() {
 
         <div className="relative">
           <button
-            onClick={() => { setOpenNotif((v) => !v); if (!openNotif) marcarTodasLidas(); }}
+            onClick={() => setOpenNotif((v) => !v)}
             className="relative p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
             aria-label="Notificações"
           >
@@ -217,11 +223,18 @@ export function Topbar() {
                     <div className="font-display font-bold text-sm">Notificações</div>
                     <div className="text-[11px] text-muted-foreground">{todas.length} no total · ordenadas por urgência</div>
                   </div>
-                  {notifs.length > 0 && (
-                    <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
-                      <Trash2 className="h-3 w-3" /> limpar
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {dispensados.length > 0 && (
+                      <button onClick={restaurarDispensados} className="text-xs text-muted-foreground hover:text-vert">
+                        restaurar ({dispensados.length})
+                      </button>
+                    )}
+                    {notifs.length > 0 && (
+                      <button onClick={limpar} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
+                        <Trash2 className="h-3 w-3" /> limpar
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1 px-2 py-2 border-b border-border overflow-x-auto">
                   {CATS.map((c) => {
@@ -250,7 +263,17 @@ export function Topbar() {
                       Nenhuma notificação nesta categoria.
                     </div>
                   ) : (
-                    visiveis.map((n) => <NotifRow key={n.id} n={n} onClose={() => setOpenNotif(false)} />)
+                    visiveis.map((n) => (
+                      <NotifRow
+                        key={n.id}
+                        n={n}
+                        onClose={() => setOpenNotif(false)}
+                        onMarcarLida={() => {
+                          if (n.categoria === "geral") marcarLida(n.id);
+                        }}
+                        onConcluir={() => dispensar(n.id)}
+                      />
+                    ))
                   )}
                 </div>
               </div>
@@ -264,7 +287,17 @@ export function Topbar() {
   );
 }
 
-function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
+function NotifRow({
+  n,
+  onClose,
+  onMarcarLida,
+  onConcluir,
+}: {
+  n: NotifItem;
+  onClose?: () => void;
+  onMarcarLida?: () => void;
+  onConcluir?: () => void;
+}) {
   const Icon = n.tipo === "error" ? AlertCircle
     : n.tipo === "warning" ? AlertTriangle
     : n.tipo === "success" ? CheckCircle2
@@ -276,8 +309,19 @@ function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
   const borda = n.urgencia >= 3 ? "border-l-2 border-l-rose-500"
     : n.urgencia === 2 ? "border-l-2 border-l-amber-500"
     : "";
+  const handleClick = () => {
+    onMarcarLida?.();
+    onClose?.();
+  };
+  const handleConcluir = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onConcluir?.();
+  };
+  const className = `group relative flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40 ${borda} ${n.lida ? "opacity-60" : ""}`;
   const conteudo = (
     <>
+      {!n.lida && <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-vert" aria-hidden />}
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cor}`}>
         <Icon className="h-4 w-4" />
       </div>
@@ -286,13 +330,21 @@ function NotifRow({ n, onClose }: { n: NotifItem; onClose?: () => void }) {
         {n.mensagem && <div className="text-xs text-muted-foreground line-clamp-2">{n.mensagem}</div>}
         <div className="text-[10px] text-muted-foreground mt-1">{dataHoraBR(n.criadoEm)}</div>
       </div>
+      {onConcluir && (
+        <button
+          onClick={handleConcluir}
+          title="Marcar como concluído"
+          className="opacity-0 group-hover:opacity-100 transition-opacity self-center p-1.5 rounded-md hover:bg-vert hover:text-white text-muted-foreground"
+        >
+          <Check className="h-3.5 w-3.5" />
+        </button>
+      )}
     </>
   );
-  const className = `flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/40 ${borda}`;
   if (n.link) {
-    return <Link to={n.link} onClick={onClose} className={className}>{conteudo}</Link>;
+    return <Link to={n.link} onClick={handleClick} className={className}>{conteudo}</Link>;
   }
-  return <div className={className}>{conteudo}</div>;
+  return <div onClick={handleClick} className={className}>{conteudo}</div>;
 }
 
 function UserSwitcher() {
