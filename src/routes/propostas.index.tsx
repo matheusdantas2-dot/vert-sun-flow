@@ -55,11 +55,6 @@ function PropostasList() {
     }
   };
 
-  const aceitar = (id: string, numero: string) => {
-    updateStatus.mutate({ id, status: "aceita" });
-    notify.success("Proposta aceita", `${numero} marcada como fechada.`);
-  };
-
   const mudarStatus = (id: string, status: PropostaStatus) => {
     updateStatus.mutate({ id, status });
     notify.success("Status atualizado", STATUS_PROPOSTA_LABEL[status]);
