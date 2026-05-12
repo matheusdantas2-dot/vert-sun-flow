@@ -145,10 +145,22 @@ function PropostasList() {
                     <td className="px-4 py-3 text-right tabular-nums font-semibold text-vert">{brl(calcTotal(p))}</td>
                     <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">{dataBR(p.validadeAte)}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`badge-stage ${statusColor[p.status]}`}>{STATUS_PROPOSTA_LABEL[p.status]}</span>
+                      <select
+                        value={p.status}
+                        onChange={(e) => mudarStatus(p.id, e.target.value as PropostaStatus)}
+                        className={`badge-stage cursor-pointer border-0 outline-none ${statusColor[p.status]}`}
+                        title="Alterar status"
+                      >
+                        {STATUS_LIST.map((s) => (
+                          <option key={s} value={s}>{STATUS_PROPOSTA_LABEL[s]}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-3">
+                        <Link to="/propostas/$id" params={{ id: p.id }} className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-vert">
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </Link>
                         <button onClick={() => visualizarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline">
                           <Eye className="h-3.5 w-3.5" /> Visualizar
                         </button>
@@ -158,11 +170,6 @@ function PropostasList() {
                         {podePdf && (
                           <button onClick={() => baixarPdf(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline">
                             <Download className="h-3.5 w-3.5" /> PDF
-                          </button>
-                        )}
-                        {p.status !== "aceita" && p.status !== "recusada" && (
-                          <button onClick={() => aceitar(p.id, p.numero)} className="text-xs font-semibold text-vert hover:underline">
-                            Marcar aceita
                           </button>
                         )}
                       </div>
