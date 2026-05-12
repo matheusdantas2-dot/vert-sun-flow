@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
+import { useClienteQuery, useUpdateCliente, useDeleteCliente } from "@/lib/clientes.api";
 import { brl, brlPrec, dataBR, dataHoraBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Phone, MessageCircle, Pencil, FileText, ArrowLeft, Plus } from "lucide-react";
@@ -14,14 +15,14 @@ export const Route = createFileRoute("/clientes/$id")({
 
 function ClienteDetalhe() {
   const { id } = Route.useParams();
-  const cliente = useStore((s) => s.clientes.find((c) => c.id === id));
+  const { data: cliente, isLoading } = useClienteQuery(id);
   const todasInteracoes = useStore((s) => s.interacoes);
   const todasPropostas = useStore((s) => s.propostas);
   const todosCards = useStore((s) => s.cards);
   const produtos = useStore((s) => s.produtos);
   const addInteracao = useStore((s) => s.addInteracao);
-  const updateCliente = useStore((s) => s.updateCliente);
-  const deleteCliente = useStore((s) => s.deleteCliente);
+  const updateClienteMut = useUpdateCliente();
+  const deleteClienteMut = useDeleteCliente();
   const navigate = useNavigate();
 
   const [editOpen, setEditOpen] = useState(false);
@@ -31,6 +32,9 @@ function ClienteDetalhe() {
   const propostas = useMemo(() => todasPropostas.filter((p) => p.clienteId === id), [todasPropostas, id]);
   const cards = useMemo(() => todosCards.filter((c) => c.clienteId === id), [todosCards, id]);
 
+  if (isLoading) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando…</div>;
+  }
   if (!cliente) {
     return (
       <div className="p-8 text-center">
@@ -139,10 +143,10 @@ function ClienteDetalhe() {
           </div>
 
           <div className="flex gap-2">
-            <button onClick={() => updateCliente(cliente.id, { ativo: !cliente.ativo })} className="flex-1 px-3 py-2 rounded-lg border border-border text-sm hover:bg-accent">
+            <button onClick={() => updateClienteMut.mutate({ id: cliente.id, patch: { ativo: !cliente.ativo } })} className="flex-1 px-3 py-2 rounded-lg border border-border text-sm hover:bg-accent">
               {cliente.ativo ? "Marcar inativo" : "Marcar ativo"}
             </button>
-            <button onClick={() => { if (confirm("Excluir este cliente?")) { deleteCliente(cliente.id); navigate({ to: "/clientes" }); } }} className="px-3 py-2 rounded-lg border border-rose-300 text-rose-700 text-sm hover:bg-rose-50">
+            <button onClick={async () => { if (confirm("Excluir este cliente?")) { await deleteClienteMut.mutateAsync(cliente.id); navigate({ to: "/clientes" }); } }} className="px-3 py-2 rounded-lg border border-rose-300 text-rose-700 text-sm hover:bg-rose-50">
               Excluir
             </button>
           </div>
