@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { Plus, FileText, ExternalLink, Download, Eye, Share2 } from "lucide-react";
@@ -9,6 +8,11 @@ import { notify } from "@/lib/notificacoes";
 import { useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import { useClientesQuery } from "@/lib/clientes.api";
+import { useProdutosQuery } from "@/lib/produtos.api";
+import { useProfilesQuery } from "@/lib/profiles.api";
+import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
@@ -16,12 +20,12 @@ export const Route = createFileRoute("/propostas/")({
 });
 
 function PropostasList() {
-  const propostas = useStore((s) => s.propostas);
-  const clientes = useStore((s) => s.clientes);
-  const usuarios = useStore((s) => s.usuarios);
-  const produtos = useStore((s) => s.produtos);
+  const { data: propostas = [] } = usePropostasQuery();
+  const { data: clientes = [] } = useClientesQuery();
+  const { data: produtos = [] } = useProdutosQuery();
+  const { data: profiles = [] } = useProfilesQuery();
   const empresa = useStore((s) => s.empresa);
-  const aceitarProposta = useStore((s) => s.aceitarProposta);
+  const updateStatus = useUpdatePropostaStatus();
   const podeCriar = usePode("criar_proposta");
   const podePdf = usePode("exportar_pdf");
 
@@ -31,7 +35,10 @@ function PropostasList() {
   const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
     const cliente = clientes.find((c) => c.id === p?.clienteId);
-    const consultor = usuarios.find((u) => u.id === p?.consultorId);
+    const profile = profiles.find((u) => u.id === p?.consultorId);
+    const consultor = profile
+      ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+      : undefined;
     if (!p || !cliente) return null;
     return { result: gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
   };
@@ -49,7 +56,7 @@ function PropostasList() {
   };
 
   const aceitar = (id: string, numero: string) => {
-    aceitarProposta(id);
+    updateStatus.mutate({ id, status: "aceita" });
     notify.success("Proposta aceita", `${numero} marcada como fechada.`);
   };
 
@@ -112,7 +119,7 @@ function PropostasList() {
             <tbody>
               {propostas.map((p) => {
                 const cliente = clientes.find((c) => c.id === p.clienteId);
-                const consultor = usuarios.find((u) => u.id === p.consultorId);
+                const consultor = profiles.find((u) => u.id === p.consultorId);
                 return (
                   <tr key={p.id} className="border-t border-border hover:bg-accent/40">
                     <td className="px-4 py-3">

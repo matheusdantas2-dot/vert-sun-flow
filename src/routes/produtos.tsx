@@ -1,10 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { brl } from "@/lib/format";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Produto, ProdutoCategoria } from "@/lib/types";
 import { usePode } from "@/lib/permissoes";
+import {
+  useProdutosQuery,
+  useAddProduto,
+  useUpdateProduto,
+  useDeleteProduto,
+} from "@/lib/produtos.api";
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
@@ -20,10 +25,10 @@ const CAT_LABEL: Record<ProdutoCategoria, string> = {
 };
 
 function Produtos() {
-  const produtos = useStore((s) => s.produtos);
-  const addProduto = useStore((s) => s.addProduto);
-  const updateProduto = useStore((s) => s.updateProduto);
-  const deleteProduto = useStore((s) => s.deleteProduto);
+  const { data: produtos = [] } = useProdutosQuery();
+  const addProdutoM = useAddProduto();
+  const updateProdutoM = useUpdateProduto();
+  const deleteProdutoM = useDeleteProduto();
   const podeEditar = usePode("editar_produto");
   const podeVerMargem = usePode("ver_margem");
 
@@ -90,7 +95,7 @@ function Produtos() {
                     <td className="px-4 py-3 text-right">
                       {podeEditar && <>
                         <button onClick={() => { setEditing(p); setOpen(true); }} className="text-xs font-semibold text-vert hover:underline mr-2">Editar</button>
-                        <button onClick={() => { if (confirm("Excluir item?")) deleteProduto(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
+                        <button onClick={() => { if (confirm("Excluir item?")) deleteProdutoM.mutate(p.id); }} className="text-rose-600 hover:text-rose-700"><Trash2 className="h-4 w-4 inline" /></button>
                       </>}
                     </td>
                   </tr>
@@ -106,8 +111,8 @@ function Produtos() {
           produto={editing}
           onClose={() => setOpen(false)}
           onSave={(data) => {
-            if (editing) updateProduto(editing.id, data);
-            else addProduto(data);
+            if (editing) updateProdutoM.mutate({ id: editing.id, patch: data });
+            else addProdutoM.mutate(data);
             setOpen(false);
           }}
         />
