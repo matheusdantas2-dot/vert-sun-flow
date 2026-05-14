@@ -5,6 +5,8 @@ import { useProfilesQuery } from "@/lib/profiles.api";
 import { useAuth } from "@/lib/auth";
 import { notify } from "@/lib/notificacoes";
 import type { LeadOrigem } from "@/lib/types";
+import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
+import { Plus } from "lucide-react";
 
 export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
@@ -17,6 +19,7 @@ export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () =>
   const [potenciaKwp, setPotenciaKwp] = useState(0);
   const [origem, setOrigem] = useState<LeadOrigem>("prospeccao");
   const [consultorId, setConsultorId] = useState("");
+  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -62,12 +65,21 @@ export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () =>
         <div className="space-y-3">
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cliente</span>
-            <select className={inp + " mt-1"} value={clienteId} onChange={(e) => setClienteId(e.target.value)} required>
-              <option value="">Selecione…</option>
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
-              ))}
-            </select>
+            <div className="mt-1 flex gap-2">
+              <select className={inp + " flex-1"} value={clienteId} onChange={(e) => setClienteId(e.target.value)} required>
+                <option value="">Selecione…</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setNovoClienteOpen(true)}
+                className="inline-flex items-center gap-1 px-3 h-9 rounded-lg border border-vert text-vert text-xs font-semibold hover:bg-vert-soft whitespace-nowrap"
+              >
+                <Plus className="h-3.5 w-3.5" /> Novo
+              </button>
+            </div>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
