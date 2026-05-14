@@ -123,6 +123,11 @@ export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () =>
           </button>
         </div>
       </form>
+      <ClienteFormModal
+        open={novoClienteOpen}
+        onClose={() => setNovoClienteOpen(false)}
+        onCreated={(c) => setClienteId(c.id)}
+      />
     </div>
   );
 }
