@@ -18,6 +18,7 @@ import {
 import { brl, kwp, dataBR, dataHoraBR, formatTel } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
+import { MensagensWhatsApp } from "@/components/clientes/MensagensWhatsApp";
 import { mensagemWhatsAppInicial, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import { notify } from "@/lib/notificacoes";
 import { useMemo, useState } from "react";
@@ -308,6 +309,9 @@ function CardDetalhe() {
           </div>
         )}
       </div>
+
+      {/* Mensagens prontas WhatsApp */}
+      <MensagensWhatsApp cliente={cliente} />
 
       {/* Registrar interação */}
       <div className="bg-card rounded-xl border border-border p-5">
