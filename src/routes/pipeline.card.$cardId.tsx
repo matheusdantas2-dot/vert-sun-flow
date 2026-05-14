@@ -2,6 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCardsQuery } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import {
+  useInteracoesByClienteQuery,
+  useAddInteracao,
+  useInteracoesRealtime,
+} from "@/lib/interacoes.api";
 import {
   useProjetoByCardId,
   useCriarProjeto,
@@ -9,11 +15,12 @@ import {
   useRemoverProjeto,
   useProjetosRealtime,
 } from "@/lib/projetos.api";
-import { brl, kwp, dataBR, formatTel } from "@/lib/format";
-import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES } from "@/lib/types";
+import { brl, kwp, dataBR, dataHoraBR, formatTel } from "@/lib/format";
+import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
 import { mensagemWhatsAppInicial, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import { notify } from "@/lib/notificacoes";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   Phone,
@@ -24,6 +31,8 @@ import {
   RefreshCw,
   Trash2,
   User,
+  FileText,
+  Plus,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
@@ -39,6 +48,7 @@ function CardDetalhe() {
   const { data: cards = [] } = useCardsQuery();
   const { data: clientes = [] } = useClientesQuery();
   const { data: profiles = [] } = useProfilesQuery();
+  const { data: todasPropostas = [] } = usePropostasQuery();
   const { data: projetoData } = useProjetoByCardId(cardId);
   const criarMut = useCriarProjeto();
   const regenerarMut = useRegenerarToken();
@@ -48,6 +58,18 @@ function CardDetalhe() {
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
   const consultor = card ? profiles.find((u) => u.id === card.consultorId) : undefined;
   const projeto = projetoData?.projeto;
+
+  const { data: interacoes = [] } = useInteracoesByClienteQuery(cliente?.id);
+  useInteracoesRealtime(cliente?.id);
+  const addInteracao = useAddInteracao();
+  const [novaNota, setNovaNota] = useState("");
+
+  const propostas = useMemo(
+    () => todasPropostas.filter((p) => cliente && p.clienteId === cliente.id),
+    [todasPropostas, cliente],
+  );
+  const calcProposta = (p: typeof propostas[number]) =>
+    p.itens.reduce((a, it) => a + (it.precoUnitario ?? 0) * it.quantidade, 0);
 
   if (!card || !cliente) {
     return (
@@ -59,6 +81,14 @@ function CardDetalhe() {
       </div>
     );
   }
+
+  const registrarNota = () => {
+    if (!novaNota.trim()) return;
+    addInteracao.mutate(
+      { cliente_id: cliente.id, tipo: "nota", titulo: "Nota interna", descricao: novaNota },
+      { onSuccess: () => setNovaNota("") },
+    );
+  };
 
   const stage = STAGES.find((s) => s.id === card.stage);
   const link = projeto ? urlPortal(projeto.token_publico) : "";
@@ -233,6 +263,91 @@ function CardDetalhe() {
           <Info label="E-mail" value={cliente.email} />
           <Info label="Concessionária" value={cliente.concessionaria} />
         </div>
+      </div>
+
+      {/* Propostas */}
+      <div className="bg-card rounded-xl border border-border p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display font-bold text-lg">Propostas ({propostas.length})</h2>
+          <Link
+            to="/propostas/nova"
+            search={{ clienteId: cliente.id }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" /> Nova proposta
+          </Link>
+        </div>
+        {propostas.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">Nenhuma proposta gerada para este cliente ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {propostas.map((p) => (
+              <Link
+                key={p.id}
+                to="/propostas/$id"
+                params={{ id: p.id }}
+                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/40"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="h-4 w-4 text-vert" />
+                  <div>
+                    <div className="font-semibold text-sm">{p.numero}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {dataBR(p.criadoEm)} · validade {dataBR(p.validadeAte)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-vert">{brl(calcProposta(p))}</div>
+                  <span className="badge-stage bg-muted text-muted-foreground text-[9px]">
+                    {STATUS_PROPOSTA_LABEL[p.status]}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Registrar interação */}
+      <div className="bg-card rounded-xl border border-border p-5">
+        <h2 className="font-display font-bold text-base mb-3">Registrar interação</h2>
+        <textarea
+          value={novaNota}
+          onChange={(e) => setNovaNota(e.target.value)}
+          placeholder="Anote uma observação, retorno do cliente, próximos passos…"
+          className="w-full p-3 rounded-lg bg-muted border border-transparent focus:bg-card focus:border-vert-light text-sm outline-none min-h-[70px]"
+        />
+        <button
+          onClick={registrarNota}
+          disabled={addInteracao.isPending}
+          className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
+        >
+          Adicionar nota
+        </button>
+      </div>
+
+      {/* Histórico */}
+      <div className="bg-card rounded-xl border border-border p-5">
+        <h2 className="font-display font-bold text-base mb-4">Histórico do negócio</h2>
+        {interacoes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma interação registrada.</p>
+        ) : (
+          <ol className="relative border-l-2 border-vert-soft ml-2 space-y-4">
+            {interacoes.map((i) => (
+              <li key={i.id} className="ml-5">
+                <span className="absolute -left-[9px] w-4 h-4 rounded-full bg-vert border-2 border-card" />
+                <div className="text-[11px] text-muted-foreground">
+                  {dataHoraBR(i.data)} · {i.tipo}
+                </div>
+                <div className="font-semibold text-sm">{i.titulo}</div>
+                {i.descricao && (
+                  <div className="text-sm text-muted-foreground mt-0.5">{i.descricao}</div>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
     </div>
   );
