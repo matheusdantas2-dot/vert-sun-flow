@@ -64,6 +64,11 @@ function CardDetalhe() {
   const criarMut = useCriarProjeto();
   const regenerarMut = useRegenerarToken();
   const removerMut = useRemoverProjeto();
+  const updateStatus = useUpdatePropostaStatus();
+  const { data: produtos = [] } = useProdutosQuery();
+  const empresa = useStore((s) => s.empresa);
+  const [preview, setPreview] = useState<{ url: string; titulo: string } | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const card = cards.find((c) => c.id === cardId);
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
