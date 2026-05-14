@@ -310,6 +310,9 @@ function CardDetalhe() {
         )}
       </div>
 
+      {/* Mensagens prontas WhatsApp */}
+      <MensagensWhatsApp cliente={cliente} />
+
       {/* Registrar interação */}
       <div className="bg-card rounded-xl border border-border p-5">
         <h2 className="font-display font-bold text-base mb-3">Registrar interação</h2>
