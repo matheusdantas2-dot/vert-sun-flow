@@ -91,6 +91,7 @@ export type Database = {
           motivo_perda: string | null
           origem: string
           potencia_kwp: number
+          proposta_id: string | null
           stage: string
           updated_at: string
           valor_estimado: number
@@ -104,6 +105,7 @@ export type Database = {
           motivo_perda?: string | null
           origem?: string
           potencia_kwp?: number
+          proposta_id?: string | null
           stage?: string
           updated_at?: string
           valor_estimado?: number
@@ -117,6 +119,7 @@ export type Database = {
           motivo_perda?: string | null
           origem?: string
           potencia_kwp?: number
+          proposta_id?: string | null
           stage?: string
           updated_at?: string
           valor_estimado?: number
