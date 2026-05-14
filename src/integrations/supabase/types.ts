@@ -829,6 +829,10 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      sincronizar_card_com_propostas: {
+        Args: { p_cliente_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "gestor" | "consultor" | "tecnico"
