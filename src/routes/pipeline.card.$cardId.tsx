@@ -2,7 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCardsQuery } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
-import { usePropostasQuery } from "@/lib/propostas.api";
+import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
+import { useProdutosQuery } from "@/lib/produtos.api";
+import { useStore } from "@/lib/store";
+import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
+import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import type { PropostaStatus } from "@/lib/types";
 import {
   useInteracoesByClienteQuery,
   useAddInteracao,
@@ -34,6 +40,10 @@ import {
   User,
   FileText,
   Plus,
+  Eye,
+  Share2,
+  Download,
+  Pencil,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
@@ -54,6 +64,11 @@ function CardDetalhe() {
   const criarMut = useCriarProjeto();
   const regenerarMut = useRegenerarToken();
   const removerMut = useRemoverProjeto();
+  const updateStatus = useUpdatePropostaStatus();
+  const { data: produtos = [] } = useProdutosQuery();
+  const empresa = useStore((s) => s.empresa);
+  const [preview, setPreview] = useState<{ url: string; titulo: string } | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const card = cards.find((c) => c.id === cardId);
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
@@ -282,33 +297,79 @@ function CardDetalhe() {
           <p className="text-sm text-muted-foreground py-4">Nenhuma proposta gerada para este cliente ainda.</p>
         ) : (
           <div className="space-y-2">
-            {propostas.map((p) => (
-              <Link
-                key={p.id}
-                to="/propostas/$id"
-                params={{ id: p.id }}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/40"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-vert" />
-                  <div>
-                    <div className="font-semibold text-sm">{p.numero}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {dataBR(p.criadoEm)} · validade {dataBR(p.validadeAte)}
+            {propostas.map((p) => {
+              const profile = profiles.find((u) => u.id === p.consultorId);
+              const consultorPdf = profile
+                ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+                : undefined;
+              const buildPdf = (modo: "save" | "blob") =>
+                gerarPdfProposta({ proposta: p, cliente, consultor: consultorPdf, produtos, empresa, modo });
+              const visualizar = () => {
+                const url = buildPdf("blob");
+                if (typeof url === "string") setPreview({ url, titulo: `${p.numero} · ${cliente.nome}` });
+              };
+              const baixar = () => {
+                buildPdf("save");
+                notify.success("PDF gerado", `Proposta ${p.numero} baixada.`);
+              };
+              return (
+                <div key={p.id} className="p-3 rounded-lg border border-border hover:bg-accent/30">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileText className="h-4 w-4 text-vert shrink-0" />
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm">{p.numero}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {dataBR(p.criadoEm)} · validade {dataBR(p.validadeAte)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="font-bold text-vert">{brl(calcProposta(p))}</div>
+                      <select
+                        value={p.status}
+                        onChange={(e) => {
+                          const status = e.target.value as PropostaStatus;
+                          updateStatus.mutate({ id: p.id, status });
+                          notify.success("Status atualizado", STATUS_PROPOSTA_LABEL[status]);
+                        }}
+                        className="badge-stage bg-muted text-foreground text-[10px] cursor-pointer outline-none border border-border rounded px-1 py-0.5"
+                      >
+                        {(["rascunho","enviada","negociacao","aceita","recusada","expirada"] as PropostaStatus[]).map((s) => (
+                          <option key={s} value={s}>{STATUS_PROPOSTA_LABEL[s]}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
+                  <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-border">
+                    <Link to="/propostas/$id" params={{ id: p.id }} className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-vert px-2 py-1 rounded hover:bg-accent">
+                      <Pencil className="h-3.5 w-3.5" /> Editar
+                    </Link>
+                    <button onClick={visualizar} className="inline-flex items-center gap-1 text-xs font-semibold text-vert hover:underline px-2 py-1 rounded hover:bg-accent">
+                      <Eye className="h-3.5 w-3.5" /> Visualizar
+                    </button>
+                    <button onClick={() => setShareId(p.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline px-2 py-1 rounded hover:bg-accent">
+                      <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                    </button>
+                    <button onClick={baixar} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline px-2 py-1 rounded hover:bg-accent">
+                      <Download className="h-3.5 w-3.5" /> PDF
+                    </button>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-vert">{brl(calcProposta(p))}</div>
-                  <span className="badge-stage bg-muted text-muted-foreground text-[9px]">
-                    {STATUS_PROPOSTA_LABEL[p.status]}
-                  </span>
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {preview && (
+        <PdfPreviewModal
+          url={preview.url}
+          titulo={preview.titulo}
+          onClose={() => setPreview(null)}
+        />
+      )}
+      {shareId && <CompartilharPropostaModal propostaId={shareId} onClose={() => setShareId(null)} />}
 
       {/* Mensagens prontas WhatsApp */}
       <MensagensWhatsApp cliente={cliente} />
