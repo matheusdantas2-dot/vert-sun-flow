@@ -191,7 +191,10 @@ export function useUpdateProposta() {
         }
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: ["cards_pipeline"] });
+    },
   });
 }
 
