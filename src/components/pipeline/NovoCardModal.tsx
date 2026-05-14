@@ -57,6 +57,7 @@ export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () =>
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <form onSubmit={submit} className="bg-card rounded-xl shadow-2xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display font-bold text-xl mb-1">Novo card no pipeline</h2>
@@ -123,11 +124,12 @@ export function NovoCardModal({ open, onClose }: { open: boolean; onClose: () =>
           </button>
         </div>
       </form>
-      <ClienteFormModal
-        open={novoClienteOpen}
-        onClose={() => setNovoClienteOpen(false)}
-        onCreated={(c) => setClienteId(c.id)}
-      />
     </div>
+    <ClienteFormModal
+      open={novoClienteOpen}
+      onClose={() => setNovoClienteOpen(false)}
+      onCreated={(c) => setClienteId(c.id)}
+    />
+    </>
   );
 }
