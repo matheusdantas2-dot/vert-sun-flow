@@ -88,10 +88,12 @@ export function ClienteFormModal({
   open,
   onClose,
   cliente,
+  onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   cliente?: Cliente;
+  onCreated?: (cliente: Cliente) => void;
 }) {
   const addCliente = useAddCliente();
   const updateCliente = useUpdateCliente();
@@ -128,8 +130,9 @@ export function ClienteFormModal({
         await updateCliente.mutateAsync({ id: cliente.id, patch: data });
         notify.success("Cliente atualizado", data.nome);
       } else {
-        await addCliente.mutateAsync(data);
+        const novo = await addCliente.mutateAsync(data);
         notify.success("Cliente cadastrado", data.nome);
+        onCreated?.(novo);
       }
       onClose();
     } catch (err: unknown) {
