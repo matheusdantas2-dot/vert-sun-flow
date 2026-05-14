@@ -2,6 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCardsQuery } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
+import { usePropostasQuery } from "@/lib/propostas.api";
+import {
+  useInteracoesByClienteQuery,
+  useAddInteracao,
+  useInteracoesRealtime,
+} from "@/lib/interacoes.api";
 import {
   useProjetoByCardId,
   useCriarProjeto,
@@ -9,11 +15,12 @@ import {
   useRemoverProjeto,
   useProjetosRealtime,
 } from "@/lib/projetos.api";
-import { brl, kwp, dataBR, formatTel } from "@/lib/format";
-import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES } from "@/lib/types";
+import { brl, kwp, dataBR, dataHoraBR, formatTel } from "@/lib/format";
+import { ORIGEM_LABEL, SEGMENTOS_LABEL, STAGES, STATUS_PROPOSTA_LABEL } from "@/lib/types";
 import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAdmin";
 import { mensagemWhatsAppInicial, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import { notify } from "@/lib/notificacoes";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   Phone,
@@ -24,6 +31,8 @@ import {
   RefreshCw,
   Trash2,
   User,
+  FileText,
+  Plus,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
@@ -39,6 +48,7 @@ function CardDetalhe() {
   const { data: cards = [] } = useCardsQuery();
   const { data: clientes = [] } = useClientesQuery();
   const { data: profiles = [] } = useProfilesQuery();
+  const { data: todasPropostas = [] } = usePropostasQuery();
   const { data: projetoData } = useProjetoByCardId(cardId);
   const criarMut = useCriarProjeto();
   const regenerarMut = useRegenerarToken();
@@ -48,6 +58,18 @@ function CardDetalhe() {
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
   const consultor = card ? profiles.find((u) => u.id === card.consultorId) : undefined;
   const projeto = projetoData?.projeto;
+
+  const { data: interacoes = [] } = useInteracoesByClienteQuery(cliente?.id);
+  useInteracoesRealtime(cliente?.id);
+  const addInteracao = useAddInteracao();
+  const [novaNota, setNovaNota] = useState("");
+
+  const propostas = useMemo(
+    () => todasPropostas.filter((p) => cliente && p.clienteId === cliente.id),
+    [todasPropostas, cliente],
+  );
+  const calcProposta = (p: typeof propostas[number]) =>
+    p.itens.reduce((a, it) => a + (it.precoUnitario ?? 0) * it.quantidade, 0);
 
   if (!card || !cliente) {
     return (
@@ -59,6 +81,14 @@ function CardDetalhe() {
       </div>
     );
   }
+
+  const registrarNota = () => {
+    if (!novaNota.trim()) return;
+    addInteracao.mutate(
+      { cliente_id: cliente.id, tipo: "nota", titulo: "Nota interna", descricao: novaNota },
+      { onSuccess: () => setNovaNota("") },
+    );
+  };
 
   const stage = STAGES.find((s) => s.id === card.stage);
   const link = projeto ? urlPortal(projeto.token_publico) : "";
