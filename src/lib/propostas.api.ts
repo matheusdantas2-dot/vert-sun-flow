@@ -140,7 +140,10 @@ export function useAddProposta() {
         .eq("proposta_id", proposta.id);
       return dbToProposta(proposta, (itens ?? []) as DbPropostaItem[]);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: ["cards_pipeline"] });
+    },
   });
 }
 
