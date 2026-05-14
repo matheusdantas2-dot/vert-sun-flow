@@ -40,6 +40,10 @@ import {
   User,
   FileText,
   Plus,
+  Eye,
+  Share2,
+  Download,
+  Pencil,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
