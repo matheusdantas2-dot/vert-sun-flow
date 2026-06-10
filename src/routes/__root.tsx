@@ -103,10 +103,10 @@ function AppShell() {
     if (!loading && !user && !publico) {
       navigate({
         to: "/login",
-        search: { redirect: location.pathname + location.search },
+        search: { redirect: location.href },
       });
     }
-  }, [loading, user, publico, location.pathname, location.search, navigate]);
+  }, [loading, user, publico, location.href, navigate]);
 
   if (publico) return <Outlet />;
 
