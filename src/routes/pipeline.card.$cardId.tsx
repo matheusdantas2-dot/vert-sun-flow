@@ -5,6 +5,7 @@ import { useProfilesQuery } from "@/lib/profiles.api";
 import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
 import { useProdutosQuery } from "@/lib/produtos.api";
 import { useStore } from "@/lib/store";
+import { useConfigGlobalQuery } from "@/lib/config.api";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
@@ -73,7 +74,9 @@ function CardDetalhe() {
   const removerMut = useRemoverProjeto();
   const updateStatus = useUpdatePropostaStatus();
   const { data: produtos = [] } = useProdutosQuery();
-  const empresa = useStore((s) => s.empresa);
+  const empresaStore = useStore((s) => s.empresa);
+  const { data: cfg } = useConfigGlobalQuery();
+  const empresa = { ...empresaStore, ...(cfg?.empresa ?? {}) };
   const [preview, setPreview] = useState<{ url: string; titulo: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const moveCard = useMoveCard();
