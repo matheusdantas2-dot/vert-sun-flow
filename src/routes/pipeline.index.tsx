@@ -1,19 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useStore } from "@/lib/store";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
 import { useCardsQuery, useMoveCard, useCardsRealtime } from "@/lib/cards.api";
-import { STAGES, type StageId } from "@/lib/types";
+import { STAGES, type StageId, ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { KanbanColumn } from "@/components/pipeline/KanbanColumn";
 import { KanbanCard } from "@/components/pipeline/KanbanCard";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import { GerarLinkProjetoModal } from "@/components/pipeline/GerarLinkProjetoModal";
 import { NovoCardModal } from "@/components/pipeline/NovoCardModal";
 import { useMemo, useState } from "react";
-import { Search, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { Search, ExternalLink, Plus, Loader2, LayoutGrid, List, Phone, MessageCircle, ArrowRight } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
+import { brl, kwp, initials, diasEntre, formatTel } from "@/lib/format";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pipeline/")({
   component: Pipeline,
