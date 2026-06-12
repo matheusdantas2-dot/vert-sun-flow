@@ -3,7 +3,7 @@ import { PropostaForm } from "@/components/propostas/PropostaForm";
 
 export const Route = createFileRoute("/propostas/$id")({
   component: EditarProposta,
-  head: () => ({ meta: [{ title: "Editar Proposta — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Editar Proposta — VertCRM" }] }),
 });
 
 function EditarProposta() {

@@ -10,7 +10,7 @@ const SUPABASE_KEY =
 
 function html(body: string, status = 200) {
   return new Response(
-    `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proposta Vert Energie</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f5f6f7;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;color:#1f2937}.card{background:#fff;border-radius:14px;padding:32px;max-width:460px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.08)}.logo{font-weight:800;color:#0d5234;font-size:22px;margin-bottom:8px}h1{font-size:18px;margin:8px 0}p{color:#555;font-size:14px;line-height:1.5}</style></head><body><div class="card"><div class="logo">Vert Energie</div>${body}</div></body></html>`,
+    `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proposta VertCRM</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f5f6f7;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;color:#1f2937}.card{background:#fff;border-radius:14px;padding:32px;max-width:460px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.08)}.logo{font-weight:800;color:#0d5234;font-size:22px;margin-bottom:8px}h1{font-size:18px;margin:8px 0}p{color:#555;font-size:14px;line-height:1.5}</style></head><body><div class="card"><div class="logo">VertCRM</div>${body}</div></body></html>`,
     { status, headers: { "Content-Type": "text/html; charset=utf-8" } },
   );
 }
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/p/$token")({
           return html("<h1>Link revogado</h1><p>Este link de proposta foi desativado pelo consultor.</p>", 410);
         }
         if (new Date(share.expira_em).getTime() < Date.now()) {
-          return html("<h1>Link expirado</h1><p>Solicite um novo link ao seu consultor Vert Energie.</p>", 410);
+          return html("<h1>Link expirado</h1><p>Solicite um novo link ao seu consultor VertCRM.</p>", 410);
         }
 
         // Registra abertura

@@ -9,7 +9,7 @@ export const Route = createFileRoute("/cliente/acompanhamento/$token")({
   component: PortalCliente,
   head: () => ({
     meta: [
-      { title: "Acompanhamento do Projeto — Vert Energie" },
+      { title: "Acompanhamento do Projeto — VertCRM" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
     ],
   }),
@@ -34,7 +34,7 @@ function PortalCliente() {
           <img src={VERT_LOGO_PNG_BASE64} alt="VertCRM" className="h-12 mx-auto mb-6 opacity-50" />
           <h1 className="text-xl font-bold text-[#0d5234] mb-2">Link inválido ou expirado</h1>
           <p className="text-sm text-muted-foreground">
-            Verifique o link recebido ou entre em contato com seu consultor da Vert Energie.
+            Verifique o link recebido ou entre em contato com seu consultor da VertCRM.
           </p>
         </div>
       </div>
@@ -47,7 +47,7 @@ function PortalCliente() {
   const pct = total ? Math.round((concluidas / total) * 100) : 0;
 
   const empresaTel = (empresa?.telefone as string) || "";
-  const empresaNome = (empresa?.razaoSocial as string) || "Vert Energie";
+  const empresaNome = (empresa?.razaoSocial as string) || "VertCRM";
   const waConsultor = empresaTel
     ? `https://wa.me/55${empresaTel.replace(/\D/g, "")}?text=${encodeURIComponent(
         `Olá! Sou ${cliente.nome}, gostaria de tirar uma dúvida sobre meu projeto.`,
@@ -129,10 +129,10 @@ function PortalCliente() {
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-5 right-5 bg-[#25D366] text-white rounded-full shadow-xl hover:scale-105 transition flex items-center gap-2 px-4 py-3 font-semibold"
-        aria-label="Falar com a Vert Energie no WhatsApp"
+        aria-label="Falar com a VertCRM no WhatsApp"
       >
         <MessageCircle className="h-5 w-5" />
-        <span className="hidden sm:inline">Falar com a Vert Energie</span>
+        <span className="hidden sm:inline">Falar com a VertCRM</span>
       </a>
     </div>
   );
