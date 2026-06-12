@@ -74,7 +74,9 @@ function CardDetalhe() {
   const removerMut = useRemoverProjeto();
   const updateStatus = useUpdatePropostaStatus();
   const { data: produtos = [] } = useProdutosQuery();
-  const empresa = useStore((s) => s.empresa);
+  const empresaStore = useStore((s) => s.empresa);
+  const { data: cfg } = useConfigGlobalQuery();
+  const empresa = { ...empresaStore, ...(cfg?.empresa ?? {}) };
   const [preview, setPreview] = useState<{ url: string; titulo: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const moveCard = useMoveCard();
