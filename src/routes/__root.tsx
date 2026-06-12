@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAberturasRealtime } from "@/hooks/useAberturasRealtime";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -41,6 +42,14 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8765e576-ff55-4b0e-8303-3237d1b3364c/id-preview-5f771f6a--c7043e1b-e213-4c2e-a404-1d1c52a595bb.lovable.app-1778094698574.png" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
+      { name: "theme-color", content: "#1a7a4a" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Vert CRM" },
+      { name: "application-name", content: "Vert CRM" },
+      { name: "msapplication-TileColor", content: "#0d5234" },
+      { name: "msapplication-TileImage", content: "/icons/icon-144x144.png" },
     ],
     links: [
       { rel: "icon", type: "image/png", href: "/favicon.png" },
@@ -51,6 +60,11 @@ export const Route = createRootRoute({
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap",
       },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192x192.png" },
+      { rel: "apple-touch-icon", sizes: "152x152", href: "/icons/icon-152x152.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192x192.png" },
+      { rel: "shortcut icon", href: "/icons/icon-96x96.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -83,11 +97,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator && import.meta.env.PROD) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch((err) => console.warn("SW falhou:", err));
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AppShell />
         <Toaster position="top-right" richColors closeButton />
+        <InstallBanner />
       </AuthProvider>
     </QueryClientProvider>
   );
