@@ -1,19 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useStore } from "@/lib/store";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
 import { useCardsQuery, useMoveCard, useCardsRealtime } from "@/lib/cards.api";
-import { STAGES, type StageId } from "@/lib/types";
+import { STAGES, type StageId, ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { KanbanColumn } from "@/components/pipeline/KanbanColumn";
 import { KanbanCard } from "@/components/pipeline/KanbanCard";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import { GerarLinkProjetoModal } from "@/components/pipeline/GerarLinkProjetoModal";
 import { NovoCardModal } from "@/components/pipeline/NovoCardModal";
 import { useMemo, useState } from "react";
-import { Search, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { Search, ExternalLink, Plus, Loader2, LayoutGrid, List, Phone, MessageCircle, ArrowRight } from "lucide-react";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
+import { brl, kwp, initials, diasEntre, formatTel } from "@/lib/format";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pipeline/")({
   component: Pipeline,
@@ -37,6 +40,7 @@ function Pipeline() {
   const [pendingMove, setPendingMove] = useState<{ cardId: string; stage: StageId } | null>(null);
   const [contratoCardId, setContratoCardId] = useState<string | null>(null);
   const [novoCardOpen, setNovoCardOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "lista">("kanban");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -116,9 +120,35 @@ function Pipeline() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Pipeline de Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} oportunidades · arraste os cards entre etapas</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {filtered.length} oportunidades {viewMode === "kanban" ? "· arraste os cards entre etapas" : "· visualize em lista"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border bg-muted p-0.5">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition",
+                viewMode === "kanban" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Visualização Kanban"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Kanban
+            </button>
+            <button
+              onClick={() => setViewMode("lista")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition",
+                viewMode === "lista" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Visualização em Lista"
+            >
+              <List className="h-4 w-4" />
+              Lista
+            </button>
+          </div>
           <button
             onClick={() => setNovoCardOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 text-sm font-semibold"
@@ -183,7 +213,7 @@ function Pipeline() {
         <div className="flex justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-vert" />
         </div>
-      ) : (
+      ) : viewMode === "kanban" ? (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-3 overflow-x-auto pb-4">
             {STAGES.map((s) => (
@@ -208,6 +238,132 @@ function Pipeline() {
             ) : null}
           </DragOverlay>
         </DndContext>
+      ) : (
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Segmento</TableHead>
+                  <TableHead>Cidade/UF</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Potência</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Consultor</TableHead>
+                  <TableHead className="text-right">Dias</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                      Nenhuma oportunidade encontrada
+                    </TableCell>
+                  </TableRow>
+                )}
+                {filtered.map((card) => {
+                  const cliente = clientesMap.get(card.clienteId);
+                  const consultor = profilesMap.get(card.consultorId);
+                  const stage = STAGES.find((s) => s.id === card.stage)!;
+                  const dias = diasEntre(card.diasNaEtapaDesde);
+                  const atrasado = dias > (sla[card.stage] ?? 999) && card.stage !== "ativado" && card.stage !== "perdido";
+                  return (
+                    <TableRow key={card.id} className="cursor-pointer hover:bg-muted/40">
+                      <TableCell>
+                        <Link
+                          to="/pipeline/card/$cardId"
+                          params={{ cardId: card.id }}
+                          className="font-medium text-vert-dark hover:underline"
+                        >
+                          {cliente?.nome ?? "—"}
+                        </Link>
+                        {cliente?.whatsapp && (
+                          <div className="text-[11px] text-muted-foreground">{formatTel(cliente.whatsapp)}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs">{cliente ? SEGMENTOS_LABEL[cliente.segmento] : "—"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs">
+                          {cliente ? `${cliente.endereco.cidade}/${cliente.endereco.uf}` : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">{brl(card.valorEstimado)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{kwp(card.potenciaKwp)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: stage.cor }} />
+                          <span className="text-xs">{stage.nome}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {consultor ? (
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                              style={{ backgroundColor: consultor.cor }}
+                            >
+                              {initials(consultor.nome)}
+                            </div>
+                            <span className="text-xs">{consultor.nome}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={cn("tabular-nums text-xs", atrasado && "text-rose-600 font-semibold")}>
+                          {dias}d
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">{ORIGEM_LABEL[card.origem]}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {cliente?.telefone && (
+                            <a
+                              href={`tel:+55${cliente.telefone.replace(/\D/g, "")}`}
+                              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                              title="Ligar"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          {cliente?.whatsapp && (
+                            <a
+                              href={`https://wa.me/55${cliente.whatsapp.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                              title="WhatsApp"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          <Link
+                            to="/pipeline/card/$cardId"
+                            params={{ cardId: card.id }}
+                            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                            title="Abrir card"
+                          >
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
 
       <MotivoPerdaModal
