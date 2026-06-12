@@ -15,7 +15,7 @@ import { useConfigGlobalQuery } from "@/lib/config.api";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
-  head: () => ({ meta: [{ title: "Dashboard — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — VertCRM" }] }),
 });
 
 function Dashboard() {
