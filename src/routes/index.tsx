@@ -71,7 +71,7 @@ function Dashboard() {
     <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto">
       <header>
         <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Dashboard Executiva</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Visão completa do mês — Vert Energie</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Visão completa do mês — VertCRM</p>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">

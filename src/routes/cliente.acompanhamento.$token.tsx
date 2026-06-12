@@ -31,7 +31,7 @@ function PortalCliente() {
     return (
       <div className="min-h-screen bg-[#f6faf7] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <img src={VERT_LOGO_PNG_BASE64} alt="Vert Energie" className="h-12 mx-auto mb-6 opacity-50" />
+          <img src={VERT_LOGO_PNG_BASE64} alt="VertCRM" className="h-12 mx-auto mb-6 opacity-50" />
           <h1 className="text-xl font-bold text-[#0d5234] mb-2">Link inválido ou expirado</h1>
           <p className="text-sm text-muted-foreground">
             Verifique o link recebido ou entre em contato com seu consultor da Vert Energie.
@@ -58,7 +58,7 @@ function PortalCliente() {
     <div className="min-h-screen bg-[#f6faf7] pb-24">
       <header className="bg-gradient-to-r from-[#0d5234] to-[#2d9e64] text-white">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center justify-between">
-          <img src={VERT_LOGO_PNG_BASE64} alt="Vert Energie" className="h-10 brightness-0 invert" />
+          <img src={VERT_LOGO_PNG_BASE64} alt="VertCRM" className="h-10 brightness-0 invert" />
           <span className="text-xs opacity-80">Portal do Cliente</span>
         </div>
       </header>

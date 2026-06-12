@@ -42,7 +42,7 @@ function LoginPage() {
             <Zap className="h-6 w-6 fill-current" />
           </div>
           <div className="font-display font-extrabold text-2xl tracking-tight">
-            vert.<span className="text-vert">energie</span>
+            VertCRM
           </div>
         </div>
 
