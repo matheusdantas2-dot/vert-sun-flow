@@ -16,7 +16,7 @@ import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/propostas/")({
   component: PropostasList,
-  head: () => ({ meta: [{ title: "Propostas — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Propostas — VertCRM" }] }),
 });
 
 function PropostasList() {

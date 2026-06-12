@@ -13,7 +13,7 @@ import {
 
 export const Route = createFileRoute("/produtos")({
   component: Produtos,
-  head: () => ({ meta: [{ title: "Produtos — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Produtos — VertCRM" }] }),
 });
 
 const CAT_LABEL: Record<ProdutoCategoria, string> = {
