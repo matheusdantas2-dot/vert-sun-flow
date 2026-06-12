@@ -449,6 +449,11 @@ function CardDetalhe() {
         />
       )}
       {shareId && <CompartilharPropostaModal propostaId={shareId} onClose={() => setShareId(null)} />}
+      <MotivoPerdaModal
+        open={motivoPerdaOpen}
+        onClose={() => setMotivoPerdaOpen(false)}
+        onConfirm={handleConfirmarPerda}
+      />
 
       {/* Mensagens prontas WhatsApp */}
       <MensagensWhatsApp cliente={cliente} />
