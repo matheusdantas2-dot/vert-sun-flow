@@ -182,11 +182,23 @@ function CardDetalhe() {
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div
-              className="inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded mb-2"
-              style={{ background: stage?.cor, color: "white" }}
-            >
-              {stage?.nome}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div
+                className="inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded"
+                style={{ background: stage?.cor, color: "white" }}
+              >
+                {stage?.nome}
+              </div>
+              {card.stage === "ativado" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-emerald-600 text-white">
+                  <Trophy className="h-3 w-3" /> Ganho
+                </span>
+              )}
+              {card.stage === "perdido" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-rose-600 text-white">
+                  <XCircle className="h-3 w-3" /> Perdido{card.motivoPerda ? ` · ${card.motivoPerda.slice(0, 40)}` : ""}
+                </span>
+              )}
             </div>
             <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">
               {cliente.nome}
