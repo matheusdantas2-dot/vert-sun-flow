@@ -79,11 +79,11 @@ export function urlPortal(token: string) {
 }
 
 export function mensagemWhatsAppInicial(cliente: Cliente, link: string, consultor?: Usuario) {
-  return `Olá ${cliente.nome}! 👋\n\nSeu projeto solar com a *VertCRM* está confirmado! 🌱⚡\n\nAcesse o link abaixo para acompanhar cada etapa do seu projeto em tempo real:\n\n👉 ${link}\n\nQualquer dúvida, estou à disposição!\n${consultor?.nome ?? "Equipe VertCRM"} — VertCRM`;
+  return `Olá ${cliente.nome}! 👋\n\nSeu projeto solar com a *Vert Energie* está confirmado! 🌱⚡\n\nAcesse o link abaixo para acompanhar cada etapa do seu projeto em tempo real:\n\n👉 ${link}\n\nQualquer dúvida, estou à disposição!\n${consultor?.nome ?? "Equipe Vert Energie"} — Vert Energie`;
 }
 
 export function mensagemWhatsAppAtualizacao(cliente: Cliente, link: string, consultor?: Usuario) {
-  return `Olá ${cliente.nome}! 👋\n\nSeu projeto solar com a *VertCRM* teve uma atualização! 🌱⚡\n\nConfira o andamento em tempo real:\n\n👉 ${link}\n\nQualquer dúvida, estou à disposição!\n${consultor?.nome ?? "Equipe VertCRM"} — VertCRM`;
+  return `Olá ${cliente.nome}! 👋\n\nSeu projeto solar com a *Vert Energie* teve uma atualização! 🌱⚡\n\nConfira o andamento em tempo real:\n\n👉 ${link}\n\nQualquer dúvida, estou à disposição!\n${consultor?.nome ?? "Equipe Vert Energie"} — Vert Energie`;
 }
 
 export function whatsappLink(telefone: string, mensagem: string) {
