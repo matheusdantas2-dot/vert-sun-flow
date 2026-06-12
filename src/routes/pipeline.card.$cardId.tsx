@@ -10,6 +10,8 @@ import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
+import { CondicoesContratoModal, type CondicoesContrato } from "@/components/pipeline/CondicoesContratoModal";
+import type { Proposta, Usuario } from "@/lib/types";
 import type { PropostaStatus } from "@/lib/types";
 import {
   useInteracoesByClienteQuery,
@@ -76,6 +78,7 @@ function CardDetalhe() {
   const [shareId, setShareId] = useState<string | null>(null);
   const moveCard = useMoveCard();
   const [motivoPerdaOpen, setMotivoPerdaOpen] = useState(false);
+  const [contratoProp, setContratoProp] = useState<{ proposta: Proposta; consultor?: Usuario; valor: number } | null>(null);
 
   const card = cards.find((c) => c.id === cardId);
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
@@ -426,10 +429,7 @@ function CardDetalhe() {
                     </button>
                     {p.status === "aceita" && (
                       <button
-                        onClick={() => {
-                          gerarPdfContrato({ card, cliente, proposta: p, produtos, consultor: consultorPdf, empresa, modo: "save" });
-                          notify.success("Contrato gerado", p.numero);
-                        }}
+                        onClick={() => setContratoProp({ proposta: p, consultor: consultorPdf, valor: calcProposta(p) })}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline px-2 py-1 rounded hover:bg-accent"
                       >
                         <FileSignature className="h-3.5 w-3.5" /> Contrato
@@ -456,6 +456,31 @@ function CardDetalhe() {
         onClose={() => setMotivoPerdaOpen(false)}
         onConfirm={handleConfirmarPerda}
       />
+      {contratoProp && (
+        <CondicoesContratoModal
+          open
+          valorTotal={contratoProp.valor}
+          enderecoSugerido={`${cliente.endereco.rua}, ${cliente.endereco.numero}`}
+          bairroSugerido={cliente.endereco.bairro}
+          cidadeSugerida={`${cliente.endereco.cidade}/${cliente.endereco.uf}`}
+          cepSugerido={cliente.endereco.cep}
+          onClose={() => setContratoProp(null)}
+          onConfirm={(condicoes: CondicoesContrato) => {
+            gerarPdfContrato({
+              card,
+              cliente,
+              proposta: contratoProp.proposta,
+              produtos,
+              consultor: contratoProp.consultor,
+              empresa,
+              condicoes,
+              modo: "save",
+            });
+            notify.success("Contrato gerado", contratoProp.proposta.numero);
+            setContratoProp(null);
+          }}
+        />
+      )}
 
       {/* Mensagens prontas WhatsApp */}
       <MensagensWhatsApp cliente={cliente} />
