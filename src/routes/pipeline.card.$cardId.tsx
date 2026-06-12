@@ -10,6 +10,8 @@ import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
 import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
+import { CondicoesContratoModal, type CondicoesContrato } from "@/components/pipeline/CondicoesContratoModal";
+import type { Proposta, Usuario } from "@/lib/types";
 import type { PropostaStatus } from "@/lib/types";
 import {
   useInteracoesByClienteQuery,
