@@ -417,7 +417,6 @@ export function gerarPdfContrato(opts: GerarContratoOpts): string | void | Blob 
   if (modo === "blob") return pdf.output("bloburl") as unknown as string;
   if (modo === "blob-data") return pdf.output("blob") as Blob;
   pdf.save(`Contrato-${numeroContrato}-${cliente.nome.replace(/\s+/g, "_")}.pdf`);
-  // mark card var used (for typing safety in case unused)
   void card;
-  void dataBR;
 }
+
