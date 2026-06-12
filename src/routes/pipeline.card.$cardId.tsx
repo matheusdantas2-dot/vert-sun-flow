@@ -241,6 +241,31 @@ function CardDetalhe() {
         </div>
       </div>
 
+      {card.stage !== "ativado" && card.stage !== "perdido" && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <h2 className="font-display font-bold text-lg mb-1">Resultado do negócio</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Mova este card para o resultado final da negociação.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleGanhar}
+              disabled={moveCard.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-60"
+            >
+              <Trophy className="h-4 w-4" /> Marcar como Ganho
+            </button>
+            <button
+              onClick={handlePerder}
+              disabled={moveCard.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-sm font-semibold disabled:opacity-60"
+            >
+              <XCircle className="h-4 w-4" /> Marcar como Perdido
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
@@ -312,30 +337,7 @@ function CardDetalhe() {
 
       {projeto && <CronogramaProjetoAdmin cardId={card.id} />}
 
-      {card.stage !== "ativado" && card.stage !== "perdido" && (
-        <div className="bg-card rounded-xl border border-border p-5">
-          <h2 className="font-display font-bold text-lg mb-1">Resultado do negócio</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Mova este card para o resultado final da negociação.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleGanhar}
-              disabled={moveCard.isPending}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-60"
-            >
-              <Trophy className="h-4 w-4" /> Marcar como Ganho
-            </button>
-            <button
-              onClick={handlePerder}
-              disabled={moveCard.isPending}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-sm font-semibold disabled:opacity-60"
-            >
-              <XCircle className="h-4 w-4" /> Marcar como Perdido
-            </button>
-          </div>
-        </div>
-      )}
+
 
 
 
