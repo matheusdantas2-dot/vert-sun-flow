@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCardsQuery } from "@/lib/cards.api";
+import { useCardsQuery, useMoveCard } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
 import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
 import { useProdutosQuery } from "@/lib/produtos.api";
 import { useStore } from "@/lib/store";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import type { PropostaStatus } from "@/lib/types";
 import {
   useInteracoesByClienteQuery,
@@ -44,6 +46,9 @@ import {
   Share2,
   Download,
   Pencil,
+  FileSignature,
+  Trophy,
+  XCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
@@ -69,6 +74,8 @@ function CardDetalhe() {
   const empresa = useStore((s) => s.empresa);
   const [preview, setPreview] = useState<{ url: string; titulo: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
+  const moveCard = useMoveCard();
+  const [motivoPerdaOpen, setMotivoPerdaOpen] = useState(false);
 
   const card = cards.find((c) => c.id === cardId);
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
@@ -141,6 +148,28 @@ function CardDetalhe() {
     removerMut.mutate(projeto.id, { onSuccess: () => notify.warning("Portal removido") });
   };
 
+  const handleGanhar = async () => {
+    if (!confirm(`Confirmar negócio GANHO com ${cliente.nome}?`)) return;
+    try {
+      await moveCard.mutateAsync({ id: card.id, stage: "ativado" });
+      notify.success("Negócio ganho! 🎉", `${cliente.nome} movido para Ativado`);
+    } catch (err: unknown) {
+      notify.error("Erro ao mover card", err instanceof Error ? err.message : "Tente novamente");
+    }
+  };
+
+  const handlePerder = () => setMotivoPerdaOpen(true);
+
+  const handleConfirmarPerda = async (motivo: string) => {
+    try {
+      await moveCard.mutateAsync({ id: card.id, stage: "perdido", motivoPerda: motivo });
+      setMotivoPerdaOpen(false);
+      notify.warning("Negócio perdido", motivo);
+    } catch (err: unknown) {
+      notify.error("Erro ao mover card", err instanceof Error ? err.message : "Tente novamente");
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6 space-y-4 max-w-[1200px] mx-auto">
       <button
@@ -153,11 +182,23 @@ function CardDetalhe() {
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div
-              className="inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded mb-2"
-              style={{ background: stage?.cor, color: "white" }}
-            >
-              {stage?.nome}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div
+                className="inline-block text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded"
+                style={{ background: stage?.cor, color: "white" }}
+              >
+                {stage?.nome}
+              </div>
+              {card.stage === "ativado" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-emerald-600 text-white">
+                  <Trophy className="h-3 w-3" /> Ganho
+                </span>
+              )}
+              {card.stage === "perdido" && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-rose-600 text-white">
+                  <XCircle className="h-3 w-3" /> Perdido{card.motivoPerda ? ` · ${card.motivoPerda.slice(0, 40)}` : ""}
+                </span>
+              )}
             </div>
             <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">
               {cliente.nome}
@@ -271,6 +312,33 @@ function CardDetalhe() {
 
       {projeto && <CronogramaProjetoAdmin cardId={card.id} />}
 
+      {card.stage !== "ativado" && card.stage !== "perdido" && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <h2 className="font-display font-bold text-lg mb-1">Resultado do negócio</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Mova este card para o resultado final da negociação.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleGanhar}
+              disabled={moveCard.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-60"
+            >
+              <Trophy className="h-4 w-4" /> Marcar como Ganho
+            </button>
+            <button
+              onClick={handlePerder}
+              disabled={moveCard.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-sm font-semibold disabled:opacity-60"
+            >
+              <XCircle className="h-4 w-4" /> Marcar como Perdido
+            </button>
+          </div>
+        </div>
+      )}
+
+
+
       <div className="bg-card rounded-xl border border-border p-5">
         <h2 className="font-display font-bold text-lg mb-3">Contato</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -354,6 +422,17 @@ function CardDetalhe() {
                     <button onClick={baixar} className="inline-flex items-center gap-1 text-xs font-semibold text-vert-dark hover:underline px-2 py-1 rounded hover:bg-accent">
                       <Download className="h-3.5 w-3.5" /> PDF
                     </button>
+                    {p.status === "aceita" && (
+                      <button
+                        onClick={() => {
+                          gerarPdfContrato({ card, cliente, proposta: p, produtos, consultor: consultorPdf, empresa, modo: "save" });
+                          notify.success("Contrato gerado", p.numero);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline px-2 py-1 rounded hover:bg-accent"
+                      >
+                        <FileSignature className="h-3.5 w-3.5" /> Contrato
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -370,6 +449,11 @@ function CardDetalhe() {
         />
       )}
       {shareId && <CompartilharPropostaModal propostaId={shareId} onClose={() => setShareId(null)} />}
+      <MotivoPerdaModal
+        open={motivoPerdaOpen}
+        onClose={() => setMotivoPerdaOpen(false)}
+        onConfirm={handleConfirmarPerda}
+      />
 
       {/* Mensagens prontas WhatsApp */}
       <MensagensWhatsApp cliente={cliente} />
