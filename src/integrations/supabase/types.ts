@@ -270,6 +270,70 @@ export type Database = {
         }
         Relationships: []
       }
+      contratos: {
+        Row: {
+          card_id: string | null
+          cliente_id: string
+          consultor_id: string | null
+          created_at: string
+          id: string
+          numero: string
+          observacoes: string | null
+          pdf_path: string | null
+          proposta_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          card_id?: string | null
+          cliente_id: string
+          consultor_id?: string | null
+          created_at?: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          pdf_path?: string | null
+          proposta_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string | null
+          cliente_id?: string
+          consultor_id?: string | null
+          created_at?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          pdf_path?: string | null
+          proposta_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       etapas_projeto: {
         Row: {
           created_at: string
