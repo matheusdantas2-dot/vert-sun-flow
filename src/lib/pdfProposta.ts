@@ -193,14 +193,14 @@ function paginaCapa(ctx: Ctx) {
 function paginaSobre(ctx: Ctx) {
   const { pdf } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 2, "Sobre a Vert Energie");
+  pageFrame(ctx, 2, "Sobre a VertCRM");
 
   sectionTitle(pdf, 26, "Sobre nós");
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
   const txt = pdf.splitTextToSize(
-    "A Vert Energie é uma empresa especializada em soluções de energia solar fotovoltaica para residências, comércios, agronegócio e indústrias. Atuamos do projeto à instalação e homologação, com equipe técnica certificada, equipamentos de marcas líderes e suporte pós-venda completo.",
+    "A VertCRM é uma empresa especializada em soluções de energia solar fotovoltaica para residências, comércios, agronegócio e indústrias. Atuamos do projeto à instalação e homologação, com equipe técnica certificada, equipamentos de marcas líderes e suporte pós-venda completo.",
     W - 2 * M,
   );
   pdf.text(txt, M, 40);

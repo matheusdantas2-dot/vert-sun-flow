@@ -31,7 +31,7 @@ import { useEffect } from "react";
 
 export const Route = createFileRoute("/agenda")({
   component: Agenda,
-  head: () => ({ meta: [{ title: "Agenda — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Agenda — VertCRM" }] }),
 });
 
 const ICON = {

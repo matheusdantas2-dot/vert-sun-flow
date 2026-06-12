@@ -56,7 +56,7 @@ export function AppSidebar({ collapsed, onToggle }: { collapsed: boolean; onTogg
           </div>
           {!collapsed && (
             <div className="font-display font-extrabold text-[19px] tracking-tight leading-none">
-              vert.<span className="text-vert-glow">energie</span>
+              VertCRM
             </div>
           )}
         </div>

@@ -17,7 +17,7 @@ import { notify } from "@/lib/notificacoes";
 
 export const Route = createFileRoute("/pipeline/")({
   component: Pipeline,
-  head: () => ({ meta: [{ title: "Pipeline — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Pipeline — VertCRM" }] }),
 });
 
 function Pipeline() {

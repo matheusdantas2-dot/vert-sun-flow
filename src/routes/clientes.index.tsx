@@ -9,7 +9,7 @@ import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
 
 export const Route = createFileRoute("/clientes/")({
   component: ClientesList,
-  head: () => ({ meta: [{ title: "Clientes — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Clientes — VertCRM" }] }),
 });
 
 function ClientesList() {

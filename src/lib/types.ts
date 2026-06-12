@@ -1,4 +1,4 @@
-// Domain types for Vert CRM
+// Domain types for VertCRM
 
 export type StageId =
   | "prospeccao"

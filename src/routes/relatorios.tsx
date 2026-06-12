@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 export const Route = createFileRoute("/relatorios")({
   component: Relatorios,
-  head: () => ({ meta: [{ title: "Relatórios — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Relatórios — VertCRM" }] }),
 });
 
 function Relatorios() {

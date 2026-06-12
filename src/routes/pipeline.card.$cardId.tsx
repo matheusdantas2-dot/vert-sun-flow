@@ -48,7 +48,7 @@ import {
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
   component: CardDetalhe,
-  head: () => ({ meta: [{ title: "Card — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Card — VertCRM" }] }),
 });
 
 function CardDetalhe() {

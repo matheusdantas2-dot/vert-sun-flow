@@ -13,7 +13,7 @@ import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAd
 
 export const Route = createFileRoute("/clientes/$id")({
   component: ClienteDetalhe,
-  head: () => ({ meta: [{ title: `Cliente — Vert CRM` }] }),
+  head: () => ({ meta: [{ title: `Cliente — VertCRM` }] }),
 });
 
 function ClienteDetalhe() {

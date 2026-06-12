@@ -23,7 +23,7 @@ export const seedUsuarios: Usuario[] = [
 ];
 
 export const seedEmpresa: Empresa = {
-  razaoSocial: "Vert Energie Comércio e Serviços Elétricos Ltda",
+  razaoSocial: "VertCRM Comércio e Serviços Elétricos Ltda",
   cnpj: "45.517.241/0001-40",
   endereco: "Av. Tancredo Neves, 620 - Salvador/BA",
   telefone: "(71) 99999-0000",

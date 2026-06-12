@@ -26,7 +26,7 @@ const ROLES: { value: AppRole; label: string }[] = [
 
 export const Route = createFileRoute("/configuracoes")({
   component: Configuracoes,
-  head: () => ({ meta: [{ title: "Configurações — Vert CRM" }] }),
+  head: () => ({ meta: [{ title: "Configurações — VertCRM" }] }),
 });
 
 function Configuracoes() {
