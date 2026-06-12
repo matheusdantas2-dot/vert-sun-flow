@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { brl, dataBR } from "@/lib/format";
 import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
 import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "lucide-react";
+import { exportPropostasCsv } from "@/lib/exportCsv";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
@@ -92,6 +93,12 @@ function PropostasList() {
           <p className="text-sm text-muted-foreground mt-0.5">{propostas.length} propostas geradas</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => exportPropostasCsv(propostas, clientes)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-accent"
+          >
+            <Download className="h-4 w-4" /> Download CSV
+          </button>
           <a href="/gerador-proposta.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-accent">
             <ExternalLink className="h-4 w-4" /> Gerador externo
           </a>
