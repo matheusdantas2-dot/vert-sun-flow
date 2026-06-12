@@ -426,10 +426,7 @@ function CardDetalhe() {
                     </button>
                     {p.status === "aceita" && (
                       <button
-                        onClick={() => {
-                          gerarPdfContrato({ card, cliente, proposta: p, produtos, consultor: consultorPdf, empresa, modo: "save" });
-                          notify.success("Contrato gerado", p.numero);
-                        }}
+                        onClick={() => setContratoProp({ proposta: p, consultor: consultorPdf, valor: calcProposta(p) })}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline px-2 py-1 rounded hover:bg-accent"
                       >
                         <FileSignature className="h-3.5 w-3.5" /> Contrato
