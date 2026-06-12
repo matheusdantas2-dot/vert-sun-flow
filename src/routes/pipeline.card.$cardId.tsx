@@ -148,6 +148,28 @@ function CardDetalhe() {
     removerMut.mutate(projeto.id, { onSuccess: () => notify.warning("Portal removido") });
   };
 
+  const handleGanhar = async () => {
+    if (!confirm(`Confirmar negócio GANHO com ${cliente.nome}?`)) return;
+    try {
+      await moveCard.mutateAsync({ id: card.id, stage: "ativado" });
+      notify.success("Negócio ganho! 🎉", `${cliente.nome} movido para Ativado`);
+    } catch (err: unknown) {
+      notify.error("Erro ao mover card", err instanceof Error ? err.message : "Tente novamente");
+    }
+  };
+
+  const handlePerder = () => setMotivoPerdaOpen(true);
+
+  const handleConfirmarPerda = async (motivo: string) => {
+    try {
+      await moveCard.mutateAsync({ id: card.id, stage: "perdido", motivoPerda: motivo });
+      setMotivoPerdaOpen(false);
+      notify.warning("Negócio perdido", motivo);
+    } catch (err: unknown) {
+      notify.error("Erro ao mover card", err instanceof Error ? err.message : "Tente novamente");
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6 space-y-4 max-w-[1200px] mx-auto">
       <button
