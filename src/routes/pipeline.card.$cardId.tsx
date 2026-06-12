@@ -456,6 +456,31 @@ function CardDetalhe() {
         onClose={() => setMotivoPerdaOpen(false)}
         onConfirm={handleConfirmarPerda}
       />
+      {contratoProp && (
+        <CondicoesContratoModal
+          open
+          valorTotal={contratoProp.valor}
+          enderecoSugerido={`${cliente.endereco.rua}, ${cliente.endereco.numero}`}
+          bairroSugerido={cliente.endereco.bairro}
+          cidadeSugerida={`${cliente.endereco.cidade}/${cliente.endereco.uf}`}
+          cepSugerido={cliente.endereco.cep}
+          onClose={() => setContratoProp(null)}
+          onConfirm={(condicoes: CondicoesContrato) => {
+            gerarPdfContrato({
+              card,
+              cliente,
+              proposta: contratoProp.proposta,
+              produtos,
+              consultor: contratoProp.consultor,
+              empresa,
+              condicoes,
+              modo: "save",
+            });
+            notify.success("Contrato gerado", contratoProp.proposta.numero);
+            setContratoProp(null);
+          }}
+        />
+      )}
 
       {/* Mensagens prontas WhatsApp */}
       <MensagensWhatsApp cliente={cliente} />
