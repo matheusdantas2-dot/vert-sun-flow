@@ -83,10 +83,18 @@ export function usePropostasQuery() {
 
 async function nextNumero(): Promise<string> {
   const ano = new Date().getFullYear();
-  const { count } = await supabase
+  // Usa o maior número do ano corrente para não perder sequência com deleções.
+  // Se COUNT fosse usado, deletar uma proposta causaria número duplicado.
+  const { data } = await supabase
     .from("propostas")
-    .select("*", { count: "exact", head: true });
-  const seq = ((count ?? 0) + 1).toString().padStart(4, "0");
+    .select("numero")
+    .like("numero", `VRT-${ano}-%`)
+    .order("numero", { ascending: false })
+    .limit(1);
+  const last = (data?.[0]?.numero ?? "") as string;
+  const parts = last.split("-");
+  const lastSeq = parseInt(parts[parts.length - 1] ?? "0", 10);
+  const seq = (isNaN(lastSeq) ? 1 : lastSeq + 1).toString().padStart(4, "0");
   return `VRT-${ano}-${seq}`;
 }
 
