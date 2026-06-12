@@ -3,15 +3,36 @@ import { useMemo } from "react";
 import { brl } from "@/lib/format";
 import { usePropostasQuery } from "@/lib/propostas.api";
 
-export function ReceitaChart() {
+interface ReceitaChartProps {
+  periodo?: { de: Date; ate: Date };
+}
+
+export function ReceitaChart({ periodo }: ReceitaChartProps = {}) {
   const { data: propostas = [] } = usePropostasQuery();
 
   const data = useMemo(() => {
-    const months = Array.from({ length: 12 }).map((_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - (11 - i));
-      return { d, label: d.toLocaleDateString("pt-BR", { month: "short" }), receita: 0, propostas: 0 };
-    });
+    // Determinar lista de meses
+    let inicio: Date;
+    let fim: Date;
+    if (periodo) {
+      inicio = new Date(periodo.de.getFullYear(), periodo.de.getMonth(), 1);
+      fim = new Date(periodo.ate.getFullYear(), periodo.ate.getMonth(), 1);
+    } else {
+      const hoje = new Date();
+      fim = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 11, 1);
+    }
+    const months: { d: Date; label: string; receita: number; propostas: number }[] = [];
+    const cursor = new Date(inicio);
+    while (cursor <= fim) {
+      months.push({
+        d: new Date(cursor),
+        label: cursor.toLocaleDateString("pt-BR", { month: "short" }),
+        receita: 0,
+        propostas: 0,
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
     propostas.forEach((p) => {
       const dt = new Date(p.criadoEm);
       const idx = months.findIndex(
@@ -23,7 +44,7 @@ export function ReceitaChart() {
       if (p.status === "aceita") months[idx].receita += total;
     });
     return months.map((m) => ({ mes: m.label, receita: m.receita, propostas: m.propostas }));
-  }, [propostas]);
+  }, [propostas, periodo]);
 
   return (
     <div className="h-64">
