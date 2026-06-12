@@ -5,6 +5,7 @@ import { useProfilesQuery } from "@/lib/profiles.api";
 import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
 import { useProdutosQuery } from "@/lib/produtos.api";
 import { useStore } from "@/lib/store";
+import { useConfigGlobalQuery } from "@/lib/config.api";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
