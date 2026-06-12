@@ -51,30 +51,52 @@ export function calcularEconomia(opts: {
   };
 }
 
-/** Payback em meses dado economia mensal e investimento */
-export function payback(investimento: number, economiaMes: number, inflacaoAA = 0) {
+/**
+ * Payback em meses considerando reajuste tarifário e degradação anual dos painéis.
+ * @param investimento  Valor total do sistema (R$)
+ * @param economiaMes   Economia no primeiro mês (R$)
+ * @param inflacaoAA    Reajuste tarifário anual em % (ex: 8 = 8% a.a.)
+ * @param degradacaoAA  Degradação anual do painel em % (padrão 0.5% a.a. — típico Tier 1)
+ */
+export function payback(
+  investimento: number,
+  economiaMes: number,
+  inflacaoAA = 0,
+  degradacaoAA = 0.5,
+) {
   if (economiaMes <= 0) return Infinity;
-  if (inflacaoAA <= 0) return investimento / economiaMes;
-  // payback considerando reajuste anual
-  const inflacaoMes = Math.pow(1 + inflacaoAA / 100, 1 / 12) - 1;
+  // Fator mensal líquido: inflação tarifária aumenta a economia, degradação do painel a reduz
+  const inflacaoMes  = Math.pow(1 + inflacaoAA  / 100, 1 / 12) - 1;
+  const degradacaoMes = Math.pow(1 - degradacaoAA / 100, 1 / 12) - 1; // valor negativo
   let saldo = investimento;
   let mes = 0;
   let economia = economiaMes;
   while (saldo > 0 && mes < 600) {
     saldo -= economia;
-    economia *= 1 + inflacaoMes;
+    // Mês seguinte: tarifa sobe, geração cai
+    economia *= (1 + inflacaoMes) * (1 + degradacaoMes);
     mes++;
   }
   return mes;
 }
 
-/** Projeção de economia em 20 anos */
-export function projecao20Anos(economiaAno: number, inflacaoAA: number) {
+/**
+ * Projeção de economia acumulada em 20 anos considerando degradação dos painéis.
+ * @param economiaAno   Economia no primeiro ano (R$)
+ * @param inflacaoAA    Reajuste tarifário anual em % (ex: 8)
+ * @param degradacaoAA  Degradação anual do painel em % (padrão 0.5)
+ */
+export function projecao20Anos(
+  economiaAno: number,
+  inflacaoAA: number,
+  degradacaoAA = 0.5,
+) {
   let total = 0;
   let atual = economiaAno;
   for (let i = 0; i < 20; i++) {
     total += atual;
-    atual *= 1 + inflacaoAA / 100;
+    // Ano seguinte: tarifa sobe, geração cai
+    atual *= (1 + inflacaoAA / 100) * (1 - degradacaoAA / 100);
   }
   return total;
 }

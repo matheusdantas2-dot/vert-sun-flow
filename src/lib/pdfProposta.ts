@@ -34,7 +34,7 @@ interface Ctx {
   economia20: number;
 }
 
-function header(ctx: Ctx, pagina: number, titulo: string) {
+function header(ctx: Ctx, pagina: number, titulo: string, totalPaginas = 7) {
   const { pdf } = ctx;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(0, 0, W, 16, "F");
@@ -48,7 +48,7 @@ function header(ctx: Ctx, pagina: number, titulo: string) {
   pdf.text(titulo.toUpperCase(), W / 2, 10, { align: "center" });
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
-  pdf.text(`${pagina} / 7`, W - M, 10, { align: "right" });
+  pdf.text(`${pagina} / ${totalPaginas}`, W - M, 10, { align: "right" });
 }
 
 function footer(ctx: Ctx) {
@@ -65,8 +65,8 @@ function footer(ctx: Ctx) {
   pdf.text(`${empresa.telefone} · ${empresa.email}`, W - M, H - 5, { align: "right" });
 }
 
-function pageFrame(ctx: Ctx, pagina: number, titulo: string) {
-  header(ctx, pagina, titulo);
+function pageFrame(ctx: Ctx, pagina: number, titulo: string, totalPaginas = 7) {
+  header(ctx, pagina, titulo, totalPaginas);
   footer(ctx);
 }
 
@@ -193,14 +193,14 @@ function paginaCapa(ctx: Ctx) {
 function paginaSobre(ctx: Ctx) {
   const { pdf } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 2, "Sobre a VertCRM");
+  pageFrame(ctx, 2, "Sobre a Vert Energie");
 
   sectionTitle(pdf, 26, "Sobre nós");
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
   const txt = pdf.splitTextToSize(
-    "A VertCRM é uma empresa especializada em soluções de energia solar fotovoltaica para residências, comércios, agronegócio e indústrias. Atuamos do projeto à instalação e homologação, com equipe técnica certificada, equipamentos de marcas líderes e suporte pós-venda completo.",
+    "A Vert Energie é uma empresa especializada em soluções de energia solar fotovoltaica para residências, comércios, agronegócio e indústrias. Atuamos do projeto à instalação e homologação, com equipe técnica certificada, equipamentos de marcas líderes e suporte pós-venda completo.",
     W - 2 * M,
   );
   pdf.text(txt, M, 40);
@@ -329,10 +329,41 @@ function paginaConsumo(ctx: Ctx) {
   pdf.text(`equivalente a ${brl(econ.economiaAno)} no primeiro ano`, W - M - 6, baseY + 42, { align: "right" });
 }
 
-function paginaSistema(ctx: Ctx) {
+/**
+ * Retorna quantas páginas extras a tabela de itens vai precisar.
+ * Usado para calcular totalPaginas antes de renderizar o PDF.
+ */
+function contarPaginasSistema(proposta: Ctx["proposta"], produtos: Ctx["produtos"]): number {
+  if (proposta.mostrarComoKit) return 1;
+  const LIMITE_Y = H - 55; // margem para o bloco de total
+  const INICIO_Y = 84; // y inicial da tabela (após headers técnicos)
+  let y = INICIO_Y;
+  const ordem: Record<string, number> = { modulo: 1, inversor: 2, estrutura: 3, cabeamento: 4, servico: 5 };
+  const itensComProd = proposta.itens
+    .map((it) => ({ it, prod: produtos.find((p) => p.id === it.produtoId) }))
+    .filter((x) => x.prod);
+  const grupos = new Map<string, typeof itensComProd>();
+  itensComProd.forEach(({ it, prod }) => {
+    const cat = prod!.categoria;
+    if (!grupos.has(cat)) grupos.set(cat, []);
+    grupos.get(cat)!.push({ it, prod });
+  });
+  const catsOrdenadas = Array.from(grupos.keys()).sort((a, b) => (ordem[a] ?? 99) - (ordem[b] ?? 99));
+  let paginas = 1;
+  catsOrdenadas.forEach((cat) => {
+    y += 7; // header categoria
+    grupos.get(cat)!.forEach(() => {
+      if (y > LIMITE_Y) { paginas++; y = 30; } // nova página
+      y += 7;
+    });
+  });
+  return paginas;
+}
+
+function paginaSistema(ctx: Ctx, paginaInicio: number, totalPaginas: number) {
   const { pdf, proposta, produtos, totais, dim } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 4, "Sistema proposto");
+  pageFrame(ctx, paginaInicio, "Sistema proposto", totalPaginas);
 
   sectionTitle(pdf, 26, "Configuração técnica");
   const cardW = (W - 2 * M - 6) / 3;
@@ -343,18 +374,40 @@ function paginaSistema(ctx: Ctx) {
   sectionTitle(pdf, 66, "Componentes inclusos");
 
   // Cabeçalho da tabela
-  let y = 78;
   const colX = { item: M + 4, qtd: M + 110, unit: M + 132, total: W - M - 4 };
-  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(M, y - 5, W - 2 * M, 8, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8);
-  pdf.text("ITEM", colX.item, y);
-  pdf.text("QTD", colX.qtd, y, { align: "right" });
-  pdf.text("UNIT.", colX.unit, y, { align: "right" });
-  pdf.text("TOTAL", colX.total, y, { align: "right" });
+
+  // Helper: imprime cabeçalho de colunas em y
+  function drawTableHeader(yh: number) {
+    pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+    pdf.rect(M, yh - 5, W - 2 * M, 8, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8);
+    pdf.text("ITEM", colX.item, yh);
+    pdf.text("QTD", colX.qtd, yh, { align: "right" });
+    pdf.text("UNIT.", colX.unit, yh, { align: "right" });
+    pdf.text("TOTAL", colX.total, yh, { align: "right" });
+  }
+
+  let y = 78;
+  drawTableHeader(y);
   y += 6;
+
+  // Limite antes do rodapé (deixa espaço para o bloco total)
+  const LIMITE_Y = H - 55;
+  let paginaAtual = paginaInicio;
+
+  // Helper: nova página quando transborda
+  function novaPaginaSeNecessario() {
+    if (y > LIMITE_Y) {
+      paginaAtual++;
+      pdf.addPage();
+      pageFrame(ctx, paginaAtual, "Sistema proposto (cont.)", totalPaginas);
+      y = 28;
+      drawTableHeader(y);
+      y += 6;
+    }
+  }
 
   // Modo "kit": exibe apenas uma linha agregada
   if (proposta.mostrarComoKit) {
@@ -367,7 +420,6 @@ function paginaSistema(ctx: Ctx) {
     pdf.setFontSize(8);
     pdf.text("KIT DE GERAÇÃO", M + 4, y);
     y += 9;
-
     pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
@@ -387,61 +439,68 @@ function paginaSistema(ctx: Ctx) {
       y += 6;
     }
   } else {
-  // Agrupar por categoria
-  const ordem: Record<string, number> = { modulo: 1, inversor: 2, estrutura: 3, cabeamento: 4, servico: 5 };
-  const labels: Record<string, string> = {
-    modulo: "Painéis solares",
-    inversor: "Inversores",
-    estrutura: "Estrutura de fixação",
-    cabeamento: "Cabeamento e proteções",
-    servico: "Serviços",
-  };
-  const itensComProd = proposta.itens
-    .map((it) => ({ it, prod: produtos.find((p) => p.id === it.produtoId) }))
-    .filter((x) => x.prod);
-  const grupos = new Map<string, typeof itensComProd>();
-  itensComProd.forEach(({ it, prod }) => {
-    const cat = prod!.categoria;
-    if (!grupos.has(cat)) grupos.set(cat, []);
-    grupos.get(cat)!.push({ it, prod });
-  });
-  const catsOrdenadas = Array.from(grupos.keys()).sort((a, b) => (ordem[a] ?? 99) - (ordem[b] ?? 99));
-
-  let zebra = 0;
-  catsOrdenadas.forEach((cat) => {
-    // header de categoria
-    pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.rect(M, y - 4, W - 2 * M, 7, "F");
-    pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
-    pdf.text(labels[cat]?.toUpperCase() ?? cat.toUpperCase(), M + 4, y);
-    y += 7;
-
-    grupos.get(cat)!.forEach(({ it, prod }) => {
-      if (zebra % 2 === 1) {
-        pdf.setFillColor(250, 252, 251);
-        pdf.rect(M, y - 4, W - 2 * M, 8, "F");
-      }
-      zebra++;
-      const nome = `${prod!.nome}${prod!.fabricante ? ` · ${prod!.fabricante}` : ""}`;
-      pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(9);
-      const nomeLines = pdf.splitTextToSize(nome, 95);
-      pdf.text(nomeLines[0], colX.item, y);
-      pdf.text(`${it.quantidade}`, colX.qtd, y, { align: "right" });
-      pdf.text(brlPrec(it.precoUnitario), colX.unit, y, { align: "right" });
-      pdf.setFont("helvetica", "bold");
-      pdf.text(brlPrec(it.precoUnitario * it.quantidade), colX.total, y, { align: "right" });
-      y += 7;
-      if (y > H - 50) return;
+    // Agrupar por categoria
+    const ordem: Record<string, number> = { modulo: 1, inversor: 2, estrutura: 3, cabeamento: 4, servico: 5 };
+    const labels: Record<string, string> = {
+      modulo: "Painéis solares",
+      inversor: "Inversores",
+      estrutura: "Estrutura de fixação",
+      cabeamento: "Cabeamento e proteções",
+      servico: "Serviços",
+    };
+    const itensComProd = proposta.itens
+      .map((it) => ({ it, prod: produtos.find((p) => p.id === it.produtoId) }))
+      .filter((x) => x.prod);
+    const grupos = new Map<string, typeof itensComProd>();
+    itensComProd.forEach(({ it, prod }) => {
+      const cat = prod!.categoria;
+      if (!grupos.has(cat)) grupos.set(cat, []);
+      grupos.get(cat)!.push({ it, prod });
     });
-  });
+    const catsOrdenadas = Array.from(grupos.keys()).sort((a, b) => (ordem[a] ?? 99) - (ordem[b] ?? 99));
+
+    let zebra = 0;
+    catsOrdenadas.forEach((cat) => {
+      novaPaginaSeNecessario();
+      // header de categoria
+      pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+      pdf.rect(M, y - 4, W - 2 * M, 7, "F");
+      pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.text(labels[cat]?.toUpperCase() ?? cat.toUpperCase(), M + 4, y);
+      y += 7;
+
+      grupos.get(cat)!.forEach(({ it, prod }) => {
+        novaPaginaSeNecessario();
+        if (zebra % 2 === 1) {
+          pdf.setFillColor(250, 252, 251);
+          pdf.rect(M, y - 4, W - 2 * M, 8, "F");
+        }
+        zebra++;
+        const nome = `${prod!.nome}${prod!.fabricante ? ` · ${prod!.fabricante}` : ""}`;
+        pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        const nomeLines = pdf.splitTextToSize(nome, 95);
+        pdf.text(nomeLines[0], colX.item, y);
+        pdf.text(`${it.quantidade}`, colX.qtd, y, { align: "right" });
+        pdf.text(brlPrec(it.precoUnitario), colX.unit, y, { align: "right" });
+        pdf.setFont("helvetica", "bold");
+        pdf.text(brlPrec(it.precoUnitario * it.quantidade), colX.total, y, { align: "right" });
+        y += 7;
+      });
+    });
   }
 
+  // Bloco total — vai para nova página se não couber
+  if (y + 20 > H - 20) {
+    paginaAtual++;
+    pdf.addPage();
+    pageFrame(ctx, paginaAtual, "Sistema proposto (cont.)", totalPaginas);
+    y = 28;
+  }
 
-  // Total
   y += 4;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.roundedRect(M, y, W - 2 * M, 16, 2, 2, "F");
@@ -454,10 +513,10 @@ function paginaSistema(ctx: Ctx) {
   pdf.text(brl(totais.valorVenda), W - M - 5, y + 11, { align: "right" });
 }
 
-function paginaRetorno(ctx: Ctx) {
+function paginaRetorno(ctx: Ctx, pagina: number, totalPaginas: number) {
   const { pdf, econ, totais, paybackMeses, economia20, proposta } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 5, "Retorno do investimento");
+  pageFrame(ctx, pagina, "Retorno do investimento", totalPaginas);
 
   sectionTitle(pdf, 26, "Indicadores financeiros");
   const cardW = (W - 2 * M - 9) / 4;
@@ -555,10 +614,10 @@ function paginaRetorno(ctx: Ctx) {
   });
 }
 
-function paginaPagamento(ctx: Ctx) {
+function paginaPagamento(ctx: Ctx, pagina: number, totalPaginas: number) {
   const { pdf, totais, proposta } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 6, "Formas de pagamento");
+  pageFrame(ctx, pagina, "Formas de pagamento", totalPaginas);
 
   sectionTitle(pdf, 26, "Opções flexíveis");
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -629,10 +688,10 @@ function paginaPagamento(ctx: Ctx) {
   });
 }
 
-function paginaContrato(ctx: Ctx) {
+function paginaContrato(ctx: Ctx, pagina: number, totalPaginas: number) {
   const { pdf, cliente, consultor, empresa, proposta } = ctx;
   pdf.addPage();
-  pageFrame(ctx, 7, "Aceite e próximos passos");
+  pageFrame(ctx, pagina, "Aceite e próximos passos", totalPaginas);
 
   sectionTitle(pdf, 26, "Etapas após aceite");
   const etapas = [
@@ -729,13 +788,17 @@ export function gerarPdfProposta(opts: GerarOpts): string | void | Blob {
     totais: { valorVenda, kwpInst }, econ, dim, paybackMeses, economia20,
   };
 
+  // Calcula total de páginas antes de renderizar para o header ficar correto
+  const paginasSistema = contarPaginasSistema(proposta, produtos);
+  const totalPaginas = 6 + paginasSistema; // capa+sobre+consumo+pagamento+retorno+contrato + sistema(s)
+
   paginaCapa(ctx);
   paginaSobre(ctx);
   paginaConsumo(ctx);
-  paginaSistema(ctx);
-  paginaRetorno(ctx);
-  paginaPagamento(ctx);
-  paginaContrato(ctx);
+  paginaSistema(ctx, 4, totalPaginas);
+  paginaRetorno(ctx, 4 + paginasSistema, totalPaginas);
+  paginaPagamento(ctx, 5 + paginasSistema, totalPaginas);
+  paginaContrato(ctx, 6 + paginasSistema, totalPaginas);
 
   if (modo === "blob") {
     return pdf.output("bloburl") as unknown as string;
