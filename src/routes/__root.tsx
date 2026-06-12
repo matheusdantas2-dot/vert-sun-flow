@@ -98,6 +98,7 @@ function AppShell() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  useAberturasRealtime(user?.id);
 
   const publico = isPublicPath(location.pathname);
 
