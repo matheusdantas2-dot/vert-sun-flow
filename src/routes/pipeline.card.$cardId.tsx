@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCardsQuery } from "@/lib/cards.api";
+import { useCardsQuery, useMoveCard } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
 import { usePropostasQuery, useUpdatePropostaStatus } from "@/lib/propostas.api";
 import { useProdutosQuery } from "@/lib/produtos.api";
 import { useStore } from "@/lib/store";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { gerarPdfContrato } from "@/lib/pdfContrato";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import { MotivoPerdaModal } from "@/components/pipeline/MotivoPerdaModal";
 import type { PropostaStatus } from "@/lib/types";
 import {
   useInteracoesByClienteQuery,
@@ -44,6 +46,9 @@ import {
   Share2,
   Download,
   Pencil,
+  FileSignature,
+  Trophy,
+  XCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/pipeline/card/$cardId")({
