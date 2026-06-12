@@ -1,7 +1,7 @@
 // Gerador de PDF do contrato — 4 páginas A4 retrato, padrão visual VertCRM
 import jsPDF from "jspdf";
 import type { PipelineCard, Proposta, Cliente, Produto, Empresa, Usuario } from "./types";
-import { brl, dataBR, formatDoc, formatTel } from "./format";
+import { brl, formatDoc, formatTel } from "./format";
 import { dimensionarSistema, tabelaPrice } from "./finance";
 import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
 
