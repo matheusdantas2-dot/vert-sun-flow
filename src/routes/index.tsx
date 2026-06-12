@@ -6,8 +6,9 @@ import { ReceitaChart } from "@/components/dashboard/ReceitaChart";
 import { SegmentoPie } from "@/components/dashboard/SegmentoPie";
 import { RankingConsultores } from "@/components/dashboard/RankingConsultores";
 import { Alertas } from "@/components/dashboard/Alertas";
+import { SeletorPeriodo, calcPeriodo, type Periodo } from "@/components/dashboard/SeletorPeriodo";
 import { DollarSign, FileText, TrendingUp, Zap, Wrench, Target } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePropostasQuery } from "@/lib/propostas.api";
 import { useCardsQuery, useCardsRealtime } from "@/lib/cards.api";
 import { useClientesQuery } from "@/lib/clientes.api";
@@ -25,6 +26,8 @@ function Dashboard() {
   const { data: cfg } = useConfigGlobalQuery();
   useCardsRealtime();
 
+  const [periodo, setPeriodo] = useState<Periodo>(() => calcPeriodo("mes"));
+
   const metas = {
     faturamentoMensal: 0,
     propostasMensais: 0,
@@ -34,28 +37,29 @@ function Dashboard() {
   };
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const mesAtual = now.getMonth();
-    const anoAtual = now.getFullYear();
-    const propostasMes = propostas.filter((p) => {
-      const d = new Date(p.criadoEm);
-      return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-    });
+    const deTs = periodo.de.getTime();
+    const ateTs = periodo.ate.getTime();
+    const dentro = (iso: string) => {
+      const t = new Date(iso).getTime();
+      return t >= deTs && t <= ateTs;
+    };
+    const propostasMes = propostas.filter((p) => dentro(p.criadoEm));
     const aceitas = propostasMes.filter((p) => p.status === "aceita");
     const calcTotal = (p: typeof propostas[number]) =>
       p.itens.reduce((acc, it) => acc + (it.precoUnitario ?? 0) * it.quantidade, 0);
     const faturamento = aceitas.reduce((a, p) => a + calcTotal(p), 0);
     const conversao = propostasMes.length > 0 ? (aceitas.length / propostasMes.length) * 100 : 0;
     const ticketResid = (() => {
-      const list = aceitas.filter((p) => clientes.find((c) => c.id === p.clienteId)?.segmento === "residencial");
+      const list = aceitas.filter(
+        (p) => clientes.find((c) => c.id === p.clienteId)?.segmento === "residencial",
+      );
       if (!list.length) return 0;
       return list.reduce((a, p) => a + calcTotal(p), 0) / list.length;
     })();
     const kwpMes = cards
       .filter((c) => {
         if (c.stage !== "ativado" && c.stage !== "instalacao") return false;
-        const d = new Date(c.diasNaEtapaDesde);
-        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+        return dentro(c.diasNaEtapaDesde);
       })
       .reduce((a, c) => a + c.potenciaKwp, 0);
     const projetosAndamento = cards.filter((c) =>
@@ -63,7 +67,7 @@ function Dashboard() {
     ).length;
 
     return { faturamento, propostasMes: propostasMes.length, conversao, ticketResid, kwpMes, projetosAndamento };
-  }, [propostas, cards, clientes]);
+  }, [propostas, cards, clientes, periodo]);
 
   const safePerc = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
 
@@ -71,12 +75,16 @@ function Dashboard() {
     <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto">
       <header>
         <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Dashboard Executiva</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Visão completa do mês — VertCRM</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {periodo.de.toLocaleDateString("pt-BR")} – {periodo.ate.toLocaleDateString("pt-BR")} · Vert Energie
+        </p>
       </header>
+
+      <SeletorPeriodo periodo={periodo} onChange={setPeriodo} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         <KpiCard
-          label="Faturamento do mês"
+          label="Faturamento"
           value={brl(stats.faturamento)}
           sub={`Meta ${brl(metas.faturamentoMensal)}`}
           progress={safePerc(stats.faturamento, metas.faturamentoMensal)}
@@ -84,7 +92,7 @@ function Dashboard() {
           accent="vert"
         />
         <KpiCard
-          label="Propostas do mês"
+          label="Propostas"
           value={num(stats.propostasMes)}
           sub={`Meta ${metas.propostasMensais}`}
           progress={safePerc(stats.propostasMes, metas.propostasMensais)}
@@ -110,10 +118,10 @@ function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-base">Receita realizada · 12 meses</h2>
+            <h2 className="font-display font-bold text-base">Receita realizada</h2>
             <span className="text-xs text-muted-foreground">Propostas aceitas</span>
           </div>
-          <ReceitaChart />
+          <ReceitaChart periodo={{ de: periodo.de, ate: periodo.ate }} />
         </div>
         <div className="bg-card rounded-xl border border-border p-5">
           <h2 className="font-display font-bold text-base mb-4">Funil de Conversão</h2>

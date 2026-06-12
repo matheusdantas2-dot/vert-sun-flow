@@ -4,8 +4,9 @@ import { useClientesQuery } from "@/lib/clientes.api";
 import { brl, brlPrec, dataBR, formatDoc, formatTel, initials, kwh } from "@/lib/format";
 import { ORIGEM_LABEL, SEGMENTOS_LABEL } from "@/lib/types";
 import { useState, useMemo } from "react";
-import { Plus, Search, Phone, MessageCircle, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Search, Phone, MessageCircle, ChevronRight, Loader2, Download } from "lucide-react";
 import { ClienteFormModal } from "@/components/clientes/ClienteFormModal";
+import { exportClientesCsv } from "@/lib/exportCsv";
 
 export const Route = createFileRoute("/clientes/")({
   component: ClientesList,
@@ -58,29 +59,7 @@ function ClientesList() {
         0,
       );
 
-  const exportCsv = () => {
-    const rows = [
-      ["Nome", "Documento", "Telefone", "E-mail", "Cidade", "UF", "Segmento", "Origem", "Consumo", "Tarifa"],
-      ...filtered.map((c) => [
-        c.nome,
-        formatDoc(c.documento),
-        formatTel(c.telefone),
-        c.email,
-        c.endereco.cidade,
-        c.endereco.uf,
-        SEGMENTOS_LABEL[c.segmento],
-        ORIGEM_LABEL[c.origem],
-        c.consumoMedio,
-        brlPrec(c.tarifa),
-      ]),
-    ];
-    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `clientes-vert-${Date.now()}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  };
+  const exportCsv = () => exportClientesCsv(filtered);
 
   return (
     <div className="p-4 lg:p-6 space-y-4 max-w-[1500px] mx-auto">

@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useAberturasRealtime } from "@/hooks/useAberturasRealtime";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -97,6 +98,7 @@ function AppShell() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  useAberturasRealtime(user?.id);
 
   const publico = isPublicPath(location.pathname);
 
