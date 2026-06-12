@@ -213,7 +213,7 @@ function Pipeline() {
         <div className="flex justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-vert" />
         </div>
-      ) : (
+      ) : viewMode === "kanban" ? (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-3 overflow-x-auto pb-4">
             {STAGES.map((s) => (
@@ -238,6 +238,132 @@ function Pipeline() {
             ) : null}
           </DragOverlay>
         </DndContext>
+      ) : (
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Segmento</TableHead>
+                  <TableHead>Cidade/UF</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Potência</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Consultor</TableHead>
+                  <TableHead className="text-right">Dias</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                      Nenhuma oportunidade encontrada
+                    </TableCell>
+                  </TableRow>
+                )}
+                {filtered.map((card) => {
+                  const cliente = clientesMap.get(card.clienteId);
+                  const consultor = profilesMap.get(card.consultorId);
+                  const stage = STAGES.find((s) => s.id === card.stage)!;
+                  const dias = diasEntre(card.diasNaEtapaDesde);
+                  const atrasado = dias > (sla[card.stage] ?? 999) && card.stage !== "ativado" && card.stage !== "perdido";
+                  return (
+                    <TableRow key={card.id} className="cursor-pointer hover:bg-muted/40">
+                      <TableCell>
+                        <Link
+                          to="/pipeline/card/$cardId"
+                          params={{ cardId: card.id }}
+                          className="font-medium text-vert-dark hover:underline"
+                        >
+                          {cliente?.nome ?? "—"}
+                        </Link>
+                        {cliente?.whatsapp && (
+                          <div className="text-[11px] text-muted-foreground">{formatTel(cliente.whatsapp)}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs">{cliente ? SEGMENTOS_LABEL[cliente.segmento] : "—"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs">
+                          {cliente ? `${cliente.endereco.cidade}/${cliente.endereco.uf}` : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">{brl(card.valorEstimado)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{kwp(card.potenciaKwp)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ background: stage.cor }} />
+                          <span className="text-xs">{stage.nome}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {consultor ? (
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                              style={{ backgroundColor: consultor.cor }}
+                            >
+                              {initials(consultor.nome)}
+                            </div>
+                            <span className="text-xs">{consultor.nome}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={cn("tabular-nums text-xs", atrasado && "text-rose-600 font-semibold")}>
+                          {dias}d
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">{ORIGEM_LABEL[card.origem]}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {cliente?.telefone && (
+                            <a
+                              href={`tel:+55${cliente.telefone.replace(/\D/g, "")}`}
+                              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                              title="Ligar"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          {cliente?.whatsapp && (
+                            <a
+                              href={`https://wa.me/55${cliente.whatsapp.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                              title="WhatsApp"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          <Link
+                            to="/pipeline/card/$cardId"
+                            params={{ cardId: card.id }}
+                            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-vert"
+                            title="Abrir card"
+                          >
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
 
       <MotivoPerdaModal
