@@ -78,6 +78,7 @@ function CardDetalhe() {
   const [shareId, setShareId] = useState<string | null>(null);
   const moveCard = useMoveCard();
   const [motivoPerdaOpen, setMotivoPerdaOpen] = useState(false);
+  const [contratoProp, setContratoProp] = useState<{ proposta: Proposta; consultor?: Usuario; valor: number } | null>(null);
 
   const card = cards.find((c) => c.id === cardId);
   const cliente = card ? clientes.find((c) => c.id === card.clienteId) : undefined;
