@@ -182,7 +182,7 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
     const url = urlShare(token);
     const tel = (cliente.telefone || "").replace(/\D/g, "");
     const txt = encodeURIComponent(
-      `Olá ${cliente.nome.split(" ")[0]}! Aqui está sua proposta de energia solar da VertCRM:\n${url}\n\nQualquer dúvida estou à disposição.`,
+      `Olá ${cliente.nome.split(" ")[0]}! Aqui está sua proposta de energia solar da Vert Energie:\n${url}\n\nQualquer dúvida estou à disposição.`,
     );
     const wa = tel ? `https://wa.me/55${tel}?text=${txt}` : `https://wa.me/?text=${txt}`;
     window.open(wa, "_blank");
@@ -191,9 +191,9 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
   const compartilharEmail = (token: string) => {
     if (!cliente) return;
     const url = urlShare(token);
-    const subj = encodeURIComponent(`Proposta VertCRM — ${proposta?.numero}`);
+    const subj = encodeURIComponent(`Proposta Vert Energie — ${proposta?.numero}`);
     const body = encodeURIComponent(
-      `Olá ${cliente.nome},\n\nSegue o link da sua proposta de energia solar:\n${url}\n\nFico à disposição para esclarecer qualquer dúvida.\n\n${consultor?.nome ?? "VertCRM"}`,
+      `Olá ${cliente.nome},\n\nSegue o link da sua proposta de energia solar:\n${url}\n\nFico à disposição para esclarecer qualquer dúvida.\n\n${consultor?.nome ?? "Vert Energie"}`,
     );
     window.location.href = `mailto:${cliente.email ?? ""}?subject=${subj}&body=${body}`;
   };
