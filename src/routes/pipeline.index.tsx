@@ -40,6 +40,7 @@ function Pipeline() {
   const [pendingMove, setPendingMove] = useState<{ cardId: string; stage: StageId } | null>(null);
   const [contratoCardId, setContratoCardId] = useState<string | null>(null);
   const [novoCardOpen, setNovoCardOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "lista">("kanban");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
