@@ -1,383 +1,171 @@
-// Gerador de PDF do contrato — 4 páginas A4 retrato, padrão visual VertCRM
+// Gerador de PDF do contrato — modelo Vert Energie (timbrado em todas as páginas, sem capa)
 import jsPDF from "jspdf";
 import type { PipelineCard, Proposta, Cliente, Produto, Empresa, Usuario } from "./types";
-import { brl, formatDoc, formatTel } from "./format";
-import { dimensionarSistema, tabelaPrice } from "./finance";
-import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
+import { brl, formatDoc } from "./format";
+import { dimensionarSistema } from "./finance";
+import { VERT_LOGO_COLOR_BASE64, VERT_LOGO_WHITE_BASE64 } from "@/assets/vertLogoBase64";
+import type { CondicoesContrato } from "@/components/pipeline/CondicoesContratoModal";
 
-const LOGO_RATIO = 577 / 351;
-
+const LOGO_RATIO = 573 / 332;
 const VERT_DARK: [number, number, number] = [13, 82, 52];
 const VERT: [number, number, number] = [45, 158, 100];
-const VERT_GLOW: [number, number, number] = [94, 232, 154];
 const TEXT: [number, number, number] = [30, 30, 30];
 const MUTED: [number, number, number] = [120, 120, 120];
-const SOFT: [number, number, number] = [232, 246, 238];
 const BORDER: [number, number, number] = [225, 230, 228];
+const SOFT: [number, number, number] = [232, 246, 238];
 
 const W = 210;
 const H = 297;
-const M = 16;
-const TOTAL = 4;
+const M = 18;
+const CONTENT_W = W - 2 * M;
 
-function header(pdf: jsPDF, pagina: number, titulo: string) {
+function timbrado(pdf: jsPDF, empresa: Empresa, numeroContrato: string) {
+  // faixa verde escura no topo
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(0, 0, W, 16, "F");
-  const lh = 8;
+  pdf.rect(0, 0, W, 22, "F");
+  // logo branco
+  const lh = 12;
   const lw = lh * LOGO_RATIO;
-  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", M, 4, lw, lh, undefined, "FAST");
+  pdf.addImage(VERT_LOGO_WHITE_BASE64, "PNG", M, 5, lw, lh, undefined, "FAST");
+  // dados da empresa à direita
   pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.text(titulo.toUpperCase(), W / 2, 10, { align: "center" });
-  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
-  pdf.text(`${pagina} / ${TOTAL}`, W - M, 10, { align: "right" });
-}
+  pdf.setFontSize(9);
+  pdf.text("VERT ENERGIE", W - M, 9, { align: "right" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
+  pdf.text(`CNPJ ${empresa.cnpj}`, W - M, 13, { align: "right" });
+  pdf.text(empresa.endereco, W - M, 16.5, { align: "right" });
+  pdf.text(`${empresa.telefone} · ${empresa.email}`, W - M, 20, { align: "right" });
 
-function footer(pdf: jsPDF, empresa: Empresa, numeroContrato: string) {
+  // linha de acento
+  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
+  pdf.rect(0, 22, W, 1.2, "F");
+
+  // rodapé
   pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   pdf.setLineWidth(0.2);
   pdf.line(M, H - 14, W - M, H - 14);
   pdf.setFontSize(7);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`${empresa.razaoSocial} · CNPJ ${empresa.cnpj}`, M, H - 9);
-  pdf.text(`Contrato ${numeroContrato}`, W - M, H - 9, { align: "right" });
-  pdf.text(empresa.endereco, M, H - 5);
-  pdf.text(`${empresa.telefone} · ${empresa.email}`, W - M, H - 5, { align: "right" });
+  pdf.text(`Contrato ${numeroContrato}`, M, H - 9);
+  pdf.text("Vert Energie · energia solar fotovoltaica", W / 2, H - 9, { align: "center" });
+  const page = pdf.getNumberOfPages();
+  pdf.text(`Pág. ${page}`, W - M, H - 9, { align: "right" });
 }
 
-function sectionTitle(pdf: jsPDF, y: number, texto: string) {
-  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(M, y, 3, 7, "F");
+interface Cursor {
+  y: number;
+}
+
+function ensureSpace(pdf: jsPDF, cur: Cursor, need: number, empresa: Empresa, numero: string) {
+  if (cur.y + need > H - 20) {
+    pdf.addPage();
+    timbrado(pdf, empresa, numero);
+    cur.y = 32;
+  }
+}
+
+function H1(pdf: jsPDF, cur: Cursor, texto: string, empresa: Empresa, numero: string) {
+  ensureSpace(pdf, cur, 14, empresa, numero);
+  pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+  pdf.rect(M, cur.y - 4, CONTENT_W, 8, "F");
+  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
+  pdf.rect(M, cur.y - 4, 2.5, 8, "F");
   pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(12);
-  pdf.text(texto, M + 6, y + 5.5);
+  pdf.setFontSize(10);
+  pdf.text(texto.toUpperCase(), M + 5, cur.y + 1.5);
+  cur.y += 9;
 }
 
-function bullets(pdf: jsPDF, y: number, items: string[], maxWidth = W - 2 * M - 8) {
+function P(
+  pdf: jsPDF,
+  cur: Cursor,
+  texto: string,
+  empresa: Empresa,
+  numero: string,
+  opts?: { bold?: boolean; size?: number; spaceAfter?: number },
+) {
+  const size = opts?.size ?? 9;
+  pdf.setFont("helvetica", opts?.bold ? "bold" : "normal");
+  pdf.setFontSize(size);
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  const lines = pdf.splitTextToSize(texto, CONTENT_W) as string[];
+  const lh = size * 0.45 + 1.2;
+  ensureSpace(pdf, cur, lines.length * lh + (opts?.spaceAfter ?? 2), empresa, numero);
+  pdf.text(lines, M, cur.y);
+  cur.y += lines.length * lh + (opts?.spaceAfter ?? 2);
+}
+
+function bullets(pdf: jsPDF, cur: Cursor, items: string[], empresa: Empresa, numero: string) {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
   items.forEach((t) => {
+    const lines = pdf.splitTextToSize(t, CONTENT_W - 8) as string[];
+    ensureSpace(pdf, cur, lines.length * 5 + 1, empresa, numero);
     pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.text("•", M + 2, y);
+    pdf.text("•", M + 2, cur.y);
     pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
     pdf.setFont("helvetica", "normal");
-    const lines = pdf.splitTextToSize(t, maxWidth) as string[];
-    pdf.text(lines, M + 8, y);
-    y += 5.5 * lines.length + 1;
+    pdf.text(lines, M + 8, cur.y);
+    cur.y += lines.length * 5 + 0.8;
   });
-  return y;
+  cur.y += 1.5;
 }
 
-function paginaCapa(
+function tabelaPagamento(
   pdf: jsPDF,
-  numeroContrato: string,
-  cliente: Cliente,
-  valorTotal: number,
-  kwp: number,
-) {
-  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(0, 0, W, H, "F");
-  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
-  pdf.circle(W + 30, H - 40, 90, "F");
-  pdf.setFillColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.circle(-15, 25, 35, "F");
-
-  const logoH = 40;
-  const logoW = logoH * LOGO_RATIO;
-  pdf.addImage(VERT_LOGO_PNG_BASE64, "PNG", (W - logoW) / 2, 32, logoW, logoH, undefined, "FAST");
-
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(11);
-  pdf.text("CONTRATO", W / 2, 100, { align: "center" });
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(20);
-  const titleLines = pdf.splitTextToSize(
-    "FORNECIMENTO E INSTALAÇÃO DE SISTEMA FOTOVOLTAICO",
-    W - 2 * M - 20,
-  ) as string[];
-  pdf.text(titleLines, W / 2, 116, { align: "center" });
-  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setFontSize(13);
-  pdf.text(numeroContrato, W / 2, 146, { align: "center" });
-
-  // Card cliente
-  pdf.setFillColor(255, 255, 255);
-  pdf.roundedRect(M, 165, W - 2 * M, 70, 4, 4, "F");
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.setFontSize(8);
-  pdf.text("CONTRATANTE", M + 6, 174);
-  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(16);
-  pdf.text(cliente.nome, M + 6, 184);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${formatDoc(cliente.documento)}`, M + 6, 192);
-  const end = `${cliente.endereco.rua}, ${cliente.endereco.numero} · ${cliente.endereco.bairro} · ${cliente.endereco.cidade}/${cliente.endereco.uf} · CEP ${cliente.endereco.cep}`;
-  const endLines = pdf.splitTextToSize(end, W - 2 * M - 12) as string[];
-  pdf.text(endLines, M + 6, 199);
-  pdf.text(`${formatTel(cliente.telefone)} · ${cliente.email}`, M + 6, 199 + 5 * endLines.length);
-
-  // Destaques
-  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
-  pdf.roundedRect(M, 250, (W - 2 * M - 6) / 2, 26, 3, 3, "F");
-  pdf.roundedRect(M + (W - 2 * M - 6) / 2 + 6, 250, (W - 2 * M - 6) / 2, 26, 3, 3, "F");
-  pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.setFontSize(7);
-  pdf.text("VALOR DO CONTRATO", M + 4, 257);
-  pdf.text("POTÊNCIA DO SISTEMA", M + (W - 2 * M - 6) / 2 + 10, 257);
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(15);
-  pdf.text(brl(valorTotal), M + 4, 270);
-  pdf.text(`${kwp.toFixed(2)} kWp`, M + (W - 2 * M - 6) / 2 + 10, 270);
-}
-
-function paginaObjeto(
-  pdf: jsPDF,
+  cur: Cursor,
+  formas: CondicoesContrato["formasPagamento"],
   empresa: Empresa,
-  numeroContrato: string,
-  cliente: Cliente,
-  proposta: Proposta,
-  produtos: Produto[],
-  kwp: number,
+  numero: string,
 ) {
-  header(pdf, 2, "Objeto e Especificações");
-  footer(pdf, empresa, numeroContrato);
-
-  const dim = dimensionarSistema(
-    cliente.consumoMedio,
-    proposta.irradiacao,
-    proposta.eficiencia,
-    proposta.cobertura,
-  );
-
-  let y = 26;
-  sectionTitle(pdf, y, "1. Objeto do Contrato");
-  y += 12;
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  const objTxt = `O presente instrumento tem por objeto o fornecimento e a instalação, pela CONTRATADA, de um sistema de geração de energia solar fotovoltaica com potência de ${kwp.toFixed(2)} kWp, com geração mensal estimada de ${dim.geracaoMensal} kWh e geração anual estimada de ${(dim.geracaoMensal * 12).toLocaleString("pt-BR")} kWh, dimensionado a partir de uma irradiação média de ${proposta.irradiacao.toString().replace(".", ",")} kWh/m²/dia.`;
-  const objLines = pdf.splitTextToSize(objTxt, W - 2 * M) as string[];
-  pdf.text(objLines, M, y);
-  y += 5.5 * objLines.length + 4;
-
-  sectionTitle(pdf, y, "2. Equipamentos Fornecidos");
-  y += 12;
-
-  // Tabela: Item | Qtd | Unid
+  const colN = 12;
+  const colV = 40;
+  const colD = CONTENT_W - colN - colV;
+  ensureSpace(pdf, cur, 8 + formas.length * 8 + 4, empresa, numero);
+  // header
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(M, y, W - 2 * M, 7, "F");
+  pdf.rect(M, cur.y, CONTENT_W, 7, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
-  pdf.text("DESCRIÇÃO", M + 3, y + 5);
-  pdf.text("QTD", W - M - 35, y + 5, { align: "right" });
-  pdf.text("UNID", W - M - 3, y + 5, { align: "right" });
-  y += 7;
-
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  pdf.text("Nº", M + 3, cur.y + 5);
+  pdf.text("FORMA DE PAGAMENTO", M + colN + 3, cur.y + 5);
+  pdf.text("VALOR", W - M - 3, cur.y + 5, { align: "right" });
+  cur.y += 7;
+  // rows
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
-  proposta.itens.forEach((it, idx) => {
-    const p = produtos.find((x) => x.id === it.produtoId);
-    if (idx % 2 === 0) {
+  formas.forEach((f, i) => {
+    if (i % 2 === 0) {
       pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-      pdf.rect(M, y, W - 2 * M, 8, "F");
+      pdf.rect(M, cur.y, CONTENT_W, 8, "F");
     }
-    const nome = p
-      ? `${p.nome}${p.fabricante ? " · " + p.fabricante : ""}${p.potenciaW ? ` · ${p.potenciaW}W` : ""}${p.potenciaKw ? ` · ${p.potenciaKw}kW` : ""}`
-      : "Item";
-    const nomeLines = pdf.splitTextToSize(nome, W - 2 * M - 50) as string[];
-    pdf.text(nomeLines[0], M + 3, y + 5.5);
-    pdf.text(it.quantidade.toString(), W - M - 35, y + 5.5, { align: "right" });
-    pdf.text(p?.unidade ?? "unid", W - M - 3, y + 5.5, { align: "right" });
-    y += 8;
-    if (y > H - 60) return;
-  });
-
-  y += 6;
-  sectionTitle(pdf, y, "3. Local de Instalação");
-  y += 12;
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  const local = `${cliente.endereco.rua}, ${cliente.endereco.numero} · ${cliente.endereco.bairro} · ${cliente.endereco.cidade}/${cliente.endereco.uf} · CEP ${cliente.endereco.cep}`;
-  const localLines = pdf.splitTextToSize(local, W - 2 * M) as string[];
-  pdf.text(localLines, M, y);
-  y += 5.5 * localLines.length + 2;
-  pdf.text(
-    `Concessionária: ${cliente.concessionaria} · UC: ${cliente.uc} · Rede: ${cliente.rede}`,
-    M,
-    y,
-  );
-}
-
-function paginaCondicoes(
-  pdf: jsPDF,
-  empresa: Empresa,
-  numeroContrato: string,
-  proposta: Proposta,
-  valorTotal: number,
-) {
-  header(pdf, 3, "Condições Comerciais");
-  footer(pdf, empresa, numeroContrato);
-
-  let y = 26;
-  sectionTitle(pdf, y, "4. Valor e Condições de Pagamento");
-  y += 12;
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(10);
-  pdf.text("Valor total do contrato:", M, y);
-  pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.text(brl(valorTotal), W - M, y, { align: "right" });
-  y += 6;
-  pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text("À vista (5% de desconto):", M, y);
-  pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(VERT[0], VERT[1], VERT[2]);
-  pdf.text(brl(valorTotal * 0.95), W - M, y, { align: "right" });
-  y += 8;
-
-  // Tabela financiamento
-  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.rect(M, y, W - 2 * M, 7, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8);
-  pdf.text("FINANCIAMENTO (Tabela Price)", M + 3, y + 5);
-  pdf.text(`Taxa: ${proposta.taxaFinanciamento.toString().replace(".", ",")}% a.m.`, W - M - 3, y + 5, { align: "right" });
-  y += 9;
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(10);
-  [24, 36, 48, 60].forEach((n) => {
-    const parcela = tabelaPrice(valorTotal, proposta.taxaFinanciamento, n);
-    pdf.text(`${n}x de`, M + 3, y);
+    pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+    pdf.text(`${i + 1}`, M + 3, cur.y + 5.5);
+    const desc = pdf.splitTextToSize(f.descricao, colD - 6) as string[];
+    pdf.text(desc[0], M + colN + 3, cur.y + 5.5);
     pdf.setFont("helvetica", "bold");
-    pdf.text(brl(parcela), W - M, y, { align: "right" });
+    pdf.text(brl(f.valor), W - M - 3, cur.y + 5.5, { align: "right" });
     pdf.setFont("helvetica", "normal");
-    y += 6;
+    cur.y += 8;
   });
-
-  y += 6;
-  sectionTitle(pdf, y, "5. Prazo de Execução");
-  y += 12;
-  y = bullets(pdf, y, [
-    "Projeto técnico: 5 dias úteis após assinatura e pagamento da entrada",
-    "Homologação na concessionária: 30 a 60 dias",
-    "Instalação física: 2 a 5 dias úteis",
-    "Ativação do sistema: imediato após a troca do medidor pela concessionária",
-  ]);
-
-  y += 4;
-  sectionTitle(pdf, y, "6. Obrigações da Contratada");
-  y += 12;
-  y = bullets(pdf, y, [
-    "Fornecer todos os equipamentos especificados, novos e de fabricantes homologados pelo INMETRO",
-    "Executar a instalação seguindo as normas técnicas vigentes (NBR 16.690, NBR 5.410)",
-    "Elaborar o projeto elétrico assinado por engenheiro responsável",
-    "Protocolar e acompanhar a homologação junto à concessionária local",
-    "Emitir ART (Anotação de Responsabilidade Técnica) do projeto e da execução",
-    "Garantir 1 (um) ano sobre o serviço de instalação executado",
-  ]);
-
-  y += 4;
-  sectionTitle(pdf, y, "7. Obrigações do Contratante");
-  y += 12;
-  bullets(pdf, y, [
-    "Efetuar o pagamento conforme condição comercial acordada",
-    "Liberar o acesso ao local de instalação na data agendada",
-    "Comunicar previamente obras ou alterações estruturais que possam afetar o sistema",
-    "Manter e operar o sistema conforme as instruções fornecidas pela Contratada",
-  ]);
-}
-
-function paginaGarantiasAssinaturas(
-  pdf: jsPDF,
-  empresa: Empresa,
-  numeroContrato: string,
-  cliente: Cliente,
-  consultor?: Usuario,
-) {
-  header(pdf, 4, "Garantias, Cláusulas e Assinaturas");
-  footer(pdf, empresa, numeroContrato);
-
-  let y = 26;
-  sectionTitle(pdf, y, "8. Garantias");
-  y += 12;
-  y = bullets(pdf, y, [
-    "Módulos fotovoltaicos: 12 anos contra defeitos de fabricação + 25 anos de eficiência linear",
-    "Inversores: 10 anos contra defeitos de fabricação",
-    "Estrutura de fixação: 10 anos contra corrosão",
-    "Serviço de instalação: 1 ano de garantia",
-  ]);
-
-  y += 4;
-  sectionTitle(pdf, y, "9. Cláusulas Gerais");
-  y += 12;
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
-  const clausulas = [
-    "9.1 RESCISÃO — Este contrato poderá ser rescindido por qualquer das partes em caso de descumprimento de cláusulas, mediante notificação prévia de 15 (quinze) dias, ressalvado o direito da parte prejudicada às perdas e danos.",
-    "9.2 FORO — Fica eleito o foro da Comarca de Ribeira do Pombal/BA para dirimir quaisquer dúvidas ou litígios decorrentes deste contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.",
-    "9.3 VIGÊNCIA — Este contrato entra em vigor na data da sua assinatura e vigorará até o cumprimento integral das obrigações nele estabelecidas.",
-  ];
-  clausulas.forEach((c) => {
-    const lines = pdf.splitTextToSize(c, W - 2 * M) as string[];
-    pdf.text(lines, M, y);
-    y += 5 * lines.length + 3;
-  });
-
-  // Assinaturas
-  y = Math.max(y + 6, H - 70);
-  sectionTitle(pdf, y, "10. Assinaturas");
-  y += 16;
-
-  const sigW = (W - 2 * M - 8) / 2;
+  // total
+  const total = formas.reduce((a, f) => a + f.valor, 0);
   pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.setLineWidth(0.3);
-  // Linhas pontilhadas
-  pdf.setLineDashPattern([1.2, 1.2], 0);
-  pdf.line(M, y, M + sigW, y);
-  pdf.line(M + sigW + 8, y, W - M, y);
-  pdf.setLineDashPattern([], 0);
-
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.setFontSize(7);
-  pdf.text("CONTRATANTE", M, y + 5);
-  pdf.text("CONTRATADA", M + sigW + 8, y + 5);
-  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setLineWidth(0.4);
+  pdf.line(M, cur.y, W - M, cur.y);
   pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFontSize(10);
-  pdf.text(cliente.nome, M, y + 11);
-  pdf.text(empresa.razaoSocial, M + sigW + 8, y + 11);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${formatDoc(cliente.documento)}`, M, y + 16);
-  pdf.text(`CNPJ: ${empresa.cnpj}`, M + sigW + 8, y + 16);
-  if (consultor?.nome) {
-    pdf.text(`Resp.: ${consultor.nome}`, M + sigW + 8, y + 21);
-  }
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  pdf.text("Data: ___/___/_____", M, y + 26);
-  pdf.text("Data: ___/___/_____", M + sigW + 8, y + 26);
-  pdf.text("Testemunha: __________________________", M, y + 33);
-  pdf.text("Testemunha: __________________________", M + sigW + 8, y + 33);
+  pdf.text("TOTAL", M + 3, cur.y + 6);
+  pdf.text(brl(total), W - M - 3, cur.y + 6, { align: "right" });
+  cur.y += 10;
 }
 
 interface GerarContratoOpts {
@@ -387,36 +175,318 @@ interface GerarContratoOpts {
   produtos: Produto[];
   consultor?: Usuario;
   empresa: Empresa;
+  condicoes: CondicoesContrato;
   modo?: "save" | "blob" | "blob-data";
 }
 
 export function gerarPdfContrato(opts: GerarContratoOpts): string | void | Blob {
-  const { card, cliente, proposta, produtos, consultor, empresa, modo = "save" } = opts;
+  const { card, cliente, proposta, produtos, empresa, condicoes, modo = "save" } = opts;
+  void VERT_LOGO_COLOR_BASE64;
 
   const valorTotal = proposta.itens.reduce((a, it) => a + it.precoUnitario * it.quantidade, 0);
-  const kwp = proposta.itens.reduce((a, it) => {
-    const p = produtos.find((x) => x.id === it.produtoId);
-    if (p?.categoria === "modulo" && p.potenciaW) return a + (p.potenciaW * it.quantidade) / 1000;
-    return a;
-  }, 0) || card.potenciaKwp;
+  const kwpSistema =
+    proposta.itens.reduce((a, it) => {
+      const p = produtos.find((x) => x.id === it.produtoId);
+      if (p?.categoria === "modulo" && p.potenciaW) return a + (p.potenciaW * it.quantidade) / 1000;
+      return a;
+    }, 0) || card.potenciaKwp;
+
+  const dim = dimensionarSistema(
+    cliente.consumoMedio,
+    proposta.irradiacao,
+    proposta.eficiencia,
+    proposta.cobertura,
+  );
 
   const ano = new Date(proposta.criadoEm || new Date()).getFullYear();
   const seq = (proposta.numero || "").replace(/\D/g, "").slice(-4).padStart(4, "0") || "0001";
-  const numeroContrato = `CTRV-${ano}-${seq}`;
+  const numero = `CTRV-${ano}-${seq}`;
 
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  timbrado(pdf, empresa, numero);
+  const cur: Cursor = { y: 32 };
 
-  paginaCapa(pdf, numeroContrato, cliente, valorTotal, kwp);
+  // Título
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(13);
+  pdf.text("CONTRATO DE PRESTAÇÃO DE SERVIÇOS E FORNECIMENTO DE MATERIAIS", W / 2, cur.y, { align: "center" });
+  cur.y += 5;
+  pdf.text("E INSTALAÇÃO DE SISTEMA SOLAR FOTOVOLTAICO", W / 2, cur.y, { align: "center" });
+  cur.y += 8;
+
+  // Identificação das partes
+  H1(pdf, cur, "Identificação das Partes Contratantes", empresa, numero);
+  P(
+    pdf,
+    cur,
+    `CONTRATADA: ${empresa.razaoSocial}, com sede em ${empresa.endereco}, inscrita no CNPJ nº ${empresa.cnpj}.`,
+    empresa,
+    numero,
+  );
+  const endCli = condicoes.enderecoContratante
+    ? `${condicoes.enderecoContratante}, bairro ${condicoes.bairroContratante || "—"}, na cidade de ${condicoes.cidadeContratante || cliente.endereco.cidade}, CEP ${condicoes.cepContratante || cliente.endereco.cep}`
+    : `${cliente.endereco.rua}, ${cliente.endereco.numero}, bairro ${cliente.endereco.bairro}, na cidade de ${cliente.endereco.cidade}/${cliente.endereco.uf}, CEP ${cliente.endereco.cep}`;
+  P(
+    pdf,
+    cur,
+    `CONTRATANTE: ${cliente.nome}, inscrito no ${cliente.tipo === "pj" ? "CNPJ" : "CPF"} nº ${formatDoc(cliente.documento)}, estabelecido no endereço ${endCli}.`,
+    empresa,
+    numero,
+  );
+  P(
+    pdf,
+    cur,
+    "As partes acima identificadas têm, entre si, justas e acordadas o presente contrato de prestação de serviços de instalação de energia solar e venda de equipamentos, que se regerá mediante as cláusulas e condições adiante estipuladas.",
+    empresa,
+    numero,
+    { spaceAfter: 4 },
+  );
+
+  // Cláusula 1
+  H1(pdf, cur, "Cláusula Primeira – Do Objeto", empresa, numero);
+  P(
+    pdf,
+    cur,
+    `1.1 O presente contrato tem como OBJETO a prestação de serviços de instalação de sistema de energia solar fotovoltaica de ${kwpSistema.toFixed(2)} kWp e a venda dos respectivos equipamentos, conforme apresentado na proposta nº ${proposta.numero} e nos termos e condições detalhados neste contrato.`,
+    empresa,
+    numero,
+    { spaceAfter: 3 },
+  );
+
+  // Cláusula 2
+  H1(pdf, cur, "Cláusula Segunda – Obrigações da Contratante", empresa, numero);
+  P(pdf, cur, "2.1 A CONTRATANTE se compromete a fornecer todas as informações necessárias e autorizações para a instalação do sistema de energia solar, incluindo, mas não se limitando a acesso à propriedade, permissões das autoridades competentes e documentação necessária.", empresa, numero);
+  P(pdf, cur, "2.2 A CONTRATANTE será responsável por qualquer obra civil necessária para a instalação do sistema, incluindo alterações na estrutura do telhado ou edifício, se necessário.", empresa, numero);
+  P(pdf, cur, "2.3 A CONTRATANTE deverá efetuar o pagamento na forma e condições estabelecidas na Cláusula Quinta.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 3
+  H1(pdf, cur, "Cláusula Terceira – Obrigações da Contratada", empresa, numero);
+  P(pdf, cur, "3.1 A CONTRATADA deverá fornecer todos os equipamentos necessários para a instalação do sistema de energia solar, conforme descrito na proposta comercial e nos padrões de qualidade e segurança exigidos pela legislação vigente.", empresa, numero);
+  P(pdf, cur, "3.2 A CONTRATADA será responsável por todos os serviços de instalação, incluindo montagem, conexão elétrica, testes de funcionamento e obtenção das devidas aprovações e homologações junto à concessionária de energia local.", empresa, numero);
+  P(pdf, cur, "3.3 A CONTRATADA se compromete a seguir todas as normas e regulamentações aplicáveis à instalação de sistemas de energia solar, garantindo a conformidade com os padrões de segurança e qualidade.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 4 — Equipamentos
+  H1(pdf, cur, "Cláusula Quarta – Dos Equipamentos e Serviços", empresa, numero);
+  P(pdf, cur, "4.1 Os equipamentos a serem fornecidos pela CONTRATADA incluem, mas não estão limitados a:", empresa, numero);
+  const itensTxt = proposta.itens.map((it) => {
+    const p = produtos.find((x) => x.id === it.produtoId);
+    const nome = p?.nome ?? "Item";
+    const fab = p?.fabricante ? ` da marca ${p.fabricante}` : "";
+    const pot = p?.potenciaW ? ` de ${p.potenciaW} W` : p?.potenciaKw ? ` de ${p.potenciaKw} kW` : "";
+    return `${it.quantidade} ${p?.unidade ?? "un"} de ${nome}${pot}${fab}`;
+  });
+  bullets(pdf, cur, itensTxt, empresa, numero);
+  P(pdf, cur, "4.2 Os serviços a serem prestados pela CONTRATADA incluem, mas não estão limitados a:", empresa, numero);
+  bullets(
+    pdf,
+    cur,
+    [
+      "Projeto detalhado do sistema, incluindo especificações técnicas e elétricas",
+      "Instalação dos painéis solares",
+      "Instalação do inversor e demais componentes elétricos",
+      "Testes de funcionamento e comissionamento do sistema",
+      `Obtenção das aprovações e homologações junto à ${cliente.concessionaria}`,
+    ],
+    empresa,
+    numero,
+  );
+
+  // Cláusula 5 — Pagamento
+  H1(pdf, cur, "Cláusula Quinta – Do Preço e das Condições de Pagamento", empresa, numero);
+  P(
+    pdf,
+    cur,
+    `5.1 A CONTRATANTE pagará à CONTRATADA o valor total de ${brl(valorTotal)} pela prestação dos serviços e fornecimento dos equipamentos, conforme detalhado na proposta comercial.`,
+    empresa,
+    numero,
+  );
+  P(pdf, cur, "5.2 O pagamento será efetuado da seguinte forma:", empresa, numero);
+  tabelaPagamento(pdf, cur, condicoes.formasPagamento, empresa, numero);
+  P(
+    pdf,
+    cur,
+    `5.3 No caso de atraso no pagamento superior a 10 dias, será aplicada uma multa moratória de ${condicoes.multaAtrasoPct}% sobre o valor em atraso.`,
+    empresa,
+    numero,
+    { spaceAfter: 3 },
+  );
+
+  // Cláusula 6 — Garantia
+  H1(pdf, cur, "Cláusula Sexta – Da Garantia", empresa, numero);
+  P(pdf, cur, "6.1 A garantia dos equipamentos será fornecida pelo fabricante, conforme os termos e condições estabelecidos na garantia do fabricante e na legislação aplicável.", empresa, numero);
+  P(pdf, cur, "6.2 Das garantias conforme a proposta:", empresa, numero);
+  bullets(
+    pdf,
+    cur,
+    [
+      "Módulos solares: 25 anos de garantia do fabricante contra queda de eficiência em 20%",
+      "Inversor: 5 anos de garantia padrão do fabricante",
+      "Infraestrutura (materiais elétricos e outros): 1 ano",
+      "Mão de obra: 1 ano a partir da conclusão da instalação",
+    ],
+    empresa,
+    numero,
+  );
+  P(pdf, cur, "6.3 A mão de obra para instalação do sistema terá garantia de 12 meses a partir da conclusão da instalação, cobrindo defeitos de instalação ou funcionamento.", empresa, numero);
+  P(pdf, cur, "6.4 A CONTRATANTE fica ciente e concorda que não haverá direito de garantia, tornando a CONTRATADA isenta de qualquer responsabilidade ou obrigação, na hipótese de:", empresa, numero);
+  bullets(
+    pdf,
+    cur,
+    [
+      "Decorrido o prazo de garantia dado à CONTRATANTE;",
+      "Danos por condições climáticas extremas (tempestades, granizo, inundação) ou eventos naturais além do controle da CONTRATADA;",
+      "Danos por mau uso, negligência ou manutenção inadequada do cliente, incluindo intervenção por pessoas não autorizadas;",
+      "Manutenção ou reparo por entidade que não seja representante autorizado da CONTRATADA;",
+      "Modificação no sistema sem aprovação prévia por escrito da CONTRATADA;",
+      "Danos por terceiros, incluindo vandalismo ou acidentes alheios à instalação;",
+      "Uso de acessórios ou equipamentos não aprovados pela CONTRATADA;",
+      "Dano à estrutura do edifício por modificações estruturais não autorizadas;",
+      "Perdas decorrentes de interrupções no fornecimento de energia pela concessionária;",
+      "Queda de eficiência por alterações climáticas, sombreamento por árvores/construções após a instalação.",
+    ],
+    empresa,
+    numero,
+  );
+  P(pdf, cur, "6.5 Na hipótese de interrupções no fornecimento pela concessionária, não serão devidos reembolsos por ausência ou diminuição de geração.", empresa, numero);
+  P(pdf, cur, "6.6 A fim de garantir o bom funcionamento do sistema, será realizado pela CONTRATADA um Plano de Manutenção Preditiva e Preventiva, durante o prazo de garantia do serviço.", empresa, numero);
+  P(pdf, cur, "6.7 Após decorrido o prazo de garantia, a CONTRATANTE fica livre para escolher qualquer profissional ou empresa para realizar manutenções, ou poderá contratar um plano com a CONTRATADA.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 7 — Prazo
+  H1(pdf, cur, "Cláusula Sétima – Do Prazo, Execução e Conclusão dos Serviços", empresa, numero);
+  P(pdf, cur, "7.1 A CONTRATADA atuará nos serviços contratados de acordo com as especificações descritas no ANEXO I, parte integrante deste contrato.", empresa, numero);
+  P(
+    pdf,
+    cur,
+    `7.2 O prazo para conclusão da instalação do sistema fotovoltaico será de ${condicoes.prazoInstalacaoDias} dias, contados a partir da assinatura do contrato, podendo ser prorrogado nas hipóteses de:`,
+    empresa,
+    numero,
+  );
+  bullets(
+    pdf,
+    cur,
+    [
+      "Condições climáticas que dificultem e/ou impossibilitem a realização dos serviços;",
+      "Estado de calamidade pública;",
+      "Greve geral que torne impossível o livre deslocamento;",
+      "Atraso por negligência ou morosidade da CONTRATANTE em demandas elétricas, estruturais ou da concessionária.",
+    ],
+    empresa,
+    numero,
+  );
+  P(pdf, cur, "7.3 Quando tais mudanças forem pré-requisito indispensável para o início do serviço, o prazo para conclusão começará a contar a partir da finalização de todas as demandas necessárias.", empresa, numero);
+  P(pdf, cur, "7.4 A CONTRATADA terá gerência integral na execução do serviço, com total autonomia, atendendo exclusivamente o cronograma firmado entre as partes.", empresa, numero);
+  P(pdf, cur, "7.5 Considera-se o cumprimento integral do contrato no momento em que todos os serviços tenham sido concluídos, mediante aprovação e revisão final da CONTRATANTE.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 8 — Rescisão
+  H1(pdf, cur, "Cláusula Oitava – Da Rescisão Contratual", empresa, numero);
+  P(pdf, cur, "8.1 Poderá o presente instrumento ser rescindido por qualquer das partes, em até 7 (sete) dias, devendo então somente ser finalizadas e pagas as etapas que já estiverem em andamento.", empresa, numero);
+  P(pdf, cur, "8.2 Em caso de desistência ou renúncia pela CONTRATANTE sem motivo justo, dentro do prazo de instalação, será devido à CONTRATADA, a título de reparação, 10% do valor deste contrato, caso a desistência seja comunicada após decorridos 7 (sete) dias da assinatura.", empresa, numero);
+  P(pdf, cur, "8.3 O descumprimento de qualquer cláusula implicará rescisão imediata deste contrato, obrigando a parte que rescindiu a pagar multa de 10% sobre o valor total do contrato.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 9 — LGPD
+  H1(pdf, cur, "Cláusula Nona – Da Observância à LGPD", empresa, numero);
+  P(pdf, cur, "9.1 A CONTRATANTE declara expresso CONSENTIMENTO para que a CONTRATADA colete, trate e compartilhe os dados necessários ao cumprimento do contrato, nos termos do Art. 7º, inc. V da LGPD, bem como os dados necessários para cumprimento de obrigações legais (Art. 7º, inc. II) e proteção ao crédito.", empresa, numero, { spaceAfter: 3 });
+
+  // Cláusula 10 — Foro
+  H1(pdf, cur, "Cláusula Décima – Da Legislação Aplicável e Foro", empresa, numero);
+  P(pdf, cur, "10.1 Este contrato será regido e interpretado de acordo com as leis da República Federativa do Brasil.", empresa, numero);
+  P(pdf, cur, "10.2 Para dirimir quaisquer controvérsias oriundas deste contrato, as partes elegem o foro da Comarca de Ribeira do Pombal – Bahia.", empresa, numero, { spaceAfter: 4 });
+
+  P(
+    pdf,
+    cur,
+    "Por estarem assim justas e contratadas, as partes assinam o presente contrato, em duas vias de igual teor, na presença das testemunhas abaixo.",
+    empresa,
+    numero,
+  );
+  const hoje = new Date();
+  const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  P(
+    pdf,
+    cur,
+    `Ribeira do Pombal, ${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}.`,
+    empresa,
+    numero,
+    { spaceAfter: 10 },
+  );
+
+  // Assinaturas
+  ensureSpace(pdf, cur, 60, empresa, numero);
+  const sigW = (CONTENT_W - 10) / 2;
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setLineWidth(0.3);
+  pdf.line(M, cur.y, M + sigW, cur.y);
+  pdf.line(M + sigW + 10, cur.y, W - M, cur.y);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.text(cliente.nome, M, cur.y + 5);
+  pdf.text("VERT ENERGIE", M + sigW + 10, cur.y + 5);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${formatDoc(cliente.documento)}`, M, cur.y + 10);
+  pdf.text(`CNPJ: ${empresa.cnpj}`, M + sigW + 10, cur.y + 10);
+  cur.y += 22;
+
+  // Testemunhas
+  ensureSpace(pdf, cur, 25, empresa, numero);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.text("TESTEMUNHAS:", M, cur.y);
+  cur.y += 8;
+  pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.line(M, cur.y, M + sigW, cur.y);
+  pdf.line(M + sigW + 10, cur.y, W - M, cur.y);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  pdf.text("CPF:", M, cur.y + 5);
+  pdf.text("CPF:", M + sigW + 10, cur.y + 5);
+
+  // Anexo I — manutenção
   pdf.addPage();
-  paginaObjeto(pdf, empresa, numeroContrato, cliente, proposta, produtos, kwp);
-  pdf.addPage();
-  paginaCondicoes(pdf, empresa, numeroContrato, proposta, valorTotal);
-  pdf.addPage();
-  paginaGarantiasAssinaturas(pdf, empresa, numeroContrato, cliente, consultor);
+  timbrado(pdf, empresa, numero);
+  cur.y = 32;
+  H1(pdf, cur, "Anexo I – Programa de Manutenção Preventiva e Preditiva", empresa, numero);
+  P(pdf, cur, "O plano de manutenção será realizado pela CONTRATADA conforme períodos preestabelecidos na Tabela 1, com o objetivo de preservar a garantia da instalação e da produção do sistema.", empresa, numero);
+  P(pdf, cur, "O valor a ser cobrado por manutenção, após um ano de cortesia, será acordado entre as partes quando esta for executada, desde que haja a necessidade de alguma troca ou instalação.", empresa, numero);
+  P(
+    pdf,
+    cur,
+    `A produção estimada e garantida do sistema será de ${dim.geracaoMensal.toLocaleString("pt-BR")} kWh/mês e ${(dim.geracaoMensal * 12).toLocaleString("pt-BR")} kWh/ano, considerando variação de 9% em relação ao valor apresentado na proposta.`,
+    empresa,
+    numero,
+  );
+  P(pdf, cur, "Os resultados apresentados são projeções baseadas em valores especificados pelos fabricantes e na irradiação média histórica do local. A contratada não se responsabiliza pela exatidão dos dados, já que a fonte solar é intermitente e depende de fatores meteorológicos.", empresa, numero, { spaceAfter: 4 });
+
+  // Tabela 1
+  ensureSpace(pdf, cur, 30, empresa, numero);
+  pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.rect(M, cur.y, CONTENT_W, 7, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8);
+  pdf.text("ELEMENTO", M + 3, cur.y + 5);
+  pdf.text("PLANO DE AÇÃO", M + 55, cur.y + 5);
+  pdf.text("PERÍODO", W - M - 3, cur.y + 5, { align: "right" });
+  cur.y += 7;
+  pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+  pdf.rect(M, cur.y, CONTENT_W, 16, "F");
+  pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.text("Sistema Fotovoltaico", M + 3, cur.y + 6);
+  const acao = pdf.splitTextToSize(
+    "Vistoria e inspeção do sistema, analisando todos os componentes (cabos, módulos, inversor, etc.). Realização de manutenção corretiva se necessário.",
+    CONTENT_W - 75,
+  ) as string[];
+  pdf.text(acao, M + 55, cur.y + 5);
+  pdf.text("6 meses", W - M - 3, cur.y + 6, { align: "right" });
 
   if (modo === "blob") return pdf.output("bloburl") as unknown as string;
   if (modo === "blob-data") return pdf.output("blob") as Blob;
-  pdf.save(`Contrato-${numeroContrato}-${cliente.nome.replace(/\s+/g, "_")}.pdf`);
-  void card;
+  pdf.save(`Contrato-${numero}-${cliente.nome.replace(/\s+/g, "_")}.pdf`);
 }
-
