@@ -120,9 +120,35 @@ function Pipeline() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Pipeline de Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} oportunidades · arraste os cards entre etapas</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {filtered.length} oportunidades {viewMode === "kanban" ? "· arraste os cards entre etapas" : "· visualize em lista"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border bg-muted p-0.5">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition",
+                viewMode === "kanban" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Visualização Kanban"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Kanban
+            </button>
+            <button
+              onClick={() => setViewMode("lista")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition",
+                viewMode === "lista" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Visualização em Lista"
+            >
+              <List className="h-4 w-4" />
+              Lista
+            </button>
+          </div>
           <button
             onClick={() => setNovoCardOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 text-sm font-semibold"
