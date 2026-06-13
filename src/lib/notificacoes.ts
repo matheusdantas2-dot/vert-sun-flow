@@ -56,7 +56,7 @@ export const useNotificacoes = create<State>()(
     }),
     {
       name: "vert-notificacoes",
-      storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as Storage))),
+      storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : (undefined as unknown as Storage))),
       partialize: (s) => ({ itens: s.itens, dispensados: s.dispensados }),
     },
   ),
