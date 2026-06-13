@@ -1,5 +1,6 @@
-// Centro de notificações in-memory + helper para emitir toast (sonner)
+// Centro de notificações persistido em localStorage + helper para emitir toast (sonner)
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
 import { uid } from "./format";
 
@@ -26,31 +27,40 @@ interface State {
   restaurarDispensados: () => void;
 }
 
-export const useNotificacoes = create<State>((set) => ({
-  itens: [],
-  dispensados: [],
-  push: ({ silent, ...n }) => {
-    const item: Notificacao = {
-      id: uid(),
-      criadoEm: new Date().toISOString(),
-      lida: false,
-      ...n,
-    };
-    set((s) => ({ itens: [item, ...s.itens].slice(0, 50) }));
-    if (!silent) {
-      const fn = n.tipo === "error" ? toast.error
-        : n.tipo === "success" ? toast.success
-        : n.tipo === "warning" ? toast.warning
-        : toast.info;
-      fn(n.titulo, n.mensagem ? { description: n.mensagem } : undefined);
-    }
-  },
-  marcarTodasLidas: () => set((s) => ({ itens: s.itens.map((i) => ({ ...i, lida: true })) })),
-  marcarLida: (id) => set((s) => ({ itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
-  limpar: () => set({ itens: [] }),
-  dispensar: (id) => set((s) => s.dispensados.includes(id) ? s : ({ dispensados: [...s.dispensados, id], itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
-  restaurarDispensados: () => set({ dispensados: [] }),
-}));
+export const useNotificacoes = create<State>()(
+  persist(
+    (set) => ({
+      itens: [],
+      dispensados: [],
+      push: ({ silent, ...n }) => {
+        const item: Notificacao = {
+          id: uid(),
+          criadoEm: new Date().toISOString(),
+          lida: false,
+          ...n,
+        };
+        set((s) => ({ itens: [item, ...s.itens].slice(0, 50) }));
+        if (!silent) {
+          const fn = n.tipo === "error" ? toast.error
+            : n.tipo === "success" ? toast.success
+            : n.tipo === "warning" ? toast.warning
+            : toast.info;
+          fn(n.titulo, n.mensagem ? { description: n.mensagem } : undefined);
+        }
+      },
+      marcarTodasLidas: () => set((s) => ({ itens: s.itens.map((i) => ({ ...i, lida: true })) })),
+      marcarLida: (id) => set((s) => ({ itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
+      limpar: () => set({ itens: [] }),
+      dispensar: (id) => set((s) => s.dispensados.includes(id) ? s : ({ dispensados: [...s.dispensados, id], itens: s.itens.map((i) => i.id === id ? { ...i, lida: true } : i) })),
+      restaurarDispensados: () => set({ dispensados: [] }),
+    }),
+    {
+      name: "vert-notificacoes",
+      storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : (undefined as unknown as Storage))),
+      partialize: (s) => ({ itens: s.itens, dispensados: s.dispensados }),
+    },
+  ),
+);
 
 // Atalhos
 export const notify = {
