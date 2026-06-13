@@ -1,5 +1,6 @@
-// Centro de notificações in-memory + helper para emitir toast (sonner)
+// Centro de notificações persistido em localStorage + helper para emitir toast (sonner)
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
 import { uid } from "./format";
 
