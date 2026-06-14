@@ -7,6 +7,7 @@ import {
   Package,
   Calendar,
   BarChart3,
+  Wallet,
   Settings,
   Zap,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const items: { to: string; icon: React.ComponentType<{ className?: string }>; la
   { to: "/produtos", icon: Package, label: "Produtos", acao: "ver_produtos" },
   { to: "/agenda", icon: Calendar, label: "Agenda", acao: "ver_agenda" },
   { to: "/relatorios", icon: BarChart3, label: "Relatórios", acao: "ver_relatorios" },
+  { to: "/financeiro", icon: Wallet, label: "Financeiro", acao: "ver_financeiro" },
   { to: "/configuracoes", icon: Settings, label: "Configurações", acao: "ver_configuracoes" },
 ];
 

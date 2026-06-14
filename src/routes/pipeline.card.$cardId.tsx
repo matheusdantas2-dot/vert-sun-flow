@@ -32,6 +32,7 @@ import { CronogramaProjetoAdmin } from "@/components/projeto/CronogramaProjetoAd
 import { MensagensWhatsApp } from "@/components/clientes/MensagensWhatsApp";
 import { mensagemWhatsAppInicial, urlPortal, whatsappLink } from "@/lib/portalCliente";
 import { notify } from "@/lib/notificacoes";
+import { RecebimentosProjeto } from "@/components/pipeline/RecebimentosProjeto";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -270,6 +271,15 @@ function CardDetalhe() {
             </button>
           </div>
         </div>
+      )}
+
+      {(["contrato", "homologacao", "instalacao", "ativado"] as const).includes(card.stage as never) && (
+        <RecebimentosProjeto
+          cardId={card.id}
+          clienteId={cliente.id}
+          clienteNome={cliente.nome}
+          valorTotal={card.valorEstimado}
+        />
       )}
 
       <div className="bg-card rounded-xl border border-border p-5">
