@@ -7,8 +7,13 @@ import {
   type LancamentoTipo,
   type ContaFinanceiraId,
   type ModoRecebimento,
+  type DespesaFixa,
+  type DespesaFixaFrequencia,
+  type CategoriaFinanceira,
   MODO_RECEBIMENTO_LABEL,
+  DESPESA_FIXA_FREQUENCIA_LABEL,
 } from "@/lib/types";
+
 
 type DbLanc = {
   id: string;
