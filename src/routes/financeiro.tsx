@@ -11,6 +11,10 @@ import {
   Check,
   Pencil,
   X,
+  Repeat,
+  Pause,
+  Play,
+  ClipboardList,
 } from "lucide-react";
 import {
   useLancamentosQuery,
@@ -19,22 +23,33 @@ import {
   useAddLancamentosBulk,
   useUpdateLancamento,
   useDeleteLancamento,
+  useDespesasFixasQuery,
+  useAddDespesaFixa,
+  useUpdateDespesaFixa,
+  useDeleteDespesaFixa,
+  calcularProximoVencimento,
+  gerarLancamentosDespesasFixas,
 } from "@/lib/lancamentos.api";
 import {
   CONTAS_FINANCEIRAS,
   CATEGORIA_LABEL,
   CATEGORIAS_RECEITA,
   CATEGORIAS_DESPESA,
+  DESPESA_FIXA_FREQUENCIA_LABEL,
+  DESPESA_FIXA_FATOR_MENSAL,
   type ContaFinanceiraId,
   type Lancamento,
   type LancamentoTipo,
   type LancamentoStatus,
   type CategoriaFinanceira,
+  type DespesaFixa,
+  type DespesaFixaFrequencia,
 } from "@/lib/types";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { brl, dataBR } from "@/lib/format";
 import { SeletorPeriodo, calcPeriodo, type Periodo } from "@/components/dashboard/SeletorPeriodo";
 import { cn } from "@/lib/utils";
+import { notify } from "@/lib/notificacoes";
 import {
   BarChart,
   Bar,
@@ -51,7 +66,8 @@ export const Route = createFileRoute("/financeiro")({
   head: () => ({ meta: [{ title: "Financeiro — VertCRM" }] }),
 });
 
-type Aba = "visao" | "lancamentos" | "contas";
+type Aba = "visao" | "lancamentos" | "fixas" | "contas";
+
 
 function FinanceiroPage() {
   useLancamentosRealtime();
@@ -74,6 +90,7 @@ function FinanceiroPage() {
             [
               { id: "visao", label: "Visão geral" },
               { id: "lancamentos", label: "Lançamentos" },
+              { id: "fixas", label: "Despesas Fixas" },
               { id: "contas", label: "Contas" },
             ] as { id: Aba; label: string }[]
           ).map((t) => (
@@ -93,6 +110,7 @@ function FinanceiroPage() {
 
       {aba === "visao" && <VisaoGeral />}
       {aba === "lancamentos" && <Lancamentos />}
+      {aba === "fixas" && <DespesasFixasAba />}
       {aba === "contas" && <Contas />}
     </div>
   );
@@ -159,6 +177,10 @@ function VisaoGeral() {
         />
         <KpiBox label="A receber (previsto)" value={brl(aReceber)} icon={Clock} tone="blue" />
       </div>
+
+      <DespesasFixasWidget />
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {CONTAS_FINANCEIRAS.map((c) => {
@@ -904,6 +926,431 @@ function ProLaboreModal({
             className="px-4 h-10 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
           >
             Registrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DESPESAS FIXAS ─────────────────────────────────────────────────────────
+
+function totalMensalComprometido(despesas: DespesaFixa[]): number {
+  return despesas
+    .filter((d) => d.ativa)
+    .reduce((a, d) => a + d.valor * DESPESA_FIXA_FATOR_MENSAL[d.frequencia], 0);
+}
+
+function isoMesAtual(mes: Date = new Date()) {
+  const ini = new Date(mes.getFullYear(), mes.getMonth(), 1).toISOString().slice(0, 10);
+  const fim = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).toISOString().slice(0, 10);
+  return { ini, fim };
+}
+
+function DespesasFixasWidget() {
+  const { data: fixas = [] } = useDespesasFixasQuery();
+  const { ini, fim } = isoMesAtual();
+  const { data: lancsMes = [] } = useLancamentosQuery({ de: ini, ate: fim, tipo: "despesa" });
+  const addBulk = useAddLancamentosBulk();
+
+  const doMes = useMemo(
+    () => fixas.filter((d) => d.ativa && d.proximoVencimento >= ini && d.proximoVencimento <= fim),
+    [fixas, ini, fim],
+  );
+
+  const jaGeradas = doMes.filter((d) =>
+    lancsMes.some((l) => l.descricao === d.descricao && l.dataVencimento === d.proximoVencimento),
+  );
+
+  const faltantes = doMes.filter(
+    (d) => !lancsMes.some((l) => l.descricao === d.descricao && l.dataVencimento === d.proximoVencimento),
+  );
+
+  const totalMensal = totalMensalComprometido(fixas);
+  const pct = doMes.length === 0 ? 0 : Math.round((jaGeradas.length / doMes.length) * 100);
+
+  async function gerarFaltantes() {
+    if (faltantes.length === 0) return;
+    const total = faltantes.reduce((a, d) => a + d.valor, 0);
+    if (!confirm(`Serão criados ${faltantes.length} lançamentos totalizando ${brl(total)}. Confirmar?`)) return;
+    const payload = gerarLancamentosDespesasFixas(faltantes, new Date());
+    await addBulk.mutateAsync(payload);
+    notify.success(`${faltantes.length} lançamentos criados no financeiro`);
+  }
+
+  if (fixas.length === 0) return null;
+
+  return (
+    <div className="bg-card rounded-xl border border-border p-5">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-vert" />
+          <div>
+            <div className="font-display font-bold text-base">Despesas fixas do mês</div>
+            <div className="text-[11px] text-muted-foreground">
+              Total comprometido: <b>{brl(totalMensal)}</b> / mês
+            </div>
+          </div>
+        </div>
+        {faltantes.length > 0 && (
+          <button
+            onClick={gerarFaltantes}
+            disabled={addBulk.isPending}
+            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-vert text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+          >
+            <Plus className="h-3.5 w-3.5" /> Gerar {faltantes.length} faltante{faltantes.length > 1 ? "s" : ""}
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="text-xs font-bold tabular-nums w-[110px] text-right">
+          {jaGeradas.length} de {doMes.length} geradas · {pct}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function diasAte(isoDate: string): number {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const alvo = new Date(isoDate);
+  alvo.setHours(0, 0, 0, 0);
+  return Math.round((alvo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function DespesasFixasAba() {
+  const { data: fixas = [] } = useDespesasFixasQuery();
+  const { ini, fim } = isoMesAtual();
+  const { data: lancsMes = [] } = useLancamentosQuery({ de: ini, ate: fim, tipo: "despesa" });
+  const addBulk = useAddLancamentosBulk();
+  const update = useUpdateDespesaFixa();
+  const del = useDeleteDespesaFixa();
+
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState<DespesaFixa | null>(null);
+
+  const totalMensal = totalMensalComprometido(fixas);
+  const doMes = fixas.filter((d) => d.ativa && d.proximoVencimento >= ini && d.proximoVencimento <= fim);
+  const faltantes = doMes.filter(
+    (d) => !lancsMes.some((l) => l.descricao === d.descricao && l.dataVencimento === d.proximoVencimento),
+  );
+
+  async function gerarMes() {
+    if (faltantes.length === 0) {
+      notify.info("Nenhuma despesa fixa pendente para este mês.");
+      return;
+    }
+    const total = faltantes.reduce((a, d) => a + d.valor, 0);
+    if (!confirm(`Serão criados ${faltantes.length} lançamentos totalizando ${brl(total)}. Confirmar?`)) return;
+    const payload = gerarLancamentosDespesasFixas(faltantes, new Date());
+    await addBulk.mutateAsync(payload);
+    notify.success(`${faltantes.length} lançamentos criados no financeiro`);
+  }
+
+  const mesLabel = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card rounded-xl border border-border p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h2 className="font-display font-bold text-lg flex items-center gap-2">
+            <Repeat className="h-4 w-4 text-vert" /> Despesas Fixas
+          </h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Total mensal comprometido: <b className="text-foreground tabular-nums">{brl(totalMensal)}</b>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={gerarMes}
+            disabled={addBulk.isPending || faltantes.length === 0}
+            className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-sm font-semibold hover:bg-accent disabled:opacity-50"
+            title={faltantes.length === 0 ? "Nada a gerar" : `${faltantes.length} pendente(s)`}
+          >
+            <Plus className="h-4 w-4" /> Gerar lançamentos de {mesLabel}
+          </button>
+          <button
+            onClick={() => {
+              setEditando(null);
+              setModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" /> Nova despesa fixa
+          </button>
+        </div>
+      </div>
+
+      {CONTAS_FINANCEIRAS.map((c) => {
+        const lista = fixas.filter((d) => d.conta === c.id);
+        if (lista.length === 0) return null;
+        return (
+          <div key={c.id} className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/40">
+              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: c.cor }} />
+              <div className="font-display font-bold text-sm">{c.nome}</div>
+              <div className="text-[11px] text-muted-foreground ml-auto">
+                {lista.filter((d) => d.ativa).length} ativa(s) · {lista.length} total
+              </div>
+            </div>
+            <ul className="divide-y divide-border">
+              {lista.map((d) => {
+                const dias = diasAte(d.proximoVencimento);
+                const cor =
+                  dias < 0
+                    ? "text-rose-600"
+                    : dias <= 7
+                      ? "text-amber-600"
+                      : "text-emerald-600";
+                return (
+                  <li
+                    key={d.id}
+                    className={cn(
+                      "px-4 py-3 flex flex-wrap items-center gap-3",
+                      !d.ativa && "opacity-60 bg-muted/20",
+                    )}
+                  >
+                    <div className="flex-1 min-w-[220px]">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{d.descricao}</span>
+                        {!d.ativa && (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground">
+                            Pausada
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {CATEGORIA_LABEL[d.categoria]} · {DESPESA_FIXA_FREQUENCIA_LABEL[d.frequencia]} · Dia {d.diaVencimento}
+                      </div>
+                    </div>
+                    <div className={cn("text-xs font-semibold tabular-nums min-w-[140px]", cor)}>
+                      Próximo: {dataBR(d.proximoVencimento)}
+                      {dias < 0
+                        ? ` (${Math.abs(dias)}d em atraso)`
+                        : dias === 0
+                          ? " (hoje)"
+                          : ` (em ${dias}d)`}
+                    </div>
+                    <div className="font-bold tabular-nums text-rose-600 min-w-[110px] text-right">
+                      {brl(d.valor)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => update.mutate({ id: d.id, patch: { ativa: !d.ativa } })}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded border border-border hover:bg-accent"
+                        title={d.ativa ? "Pausar" : "Ativar"}
+                      >
+                        {d.ativa ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditando(d);
+                          setModal(true);
+                        }}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded border border-border hover:bg-accent"
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Excluir a despesa fixa "${d.descricao}"?`)) return;
+                          await del.mutateAsync(d.id);
+                        }}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded text-muted-foreground hover:text-rose-600"
+                        title="Excluir"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+
+      {fixas.length === 0 && (
+        <div className="bg-card rounded-xl border border-border p-10 text-center">
+          <Repeat className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <div className="font-display font-bold">Nenhuma despesa fixa cadastrada</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Cadastre aluguel, software, internet e outras despesas recorrentes para automatizar seu controle.
+          </p>
+        </div>
+      )}
+
+      {modal && (
+        <DespesaFixaModal
+          inicial={editando}
+          onClose={() => {
+            setModal(false);
+            setEditando(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DespesaFixaModal({
+  inicial,
+  onClose,
+}: {
+  inicial: DespesaFixa | null;
+  onClose: () => void;
+}) {
+  const add = useAddDespesaFixa();
+  const update = useUpdateDespesaFixa();
+
+  const [conta, setConta] = useState<ContaFinanceiraId>(inicial?.conta ?? "vert_pj");
+  const [descricao, setDescricao] = useState(inicial?.descricao ?? "");
+  const [valor, setValor] = useState(String(inicial?.valor ?? ""));
+  const [categoria, setCategoria] = useState<CategoriaFinanceira>(
+    (inicial?.categoria as CategoriaFinanceira) ?? "outros_despesa",
+  );
+  const [frequencia, setFrequencia] = useState<DespesaFixaFrequencia>(inicial?.frequencia ?? "mensal");
+  const [dia, setDia] = useState(String(inicial?.diaVencimento ?? 5));
+  const [obs, setObs] = useState(inicial?.observacoes ?? "");
+
+  const diaNum = Math.min(28, Math.max(1, Number(dia) || 1));
+  const previewProximo = useMemo(
+    () => calcularProximoVencimento(frequencia, diaNum),
+    [frequencia, diaNum],
+  );
+
+  async function salvar() {
+    const valorNum = Number(valor.replace(",", "."));
+    if (!descricao.trim() || !valorNum || valorNum <= 0) return;
+    const base = {
+      conta,
+      descricao: descricao.trim(),
+      valor: valorNum,
+      categoria,
+      frequencia,
+      diaVencimento: diaNum,
+      observacoes: obs || undefined,
+    };
+    if (inicial) {
+      await update.mutateAsync({
+        id: inicial.id,
+        patch: { ...base, proximoVencimento: previewProximo },
+      });
+    } else {
+      await add.mutateAsync({ ...base, ativa: true });
+    }
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-card rounded-xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-display font-bold text-lg">
+            {inicial ? "Editar despesa fixa" : "Nova despesa fixa"}
+          </h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <Field label="Conta">
+            <select
+              value={conta}
+              onChange={(e) => setConta(e.target.value as ContaFinanceiraId)}
+              className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+            >
+              {CONTAS_FINANCEIRAS.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Descrição">
+            <input
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Ex.: Aluguel do escritório"
+              className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Valor (R$)">
+              <input
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                inputMode="decimal"
+                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+              />
+            </Field>
+            <Field label="Categoria">
+              <select
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value as CategoriaFinanceira)}
+                className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+              >
+                {CATEGORIAS_DESPESA.map((c) => (
+                  <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Frequência">
+              <select
+                value={frequencia}
+                onChange={(e) => setFrequencia(e.target.value as DespesaFixaFrequencia)}
+                className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+              >
+                {(Object.keys(DESPESA_FIXA_FREQUENCIA_LABEL) as DespesaFixaFrequencia[]).map((f) => (
+                  <option key={f} value={f}>{DESPESA_FIXA_FREQUENCIA_LABEL[f]}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Dia do vencimento (1–28)">
+              <input
+                type="number"
+                min={1}
+                max={28}
+                value={dia}
+                onChange={(e) => setDia(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+              />
+            </Field>
+          </div>
+          <p className="text-[11px] text-muted-foreground -mt-1">
+            Recomendamos usar até o dia 28 para evitar problemas em fevereiro.
+          </p>
+          <Field label="Observações">
+            <textarea
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none"
+            />
+          </Field>
+          <div className="bg-muted/40 rounded-lg p-3 text-xs">
+            Próximo vencimento previsto:{" "}
+            <b className="tabular-nums">{dataBR(previewProximo)}</b>
+          </div>
+        </div>
+        <div className="p-4 border-t border-border flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 h-10 rounded-lg border border-border text-sm font-semibold">
+            Cancelar
+          </button>
+          <button
+            onClick={salvar}
+            disabled={add.isPending || update.isPending}
+            className="px-4 h-10 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+          >
+            Salvar
           </button>
         </div>
       </div>
