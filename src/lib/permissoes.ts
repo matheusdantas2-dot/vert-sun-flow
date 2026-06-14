@@ -13,6 +13,7 @@ export type Acao =
   | "ver_agenda"
   | "ver_relatorios"
   | "ver_configuracoes"
+  | "ver_financeiro"
   | "mover_card"
   | "exportar_pdf"
   | "ver_margem";
@@ -21,7 +22,7 @@ const MATRIZ: Record<UsuarioPerfil, Acao[]> = {
   admin: [
     "ver_dashboard", "ver_pipeline", "ver_clientes", "editar_cliente",
     "ver_propostas", "criar_proposta", "ver_produtos", "editar_produto",
-    "ver_agenda", "ver_relatorios", "ver_configuracoes",
+    "ver_agenda", "ver_relatorios", "ver_configuracoes", "ver_financeiro",
     "mover_card", "exportar_pdf", "ver_margem",
   ],
   consultor: [
