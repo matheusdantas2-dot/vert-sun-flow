@@ -14,6 +14,7 @@ export type Acao =
   | "ver_relatorios"
   | "ver_configuracoes"
   | "ver_financeiro"
+  | "ver_engenharia"
   | "mover_card"
   | "exportar_pdf"
   | "ver_margem";
@@ -23,16 +24,17 @@ const MATRIZ: Record<UsuarioPerfil, Acao[]> = {
     "ver_dashboard", "ver_pipeline", "ver_clientes", "editar_cliente",
     "ver_propostas", "criar_proposta", "ver_produtos", "editar_produto",
     "ver_agenda", "ver_relatorios", "ver_configuracoes", "ver_financeiro",
+    "ver_engenharia",
     "mover_card", "exportar_pdf", "ver_margem",
   ],
   consultor: [
     "ver_dashboard", "ver_pipeline", "ver_clientes", "editar_cliente",
     "ver_propostas", "criar_proposta", "ver_produtos",
-    "ver_agenda", "ver_relatorios",
+    "ver_agenda", "ver_relatorios", "ver_engenharia",
     "mover_card", "exportar_pdf",
   ],
   instalador: [
-    "ver_pipeline", "ver_clientes", "ver_agenda",
+    "ver_pipeline", "ver_clientes", "ver_agenda", "ver_engenharia",
   ],
 };
 
