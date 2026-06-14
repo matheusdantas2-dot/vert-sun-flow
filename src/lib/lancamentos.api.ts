@@ -377,7 +377,7 @@ export function useDespesasFixasQuery() {
 export function useAddDespesaFixa() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: Omit<Partial<DespesaFixa>, "proximoVencimento"> & { frequencia: DespesaFixaFrequencia; diaVencimento: number }) => {
+    mutationFn: async (input: Partial<DespesaFixa> & { frequencia: DespesaFixaFrequencia; diaVencimento: number }) => {
       const proximo = input.proximoVencimento
         ?? calcularProximoVencimento(input.frequencia, input.diaVencimento);
       const payload = toDbDF({ ...input, proximoVencimento: proximo });
