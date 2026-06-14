@@ -11,6 +11,10 @@ import {
   Check,
   Pencil,
   X,
+  Repeat,
+  Pause,
+  Play,
+  ClipboardList,
 } from "lucide-react";
 import {
   useLancamentosQuery,
@@ -19,22 +23,33 @@ import {
   useAddLancamentosBulk,
   useUpdateLancamento,
   useDeleteLancamento,
+  useDespesasFixasQuery,
+  useAddDespesaFixa,
+  useUpdateDespesaFixa,
+  useDeleteDespesaFixa,
+  calcularProximoVencimento,
+  gerarLancamentosDespesasFixas,
 } from "@/lib/lancamentos.api";
 import {
   CONTAS_FINANCEIRAS,
   CATEGORIA_LABEL,
   CATEGORIAS_RECEITA,
   CATEGORIAS_DESPESA,
+  DESPESA_FIXA_FREQUENCIA_LABEL,
+  DESPESA_FIXA_FATOR_MENSAL,
   type ContaFinanceiraId,
   type Lancamento,
   type LancamentoTipo,
   type LancamentoStatus,
   type CategoriaFinanceira,
+  type DespesaFixa,
+  type DespesaFixaFrequencia,
 } from "@/lib/types";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { brl, dataBR } from "@/lib/format";
 import { SeletorPeriodo, calcPeriodo, type Periodo } from "@/components/dashboard/SeletorPeriodo";
 import { cn } from "@/lib/utils";
+import { notify } from "@/lib/notificacoes";
 import {
   BarChart,
   Bar,
@@ -51,7 +66,8 @@ export const Route = createFileRoute("/financeiro")({
   head: () => ({ meta: [{ title: "Financeiro — VertCRM" }] }),
 });
 
-type Aba = "visao" | "lancamentos" | "contas";
+type Aba = "visao" | "lancamentos" | "fixas" | "contas";
+
 
 function FinanceiroPage() {
   useLancamentosRealtime();
