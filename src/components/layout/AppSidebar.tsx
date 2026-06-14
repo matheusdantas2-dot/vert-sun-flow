@@ -8,6 +8,7 @@ import {
   Calendar,
   BarChart3,
   Wallet,
+  HardHat,
   Settings,
   Zap,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const items: { to: string; icon: React.ComponentType<{ className?: string }>; la
   { to: "/agenda", icon: Calendar, label: "Agenda", acao: "ver_agenda" },
   { to: "/relatorios", icon: BarChart3, label: "Relatórios", acao: "ver_relatorios" },
   { to: "/financeiro", icon: Wallet, label: "Financeiro", acao: "ver_financeiro" },
+  { to: "/engenharia", icon: HardHat, label: "Engenharia", acao: "ver_engenharia" },
   { to: "/configuracoes", icon: Settings, label: "Configurações", acao: "ver_configuracoes" },
 ];
 
