@@ -142,7 +142,7 @@ export function gerarMemorialDescritivo(d: DadosEngenharia): jsPDF {
   y = sectionTitle(pdf, M, y, "1. Identificação do empreendimento");
   const colW = W - M * 2;
   y = kvRow(pdf, M, y, colW, "Titular (UC)", d.cliente.nome);
-  y = kvRow(pdf, M, y, colW, "CPF/CNPJ", formatDoc(d.cliente.documento, d.cliente.tipo));
+  y = kvRow(pdf, M, y, colW, "CPF/CNPJ", formatDoc(d.cliente.documento));
   y = kvRow(
     pdf,
     M,
