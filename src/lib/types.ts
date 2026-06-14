@@ -247,3 +247,116 @@ export const STATUS_PROPOSTA_LABEL: Record<PropostaStatus, string> = {
   recusada: "Recusada",
   expirada: "Expirada",
 };
+
+// ─── FINANCEIRO ───────────────────────────────────────────────────────────────
+
+export type ContaFinanceiraId = "vert_pj" | "pessoal_matheus";
+
+export const CONTAS_FINANCEIRAS: { id: ContaFinanceiraId; nome: string; cor: string }[] = [
+  { id: "vert_pj", nome: "Vert Energie (PJ)", cor: "#1a7a4a" },
+  { id: "pessoal_matheus", nome: "Pessoal (PF)", cor: "#7c3aed" },
+];
+
+export type LancamentoTipo = "receita" | "despesa" | "transferencia";
+export type LancamentoStatus = "previsto" | "realizado" | "cancelado";
+
+export type ModoRecebimento =
+  | "avista"
+  | "50_30_20"
+  | "cartao_credito"
+  | "financiado_sol_agora"
+  | "financiado_eos"
+  | "financiado_77sol"
+  | "financiado_bnb";
+
+export const MODO_RECEBIMENTO_LABEL: Record<ModoRecebimento, string> = {
+  avista: "À vista",
+  "50_30_20": "50/30/20 (parcelas próprias)",
+  cartao_credito: "Cartão de crédito",
+  financiado_sol_agora: "Financiado — Sol Agora",
+  financiado_eos: "Financiado — EOS Fin",
+  financiado_77sol: "Financiado — 77Sol",
+  financiado_bnb: "Financiado — BNB FNE Sol",
+};
+
+export const FINANCEIRAS_REPASSE_UNICO: ModoRecebimento[] = [
+  "financiado_sol_agora",
+  "financiado_eos",
+  "financiado_77sol",
+  "financiado_bnb",
+];
+
+export interface Lancamento {
+  id: string;
+  conta: ContaFinanceiraId;
+  tipo: LancamentoTipo;
+  descricao: string;
+  valor: number;
+  categoria: string;
+  dataVencimento: string;
+  dataRealizacao?: string;
+  status: LancamentoStatus;
+  cardId?: string;
+  propostaId?: string;
+  clienteId?: string;
+  contaDestino?: ContaFinanceiraId;
+  modoRecebimento?: ModoRecebimento;
+  parcelaNumero?: number;
+  parcelaTotal?: number;
+  observacoes?: string;
+  criadoEm: string;
+}
+
+export type CategoriaFinanceira =
+  | "projeto_solar"
+  | "servico_manutencao"
+  | "consultoria"
+  | "prolabore_entrada"
+  | "outros_receita"
+  | "equipamento"
+  | "mao_de_obra"
+  | "combustivel"
+  | "marketing"
+  | "aluguel"
+  | "prolabore_saida"
+  | "imposto"
+  | "software"
+  | "outros_despesa";
+
+export const CATEGORIA_LABEL: Record<CategoriaFinanceira, string> = {
+  projeto_solar: "Projeto Solar",
+  servico_manutencao: "Manutenção",
+  consultoria: "Consultoria",
+  prolabore_entrada: "Pró-labore recebido",
+  outros_receita: "Outras receitas",
+  equipamento: "Equipamentos",
+  mao_de_obra: "Mão de obra",
+  combustivel: "Combustível",
+  marketing: "Marketing",
+  aluguel: "Aluguel",
+  prolabore_saida: "Pró-labore pago",
+  imposto: "Impostos e taxas",
+  software: "Software / Assinaturas",
+  outros_despesa: "Outras despesas",
+};
+
+export const CATEGORIAS_RECEITA: CategoriaFinanceira[] = [
+  "projeto_solar",
+  "servico_manutencao",
+  "consultoria",
+  "prolabore_entrada",
+  "outros_receita",
+];
+
+export const CATEGORIAS_DESPESA: CategoriaFinanceira[] = [
+  "equipamento",
+  "mao_de_obra",
+  "combustivel",
+  "marketing",
+  "aluguel",
+  "prolabore_saida",
+  "imposto",
+  "software",
+  "outros_despesa",
+];
+
