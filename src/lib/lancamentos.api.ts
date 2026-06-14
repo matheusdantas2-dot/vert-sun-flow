@@ -254,3 +254,166 @@ export function gerarParcelasRecebimento(opts: {
       return [];
   }
 }
+
+// ─── DESPESAS FIXAS RECORRENTES ─────────────────────────────────────────────
+
+type DbDespFixa = {
+  id: string;
+  conta: string;
+  descricao: string;
+  valor: number | string;
+  categoria: string;
+  frequencia: string;
+  dia_vencimento: number;
+  ativa: boolean;
+  proximo_vencimento: string;
+  observacoes: string | null;
+  created_at: string;
+};
+
+function fromDbDF(r: DbDespFixa): DespesaFixa {
+  return {
+    id: r.id,
+    conta: r.conta as ContaFinanceiraId,
+    descricao: r.descricao,
+    valor: Number(r.valor),
+    categoria: r.categoria as CategoriaFinanceira,
+    frequencia: r.frequencia as DespesaFixaFrequencia,
+    diaVencimento: r.dia_vencimento,
+    ativa: r.ativa,
+    proximoVencimento: r.proximo_vencimento,
+    observacoes: r.observacoes ?? undefined,
+    criadoEm: r.created_at,
+  };
+}
+
+function toDbDF(p: Partial<DespesaFixa>): Record<string, unknown> {
+  const o: Record<string, unknown> = {};
+  if (p.conta !== undefined) o.conta = p.conta;
+  if (p.descricao !== undefined) o.descricao = p.descricao;
+  if (p.valor !== undefined) o.valor = p.valor;
+  if (p.categoria !== undefined) o.categoria = p.categoria;
+  if (p.frequencia !== undefined) o.frequencia = p.frequencia;
+  if (p.diaVencimento !== undefined) o.dia_vencimento = p.diaVencimento;
+  if (p.ativa !== undefined) o.ativa = p.ativa;
+  if (p.proximoVencimento !== undefined) o.proximo_vencimento = p.proximoVencimento;
+  if (p.observacoes !== undefined) o.observacoes = p.observacoes ?? null;
+  return o;
+}
+
+/**
+ * Calcula a próxima data de vencimento a partir da frequência e do dia preferido.
+ * Limita o dia em 28 para evitar problemas em fevereiro.
+ */
+export function calcularProximoVencimento(
+  frequencia: DespesaFixaFrequencia,
+  diaVencimento: number,
+  referencia: Date = new Date(),
+): string {
+  const mesesPorFrequencia: Record<DespesaFixaFrequencia, number> = {
+    mensal: 1,
+    bimestral: 2,
+    trimestral: 3,
+    semestral: 6,
+    anual: 12,
+  };
+  const dia = Math.min(Math.max(1, diaVencimento), 28);
+  const hoje = new Date(referencia);
+  hoje.setHours(0, 0, 0, 0);
+
+  // Próximo vencimento neste mesmo mês, se o dia ainda não passou
+  const candidato = new Date(hoje.getFullYear(), hoje.getMonth(), dia);
+  if (candidato >= hoje) {
+    return candidato.toISOString().slice(0, 10);
+  }
+  // Caso contrário, soma o intervalo da frequência
+  const meses = mesesPorFrequencia[frequencia];
+  const r = new Date(hoje.getFullYear(), hoje.getMonth() + meses, dia);
+  return r.toISOString().slice(0, 10);
+}
+
+/**
+ * Gera lançamentos a partir das despesas fixas ativas cujo próximo vencimento
+ * cai dentro do mês informado.
+ */
+export function gerarLancamentosDespesasFixas(
+  despesas: DespesaFixa[],
+  mes: Date = new Date(),
+): Partial<Lancamento>[] {
+  const inicio = new Date(mes.getFullYear(), mes.getMonth(), 1);
+  const fim = new Date(mes.getFullYear(), mes.getMonth() + 1, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const ini = iso(inicio);
+  const end = iso(fim);
+
+  return despesas
+    .filter((d) => d.ativa && d.proximoVencimento >= ini && d.proximoVencimento <= end)
+    .map((d) => ({
+      conta: d.conta,
+      tipo: "despesa" as LancamentoTipo,
+      descricao: d.descricao,
+      valor: d.valor,
+      categoria: d.categoria,
+      dataVencimento: d.proximoVencimento,
+      status: "previsto" as LancamentoStatus,
+      observacoes: `Gerado automaticamente — despesa fixa (${DESPESA_FIXA_FREQUENCIA_LABEL[d.frequencia]})`,
+    }));
+}
+
+export function useDespesasFixasQuery() {
+  return useQuery({
+    queryKey: ["despesas_fixas"],
+    queryFn: async (): Promise<DespesaFixa[]> => {
+      const { data, error } = await supabase
+        .from("despesas_fixas")
+        .select("*")
+        .order("proximo_vencimento", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((r) => fromDbDF(r as DbDespFixa));
+    },
+  });
+}
+
+export function useAddDespesaFixa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Omit<Partial<DespesaFixa>, "proximoVencimento"> & { frequencia: DespesaFixaFrequencia; diaVencimento: number }) => {
+      const proximo = input.proximoVencimento
+        ?? calcularProximoVencimento(input.frequencia, input.diaVencimento);
+      const payload = toDbDF({ ...input, proximoVencimento: proximo });
+      const { data, error } = await supabase
+        .from("despesas_fixas")
+        .insert(payload as never)
+        .select()
+        .single();
+      if (error) throw error;
+      return fromDbDF(data as DbDespFixa);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["despesas_fixas"] }),
+  });
+}
+
+export function useUpdateDespesaFixa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<DespesaFixa> }) => {
+      const { error } = await supabase
+        .from("despesas_fixas")
+        .update(toDbDF(patch) as never)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["despesas_fixas"] }),
+  });
+}
+
+export function useDeleteDespesaFixa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("despesas_fixas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["despesas_fixas"] }),
+  });
+}
