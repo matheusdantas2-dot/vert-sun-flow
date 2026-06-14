@@ -90,6 +90,7 @@ function FinanceiroPage() {
             [
               { id: "visao", label: "Visão geral" },
               { id: "lancamentos", label: "Lançamentos" },
+              { id: "fixas", label: "Despesas Fixas" },
               { id: "contas", label: "Contas" },
             ] as { id: Aba; label: string }[]
           ).map((t) => (
@@ -109,6 +110,7 @@ function FinanceiroPage() {
 
       {aba === "visao" && <VisaoGeral />}
       {aba === "lancamentos" && <Lancamentos />}
+      {aba === "fixas" && <DespesasFixasAba />}
       {aba === "contas" && <Contas />}
     </div>
   );
