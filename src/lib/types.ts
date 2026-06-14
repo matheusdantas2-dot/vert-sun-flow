@@ -360,3 +360,38 @@ export const CATEGORIAS_DESPESA: CategoriaFinanceira[] = [
   "outros_despesa",
 ];
 
+// ─── DESPESAS FIXAS RECORRENTES ──────────────────────────────────────────────
+
+export type DespesaFixaFrequencia = "mensal" | "bimestral" | "trimestral" | "semestral" | "anual";
+
+export const DESPESA_FIXA_FREQUENCIA_LABEL: Record<DespesaFixaFrequencia, string> = {
+  mensal: "Mensal",
+  bimestral: "Bimestral (a cada 2 meses)",
+  trimestral: "Trimestral (a cada 3 meses)",
+  semestral: "Semestral (a cada 6 meses)",
+  anual: "Anual",
+};
+
+export const DESPESA_FIXA_FATOR_MENSAL: Record<DespesaFixaFrequencia, number> = {
+  mensal: 1,
+  bimestral: 0.5,
+  trimestral: 1 / 3,
+  semestral: 1 / 6,
+  anual: 1 / 12,
+};
+
+export interface DespesaFixa {
+  id: string;
+  conta: ContaFinanceiraId;
+  descricao: string;
+  valor: number;
+  categoria: CategoriaFinanceira;
+  frequencia: DespesaFixaFrequencia;
+  diaVencimento: number;
+  ativa: boolean;
+  proximoVencimento: string;
+  observacoes?: string;
+  criadoEm: string;
+}
+
+
