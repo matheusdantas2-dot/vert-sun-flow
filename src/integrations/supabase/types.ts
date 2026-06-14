@@ -334,6 +334,51 @@ export type Database = {
           },
         ]
       }
+      despesas_fixas: {
+        Row: {
+          ativa: boolean
+          categoria: string
+          conta: string
+          created_at: string
+          descricao: string
+          dia_vencimento: number
+          frequencia: string
+          id: string
+          observacoes: string | null
+          proximo_vencimento: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativa?: boolean
+          categoria: string
+          conta: string
+          created_at?: string
+          descricao: string
+          dia_vencimento: number
+          frequencia?: string
+          id?: string
+          observacoes?: string | null
+          proximo_vencimento: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          ativa?: boolean
+          categoria?: string
+          conta?: string
+          created_at?: string
+          descricao?: string
+          dia_vencimento?: number
+          frequencia?: string
+          id?: string
+          observacoes?: string | null
+          proximo_vencimento?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       etapas_projeto: {
         Row: {
           created_at: string
