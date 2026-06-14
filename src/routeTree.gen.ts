@@ -16,6 +16,7 @@ import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as EngenhariaRouteImport } from './routes/engenharia'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaRouteImport } from './routes/agenda'
@@ -63,6 +64,11 @@ const LoginRoute = LoginRouteImport.update({
 const FinanceiroRoute = FinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngenhariaRoute = EngenhariaRouteImport.update({
+  id: '/engenharia',
+  path: '/engenharia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/engenharia'
     | '/financeiro'
     | '/login'
     | '/pipeline'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/engenharia'
     | '/financeiro'
     | '/login'
     | '/produtos'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/engenharia'
     | '/financeiro'
     | '/login'
     | '/pipeline'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   AgendaRoute: typeof AgendaRoute
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  EngenhariaRoute: typeof EngenhariaRoute
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRouteWithChildren
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/financeiro'
       fullPath: '/financeiro'
       preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engenharia': {
+      id: '/engenharia'
+      path: '/engenharia'
+      fullPath: '/engenharia'
+      preLoaderRoute: typeof EngenhariaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -451,6 +471,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaRoute: AgendaRoute,
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  EngenhariaRoute: EngenhariaRoute,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRouteWithChildren,
