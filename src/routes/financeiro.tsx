@@ -178,6 +178,10 @@ function VisaoGeral() {
         <KpiBox label="A receber (previsto)" value={brl(aReceber)} icon={Clock} tone="blue" />
       </div>
 
+      <DespesasFixasWidget />
+
+
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {CONTAS_FINANCEIRAS.map((c) => {
           const lcs = todos
