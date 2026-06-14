@@ -15,6 +15,7 @@ import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaRouteImport } from './routes/agenda'
@@ -57,6 +58,11 @@ const PipelineRoute = PipelineRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/financeiro'
     | '/login'
     | '/pipeline'
     | '/produtos'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/financeiro'
     | '/login'
     | '/produtos'
     | '/recuperar-senha'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/cadastro'
     | '/configuracoes'
+    | '/financeiro'
     | '/login'
     | '/pipeline'
     | '/produtos'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   AgendaRoute: typeof AgendaRoute
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRouteWithChildren
   ProdutosRoute: typeof ProdutosRoute
@@ -316,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaRoute: AgendaRoute,
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRouteWithChildren,
   ProdutosRoute: ProdutosRoute,
