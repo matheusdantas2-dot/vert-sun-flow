@@ -273,6 +273,15 @@ function CardDetalhe() {
         </div>
       )}
 
+      {(["contrato", "homologacao", "instalacao", "ativado"] as const).includes(card.stage as never) && (
+        <RecebimentosProjeto
+          cardId={card.id}
+          clienteId={cliente.id}
+          clienteNome={cliente.nome}
+          valorTotal={card.valorEstimado}
+        />
+      )}
+
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
