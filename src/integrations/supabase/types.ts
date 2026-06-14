@@ -432,6 +432,94 @@ export type Database = {
           },
         ]
       }
+      lancamentos: {
+        Row: {
+          card_id: string | null
+          categoria: string
+          cliente_id: string | null
+          conta: string
+          conta_destino: string | null
+          created_at: string
+          data_realizacao: string | null
+          data_vencimento: string
+          descricao: string
+          id: string
+          modo_recebimento: string | null
+          observacoes: string | null
+          parcela_numero: number | null
+          parcela_total: number | null
+          proposta_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          card_id?: string | null
+          categoria: string
+          cliente_id?: string | null
+          conta: string
+          conta_destino?: string | null
+          created_at?: string
+          data_realizacao?: string | null
+          data_vencimento: string
+          descricao: string
+          id?: string
+          modo_recebimento?: string | null
+          observacoes?: string | null
+          parcela_numero?: number | null
+          parcela_total?: number | null
+          proposta_id?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          card_id?: string | null
+          categoria?: string
+          cliente_id?: string | null
+          conta?: string
+          conta_destino?: string | null
+          created_at?: string
+          data_realizacao?: string | null
+          data_vencimento?: string
+          descricao?: string
+          id?: string
+          modo_recebimento?: string | null
+          observacoes?: string | null
+          parcela_numero?: number | null
+          parcela_total?: number | null
+          proposta_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motivos_perda: {
         Row: {
           ativo: boolean
