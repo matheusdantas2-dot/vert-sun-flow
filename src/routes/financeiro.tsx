@@ -878,7 +878,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
           </button>
           <button
             onClick={salvar}
-            disabled={add.isPending || update.isPending}
+            disabled={add.isPending || update.isPending || addBulk.isPending || addDespesaFixa.isPending}
             className="px-4 h-10 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
           >
             Salvar
