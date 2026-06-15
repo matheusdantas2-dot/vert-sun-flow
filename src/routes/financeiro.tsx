@@ -643,7 +643,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
         });
       }
       await addBulk.mutateAsync(lista);
-      notify(`${parcelas} parcelas geradas`, "success");
+      notify.success(`${parcelas} parcelas geradas`);
       onClose();
       return;
     }
@@ -667,7 +667,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
         clienteId: clienteId || undefined,
         observacoes: (obs ? obs + " — " : "") + "Despesa fixa recorrente",
       });
-      notify("Despesa fixa criada e primeiro lançamento gerado", "success");
+      notify.success("Despesa fixa criada e primeiro lançamento gerado");
       onClose();
       return;
     }
