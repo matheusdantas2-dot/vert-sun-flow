@@ -394,4 +394,164 @@ export interface DespesaFixa {
   criadoEm: string;
 }
 
+// ─── HOMOLOGAÇÃO ──────────────────────────────────────────────────────────────
+
+export type HomologacaoTipo = "inicial" | "aumento" | "lista_compensacao";
+
+export const HOMOLOGACAO_TIPO_LABEL: Record<HomologacaoTipo, string> = {
+  inicial: "Homologação inicial",
+  aumento: "Aumento de sistema",
+  lista_compensacao: "Adição à lista de compensação",
+};
+
+export const HOMOLOGACAO_TIPO_DESC: Record<HomologacaoTipo, string> = {
+  inicial: "Primeiro sistema fotovoltaico — processo completo junto à COELBA",
+  aumento: "Ampliação de sistema já homologado — atualização de potência e documentação",
+  lista_compensacao: "Inclusão de novas unidades consumidoras na lista de compensação de energia",
+};
+
+export type HomologacaoEtapa =
+  | "documentacao"
+  | "analise_interna"
+  | "protocolo"
+  | "em_analise"
+  | "pendencia"
+  | "aprovado"
+  | "medidor_trocado";
+
+export const HOMOLOGACAO_ETAPA_LABEL: Record<HomologacaoEtapa, string> = {
+  documentacao: "Documentação",
+  analise_interna: "Análise interna",
+  protocolo: "Protocolo COELBA",
+  em_analise: "Em análise",
+  pendencia: "Pendência",
+  aprovado: "Aprovado",
+  medidor_trocado: "Medidor trocado",
+};
+
+export const HOMOLOGACAO_ETAPAS_ORDEM: HomologacaoEtapa[] = [
+  "documentacao",
+  "analise_interna",
+  "protocolo",
+  "em_analise",
+  "pendencia",
+  "aprovado",
+  "medidor_trocado",
+];
+
+export const HOMOLOGACAO_ETAPA_COR: Record<HomologacaoEtapa, string> = {
+  documentacao: "bg-blue-100 text-blue-800",
+  analise_interna: "bg-yellow-100 text-yellow-800",
+  protocolo: "bg-purple-100 text-purple-800",
+  em_analise: "bg-orange-100 text-orange-800",
+  pendencia: "bg-red-100 text-red-800",
+  aprovado: "bg-green-100 text-green-800",
+  medidor_trocado: "bg-emerald-100 text-emerald-800",
+};
+
+export const HOMOLOGACAO_ETAPA_DESC: Record<HomologacaoEtapa, string> = {
+  documentacao: "Aguardando envio dos documentos necessários",
+  analise_interna: "A Vert Energie está revisando sua documentação",
+  protocolo: "Documentação protocolada junto à COELBA",
+  em_analise: "A COELBA está analisando seu processo",
+  pendencia: "A COELBA solicitou documentação adicional — verifique a aba Documentos",
+  aprovado: "Processo aprovado pela COELBA! Aguardando troca do medidor",
+  medidor_trocado: "🎉 Parabéns! Seu sistema está oficialmente homologado",
+};
+
+export type DocStatus = "pendente" | "recebido" | "aprovado" | "rejeitado";
+
+export interface HomologacaoDoc {
+  id: string;
+  nome: string;
+  obrigatorio: boolean;
+  status: DocStatus;
+  arquivoPath?: string;
+  arquivoNome?: string;
+  observacao?: string;
+  enviadoEm?: string;
+}
+
+export interface HomologacaoDadosCliente {
+  nome?: string;
+  cpf?: string;
+  rg?: string;
+  telefone?: string;
+  email?: string;
+  uc?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+  consumo1?: number;
+  consumo2?: number;
+  consumo3?: number;
+  ligacao?: "monofasico" | "bifasico" | "trifasico";
+  potenciaAtual?: number;
+  potenciaAumento?: number;
+  ucNome?: string;
+  ucCpf?: string;
+  ucNumero?: string;
+  ucEndereco?: string;
+  ucRelacao?: "proprietario" | "locatario" | "conjuge" | "outro";
+}
+
+export interface HomologacaoProcesso {
+  id: string;
+  token: string;
+  tipo: HomologacaoTipo;
+  etapa: HomologacaoEtapa;
+  clienteId: string;
+  cardId?: string;
+  consultorId?: string;
+  potenciaKwp?: number;
+  uc: string;
+  concessionaria: string;
+  enderecoInstalacao: string;
+  processoOriginalNumero?: string;
+  processoOriginalData?: string;
+  dataProtocolo?: string;
+  numeroProtocolo?: string;
+  dataPrevisaoResposta?: string;
+  dataAprovacao?: string;
+  dataMedidor?: string;
+  documentos: HomologacaoDoc[];
+  dadosCliente: HomologacaoDadosCliente;
+  observacoesInternas?: string;
+  mensagemCliente?: string;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export const DOCS_POR_TIPO: Record<HomologacaoTipo, { nome: string; obrigatorio: boolean }[]> = {
+  inicial: [
+    { nome: "RG e CPF do titular (frente e verso)", obrigatorio: true },
+    { nome: "Conta de energia recente (últimas 3 vias)", obrigatorio: true },
+    { nome: "Comprovante de endereço do imóvel (IPTU ou similar)", obrigatorio: true },
+    { nome: "Foto da fachada do imóvel", obrigatorio: true },
+    { nome: "Foto do telhado / local de instalação", obrigatorio: true },
+    { nome: "Foto do medidor atual e caixa de proteção", obrigatorio: true },
+    { nome: "Foto do quadro de distribuição interno", obrigatorio: true },
+    { nome: "Procuração (se representado por terceiro)", obrigatorio: false },
+    { nome: "Habite-se / Alvará (imóvel comercial/industrial)", obrigatorio: false },
+  ],
+  aumento: [
+    { nome: "RG e CPF do titular (frente e verso)", obrigatorio: true },
+    { nome: "Conta de energia recente", obrigatorio: true },
+    { nome: "Foto dos novos painéis instalados", obrigatorio: true },
+    { nome: "Foto do inversor atual + novo (se aplicável)", obrigatorio: true },
+    { nome: "Nota fiscal dos novos equipamentos", obrigatorio: true },
+    { nome: "Procuração (se representado por terceiro)", obrigatorio: false },
+  ],
+  lista_compensacao: [
+    { nome: "Conta de energia da UC a adicionar", obrigatorio: true },
+    { nome: "RG e CPF do titular da UC adicional", obrigatorio: true },
+    { nome: "Comprovante de vínculo (locação, propriedade)", obrigatorio: true },
+    { nome: "Procuração (se titular diferente da UC geradora)", obrigatorio: false },
+  ],
+};
+
+
 
