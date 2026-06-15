@@ -158,16 +158,19 @@ function AbaDados({ processo }: { processo: import("@/lib/types").HomologacaoPro
 
   return (
     <div className="bg-white rounded-xl border border-border p-5 space-y-4 mt-4">
+      <div className="text-xs text-muted-foreground">
+        Estes dados são do <strong>cliente final</strong> (titular da unidade consumidora).
+      </div>
       {preenchido && (
         <div className="text-xs bg-green-100 text-green-800 inline-block px-2 py-1 rounded">Dados preenchidos ✓</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div><Label>Nome completo</Label><Input value={d.nome ?? ""} onChange={(e) => set("nome", e.target.value)} /></div>
+        <div><Label>Nome completo do titular</Label><Input value={d.nome ?? ""} onChange={(e) => set("nome", e.target.value)} /></div>
         <div><Label>CPF</Label><Input value={d.cpf ?? ""} onChange={(e) => set("cpf", maskCpf(e.target.value))} /></div>
         <div><Label>RG</Label><Input value={d.rg ?? ""} onChange={(e) => set("rg", e.target.value)} /></div>
-        <div><Label>WhatsApp</Label><Input value={d.telefone ?? ""} onChange={(e) => set("telefone", maskTel(e.target.value))} /></div>
-        <div className="sm:col-span-2"><Label>E-mail</Label><Input type="email" value={d.email ?? ""} onChange={(e) => set("email", e.target.value)} /></div>
+        <div><Label>WhatsApp do cliente</Label><Input value={d.telefone ?? ""} onChange={(e) => set("telefone", maskTel(e.target.value))} /></div>
+        <div className="sm:col-span-2"><Label>E-mail do cliente</Label><Input type="email" value={d.email ?? ""} onChange={(e) => set("email", e.target.value)} /></div>
         <div><Label>UC (na conta de energia)</Label><Input value={d.uc ?? processo.uc} onChange={(e) => set("uc", e.target.value)} /></div>
         <div>
           <Label>Tipo de ligação</Label>
