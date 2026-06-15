@@ -230,20 +230,6 @@ export function NovoProcessoModal({
             </label>
           </div>
         )}
-            <div>
-              <div className="font-semibold mb-1">Documentos que serão solicitados ({docs.length}):</div>
-              <ul className="list-disc pl-5 text-xs space-y-0.5">
-                {docs.map((d, i) => (
-                  <li key={i}>{d.nome}{d.obrigatorio ? "" : " (opcional)"}</li>
-                ))}
-              </ul>
-            </div>
-            <label className="flex items-center gap-2 text-sm pt-2">
-              <input type="checkbox" checked={enviarWhats} onChange={(e) => setEnviarWhats(e.target.checked)} />
-              Enviar link de documentação ao cliente agora via WhatsApp
-            </label>
-          </div>
-        )}
 
         <DialogFooter className="gap-2">
           {passo > 1 && (
