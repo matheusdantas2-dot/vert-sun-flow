@@ -33,7 +33,7 @@ import { NovoProcessoModal } from "@/components/homologacao/NovoProcessoModal";
 import { notify } from "@/lib/notificacoes";
 import { dataBR } from "@/lib/format";
 
-export const Route = createFileRoute("/engenharia/homologacao")({
+export const Route = createFileRoute("/homologacoes")({
   component: HomologacaoPage,
   head: () => ({ meta: [{ title: "Homologações — VertCRM" }] }),
 });
@@ -441,7 +441,7 @@ function SheetProcesso({ processo, onClose }: { processo: HomologacaoProcesso; o
         </Dialog>
       </SheetContent>
     </Sheet>
-  );
+  )
 }
 
 function Info({ label, value }: { label: string; value: string }) {
