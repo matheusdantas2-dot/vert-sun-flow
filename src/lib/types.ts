@@ -450,13 +450,13 @@ export const HOMOLOGACAO_ETAPA_COR: Record<HomologacaoEtapa, string> = {
 };
 
 export const HOMOLOGACAO_ETAPA_DESC: Record<HomologacaoEtapa, string> = {
-  documentacao: "Aguardando envio dos documentos necessários",
-  analise_interna: "A Vert Energie está revisando sua documentação",
+  documentacao: "Aguardando envio dos documentos do cliente final",
+  analise_interna: "A Vert Energie está revisando a documentação",
   protocolo: "Documentação protocolada junto à COELBA",
-  em_analise: "A COELBA está analisando seu processo",
+  em_analise: "A COELBA está analisando o processo",
   pendencia: "A COELBA solicitou documentação adicional — verifique a aba Documentos",
   aprovado: "Processo aprovado pela COELBA! Aguardando troca do medidor",
-  medidor_trocado: "🎉 Parabéns! Seu sistema está oficialmente homologado",
+  medidor_trocado: "🎉 Sistema oficialmente homologado",
 };
 
 export type DocStatus = "pendente" | "recebido" | "aprovado" | "rejeitado";
@@ -473,6 +473,7 @@ export interface HomologacaoDoc {
 }
 
 export interface HomologacaoDadosCliente {
+  // dados do cliente final (preenchidos pelo integrador)
   nome?: string;
   cpf?: string;
   rg?: string;
@@ -503,6 +504,7 @@ export interface HomologacaoProcesso {
   token: string;
   tipo: HomologacaoTipo;
   etapa: HomologacaoEtapa;
+  /** clienteId aqui aponta para o INTEGRADOR (parceiro) que abriu o processo */
   clienteId: string;
   cardId?: string;
   consultorId?: string;
@@ -525,31 +527,28 @@ export interface HomologacaoProcesso {
   atualizadoEm: string;
 }
 
+// Lista enxuta de documentos — solicitada pelo integrador para o cliente final.
+// Sem habite-se, procuração ou foto do telhado. Comprovante de endereço = conta de energia.
 export const DOCS_POR_TIPO: Record<HomologacaoTipo, { nome: string; obrigatorio: boolean }[]> = {
   inicial: [
-    { nome: "RG e CPF do titular (frente e verso)", obrigatorio: true },
-    { nome: "Conta de energia recente (últimas 3 vias)", obrigatorio: true },
-    { nome: "Comprovante de endereço do imóvel (IPTU ou similar)", obrigatorio: true },
+    { nome: "RG e CPF do cliente final (frente e verso)", obrigatorio: true },
+    { nome: "Conta de energia recente (comprovante de endereço e titularidade)", obrigatorio: true },
     { nome: "Foto da fachada do imóvel", obrigatorio: true },
-    { nome: "Foto do telhado / local de instalação", obrigatorio: true },
     { nome: "Foto do medidor atual e caixa de proteção", obrigatorio: true },
-    { nome: "Foto do quadro de distribuição interno", obrigatorio: true },
-    { nome: "Procuração (se representado por terceiro)", obrigatorio: false },
-    { nome: "Habite-se / Alvará (imóvel comercial/industrial)", obrigatorio: false },
+    { nome: "Foto do quadro de distribuição interno", obrigatorio: false },
   ],
   aumento: [
-    { nome: "RG e CPF do titular (frente e verso)", obrigatorio: true },
+    { nome: "RG e CPF do cliente final (frente e verso)", obrigatorio: true },
     { nome: "Conta de energia recente", obrigatorio: true },
     { nome: "Foto dos novos painéis instalados", obrigatorio: true },
     { nome: "Foto do inversor atual + novo (se aplicável)", obrigatorio: true },
     { nome: "Nota fiscal dos novos equipamentos", obrigatorio: true },
-    { nome: "Procuração (se representado por terceiro)", obrigatorio: false },
+    { nome: "Foto do quadro de distribuição interno", obrigatorio: false },
   ],
   lista_compensacao: [
-    { nome: "Conta de energia da UC a adicionar", obrigatorio: true },
+    { nome: "Conta de energia da UC a adicionar (comprovante de endereço)", obrigatorio: true },
     { nome: "RG e CPF do titular da UC adicional", obrigatorio: true },
-    { nome: "Comprovante de vínculo (locação, propriedade)", obrigatorio: true },
-    { nome: "Procuração (se titular diferente da UC geradora)", obrigatorio: false },
+    { nome: "Comprovante de vínculo (locação ou propriedade)", obrigatorio: true },
   ],
 };
 

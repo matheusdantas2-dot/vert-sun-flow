@@ -79,7 +79,7 @@ function PortalHomologacao() {
       <header className="bg-gradient-to-r from-[#0d5234] to-[#2d9e64] text-white">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
           <img src={VERT_LOGO_PNG_BASE64} alt="Vert Energie" className="h-10 brightness-0 invert" />
-          <span className="text-xs opacity-80">Portal de Homologação</span>
+          <span className="text-xs opacity-80">Portal do Integrador</span>
         </div>
       </header>
 
@@ -87,11 +87,14 @@ function PortalHomologacao() {
         <section>
           <h1 className="text-2xl font-bold text-[#0d5234]">{HOMOLOGACAO_TIPO_LABEL[processo.tipo]}</h1>
           <p className="text-sm text-muted-foreground">UC {processo.uc} · {processo.concessionaria}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Preencha os dados do cliente final e envie os documentos abaixo. A Vert Energie cuida do protocolo junto à COELBA.
+          </p>
         </section>
 
         <Tabs defaultValue="dados">
           <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="dados">Meus dados</TabsTrigger>
+            <TabsTrigger value="dados">Cliente final</TabsTrigger>
             <TabsTrigger value="docs">Documentos</TabsTrigger>
             <TabsTrigger value="track">Acompanhamento</TabsTrigger>
           </TabsList>
@@ -155,16 +158,19 @@ function AbaDados({ processo }: { processo: import("@/lib/types").HomologacaoPro
 
   return (
     <div className="bg-white rounded-xl border border-border p-5 space-y-4 mt-4">
+      <div className="text-xs text-muted-foreground">
+        Estes dados são do <strong>cliente final</strong> (titular da unidade consumidora).
+      </div>
       {preenchido && (
         <div className="text-xs bg-green-100 text-green-800 inline-block px-2 py-1 rounded">Dados preenchidos ✓</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div><Label>Nome completo</Label><Input value={d.nome ?? ""} onChange={(e) => set("nome", e.target.value)} /></div>
+        <div><Label>Nome completo do titular</Label><Input value={d.nome ?? ""} onChange={(e) => set("nome", e.target.value)} /></div>
         <div><Label>CPF</Label><Input value={d.cpf ?? ""} onChange={(e) => set("cpf", maskCpf(e.target.value))} /></div>
         <div><Label>RG</Label><Input value={d.rg ?? ""} onChange={(e) => set("rg", e.target.value)} /></div>
-        <div><Label>WhatsApp</Label><Input value={d.telefone ?? ""} onChange={(e) => set("telefone", maskTel(e.target.value))} /></div>
-        <div className="sm:col-span-2"><Label>E-mail</Label><Input type="email" value={d.email ?? ""} onChange={(e) => set("email", e.target.value)} /></div>
+        <div><Label>WhatsApp do cliente</Label><Input value={d.telefone ?? ""} onChange={(e) => set("telefone", maskTel(e.target.value))} /></div>
+        <div className="sm:col-span-2"><Label>E-mail do cliente</Label><Input type="email" value={d.email ?? ""} onChange={(e) => set("email", e.target.value)} /></div>
         <div><Label>UC (na conta de energia)</Label><Input value={d.uc ?? processo.uc} onChange={(e) => set("uc", e.target.value)} /></div>
         <div>
           <Label>Tipo de ligação</Label>

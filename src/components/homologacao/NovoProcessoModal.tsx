@@ -134,15 +134,18 @@ export function NovoProcessoModal({
               <p className="text-xs text-muted-foreground mt-1">{HOMOLOGACAO_TIPO_DESC[tipo]}</p>
             </div>
             <div>
-              <Label>Cliente *</Label>
+              <Label>Integrador (parceiro) *</Label>
               <Select value={clienteId} onValueChange={preencherDoCliente}>
-                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione o integrador…" /></SelectTrigger>
                 <SelectContent>
                   {clientes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                O integrador receberá um link para preencher os dados do cliente final e enviar os documentos.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -208,13 +211,13 @@ export function NovoProcessoModal({
           <div className="space-y-3 text-sm">
             <div className="rounded-lg border border-border p-3 bg-muted/30 space-y-1">
               <div><strong>Tipo:</strong> {HOMOLOGACAO_TIPO_LABEL[tipo]}</div>
-              <div><strong>Cliente:</strong> {cliente?.nome ?? "—"}</div>
+              <div><strong>Integrador:</strong> {cliente?.nome ?? "—"}</div>
               <div><strong>UC:</strong> {uc}</div>
               <div><strong>Endereço:</strong> {endereco}</div>
               {potencia && <div><strong>Potência:</strong> {potencia} kWp</div>}
             </div>
             <div>
-              <div className="font-semibold mb-1">Documentos que serão solicitados ({docs.length}):</div>
+              <div className="font-semibold mb-1">Documentos que serão solicitados ao integrador ({docs.length}):</div>
               <ul className="list-disc pl-5 text-xs space-y-0.5">
                 {docs.map((d, i) => (
                   <li key={i}>{d.nome}{d.obrigatorio ? "" : " (opcional)"}</li>
@@ -223,7 +226,7 @@ export function NovoProcessoModal({
             </div>
             <label className="flex items-center gap-2 text-sm pt-2">
               <input type="checkbox" checked={enviarWhats} onChange={(e) => setEnviarWhats(e.target.checked)} />
-              Enviar link de documentação ao cliente agora via WhatsApp
+              Enviar link do portal ao integrador agora via WhatsApp
             </label>
           </div>
         )}

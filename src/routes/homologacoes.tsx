@@ -133,7 +133,7 @@ function HomologacaoPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Integrador / Cliente final</TableHead>
               <TableHead>UC</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Etapa</TableHead>
@@ -152,9 +152,15 @@ function HomologacaoPage() {
               const obrig = h.documentos.filter((d) => d.obrigatorio);
               const obrigOk = obrig.filter((d) => d.status === "aprovado" || d.status === "recebido").length;
               const completo = obrigOk === obrig.length && obrig.length > 0;
+              const nomeFinal = h.dadosCliente?.nome;
               return (
                 <TableRow key={h.id}>
-                  <TableCell>{clientesById[h.clienteId]?.nome ?? "—"}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{clientesById[h.clienteId]?.nome ?? "—"}</div>
+                    {nomeFinal && (
+                      <div className="text-xs text-muted-foreground">Cliente final: {nomeFinal}</div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{h.uc}</TableCell>
                   <TableCell>{HOMOLOGACAO_TIPO_LABEL[h.tipo]}</TableCell>
                   <TableCell>
@@ -316,9 +322,10 @@ function SheetProcesso({ processo, onClose }: { processo: HomologacaoProcesso; o
           </TabsList>
 
           <TabsContent value="processo" className="space-y-3">
-            <Info label="Cliente" value={cliente?.nome ?? "—"} />
+            <Info label="Integrador (parceiro)" value={cliente?.nome ?? "—"} />
+            <Info label="Cliente final" value={processo.dadosCliente?.nome ?? "— (a preencher pelo integrador)"} />
             <Info label="UC" value={processo.uc} />
-            <Info label="Endereço" value={processo.enderecoInstalacao} />
+            <Info label="Endereço de instalação" value={processo.enderecoInstalacao} />
             <Info label="Potência" value={processo.potenciaKwp ? `${processo.potenciaKwp} kWp` : "—"} />
             <div className="flex flex-wrap gap-2 pt-2">
               <Button size="sm" variant="outline" onClick={copiarLink}><Copy className="h-3.5 w-3.5 mr-1" />Copiar link</Button>
