@@ -561,7 +561,9 @@ function Filtro({ label, children }: { label: string; children: React.ReactNode 
 // ─── MODAL LANÇAMENTO ───────────────────────────────────────────────────────
 function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onClose: () => void }) {
   const add = useAddLancamento();
+  const addBulk = useAddLancamentosBulk();
   const update = useUpdateLancamento();
+  const addDespesaFixa = useAddDespesaFixa();
   const { data: clientes = [] } = useClientesQuery();
 
   const [tipo, setTipo] = useState<LancamentoTipo>(inicial?.tipo ?? "despesa");
@@ -578,27 +580,104 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
   const [clienteId, setClienteId] = useState(inicial?.clienteId ?? "");
   const [obs, setObs] = useState(inicial?.observacoes ?? "");
 
+  // Parcelamento / Recorrência (somente em criação)
+  const [modo, setModo] = useState<"unico" | "parcelado" | "fixa">("unico");
+  const [parcelas, setParcelas] = useState<number>(2);
+  const [valorTipo, setValorTipo] = useState<"total" | "parcela">("total");
+  const [frequenciaFixa, setFrequenciaFixa] = useState<DespesaFixaFrequencia>("mensal");
+
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
+  const valorNum = Number(valor.replace(",", "."));
+  const podeRecorrer = !inicial;
+
+  // Cálculo de preview de parcelas
+  const previewParcelas = useMemo(() => {
+    if (modo !== "parcelado" || !valorNum || valorNum <= 0 || parcelas < 1) return null;
+    const total = valorTipo === "total" ? valorNum : valorNum * parcelas;
+    const porParcela = +(total / parcelas).toFixed(2);
+    const ajuste = +(total - porParcela * parcelas).toFixed(2);
+    return { total, porParcela, ajuste, n: parcelas };
+  }, [modo, valorNum, parcelas, valorTipo]);
+
+  function addMeses(iso: string, meses: number): string {
+    const [y, m, d] = iso.split("-").map(Number);
+    const base = new Date(y, m - 1, Math.min(d, 28));
+    base.setMonth(base.getMonth() + meses);
+    return base.toISOString().slice(0, 10);
+  }
 
   async function salvar() {
-    const valorNum = Number(valor.replace(",", "."));
     if (!descricao.trim() || !valorNum || valorNum <= 0) return;
-    const payload: Partial<Lancamento> = {
-      tipo,
-      conta,
-      descricao: descricao.trim(),
-      valor: valorNum,
-      categoria,
-      dataVencimento: dataVenc,
-      status: statusV,
-      clienteId: clienteId || undefined,
-      observacoes: obs || undefined,
-    };
+
+    // Edição: comportamento simples sem recorrência
     if (inicial) {
-      await update.mutateAsync({ id: inicial.id, patch: payload });
-    } else {
-      await add.mutateAsync(payload);
+      await update.mutateAsync({
+        id: inicial.id,
+        patch: {
+          tipo, conta, descricao: descricao.trim(), valor: valorNum,
+          categoria, dataVencimento: dataVenc, status: statusV,
+          clienteId: clienteId || undefined, observacoes: obs || undefined,
+        },
+      });
+      onClose();
+      return;
     }
+
+    // Modo parcelado: gera N lançamentos
+    if (modo === "parcelado" && parcelas > 1 && previewParcelas) {
+      const lista: Partial<Lancamento>[] = [];
+      for (let i = 0; i < parcelas; i++) {
+        const isUltima = i === parcelas - 1;
+        const valorParc = isUltima
+          ? +(previewParcelas.porParcela + previewParcelas.ajuste).toFixed(2)
+          : previewParcelas.porParcela;
+        lista.push({
+          tipo, conta, descricao: `${descricao.trim()} (${i + 1}/${parcelas})`,
+          valor: valorParc, categoria,
+          dataVencimento: addMeses(dataVenc, i),
+          status: statusV,
+          clienteId: clienteId || undefined,
+          observacoes: obs || undefined,
+          parcelaNumero: i + 1,
+          parcelaTotal: parcelas,
+        });
+      }
+      await addBulk.mutateAsync(lista);
+      notify(`${parcelas} parcelas geradas`, "success");
+      onClose();
+      return;
+    }
+
+    // Modo despesa fixa recorrente: cadastra na tabela despesas_fixas
+    // e já cria o primeiro lançamento previsto deste mês
+    if (modo === "fixa" && tipo === "despesa") {
+      const dia = Number(dataVenc.split("-")[2]);
+      await addDespesaFixa.mutateAsync({
+        conta, descricao: descricao.trim(), valor: valorNum,
+        categoria: categoria as CategoriaFinanceira,
+        frequencia: frequenciaFixa,
+        diaVencimento: dia,
+        ativa: true,
+        proximoVencimento: addMeses(dataVenc, 1),
+        observacoes: obs || undefined,
+      });
+      await add.mutateAsync({
+        tipo, conta, descricao: descricao.trim(), valor: valorNum,
+        categoria, dataVencimento: dataVenc, status: statusV,
+        clienteId: clienteId || undefined,
+        observacoes: (obs ? obs + " — " : "") + "Despesa fixa recorrente",
+      });
+      notify("Despesa fixa criada e primeiro lançamento gerado", "success");
+      onClose();
+      return;
+    }
+
+    // Lançamento único padrão
+    await add.mutateAsync({
+      tipo, conta, descricao: descricao.trim(), valor: valorNum,
+      categoria, dataVencimento: dataVenc, status: statusV,
+      clienteId: clienteId || undefined, observacoes: obs || undefined,
+    });
     onClose();
   }
 
