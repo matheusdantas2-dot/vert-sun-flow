@@ -79,7 +79,7 @@ function PortalHomologacao() {
       <header className="bg-gradient-to-r from-[#0d5234] to-[#2d9e64] text-white">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
           <img src={VERT_LOGO_PNG_BASE64} alt="Vert Energie" className="h-10 brightness-0 invert" />
-          <span className="text-xs opacity-80">Portal de Homologação</span>
+          <span className="text-xs opacity-80">Portal do Integrador</span>
         </div>
       </header>
 
@@ -87,11 +87,14 @@ function PortalHomologacao() {
         <section>
           <h1 className="text-2xl font-bold text-[#0d5234]">{HOMOLOGACAO_TIPO_LABEL[processo.tipo]}</h1>
           <p className="text-sm text-muted-foreground">UC {processo.uc} · {processo.concessionaria}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Preencha os dados do cliente final e envie os documentos abaixo. A Vert Energie cuida do protocolo junto à COELBA.
+          </p>
         </section>
 
         <Tabs defaultValue="dados">
           <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="dados">Meus dados</TabsTrigger>
+            <TabsTrigger value="dados">Cliente final</TabsTrigger>
             <TabsTrigger value="docs">Documentos</TabsTrigger>
             <TabsTrigger value="track">Acompanhamento</TabsTrigger>
           </TabsList>
