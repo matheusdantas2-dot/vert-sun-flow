@@ -1266,13 +1266,16 @@ function DespesasFixasAba() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="bg-card rounded-xl border border-border p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <h2 className="font-display font-bold text-lg flex items-center gap-2">
-            <Repeat className="h-4 w-4 text-vert" /> Despesas Fixas
-          </h2>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Templates de lançamentos recorrentes
+          </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Total mensal comprometido: <b className="text-foreground tabular-nums">{brl(totalMensal)}</b>
+            {faltantes.length > 0 && (
+              <> · <span className="text-amber-600 font-semibold">{faltantes.length} pendente(s) este mês</span></>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1291,7 +1294,7 @@ function DespesasFixasAba() {
             }}
             className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Nova despesa fixa
+            <Plus className="h-4 w-4" /> Nova recorrência
           </button>
         </div>
       </div>
