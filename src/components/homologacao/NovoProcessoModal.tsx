@@ -134,15 +134,18 @@ export function NovoProcessoModal({
               <p className="text-xs text-muted-foreground mt-1">{HOMOLOGACAO_TIPO_DESC[tipo]}</p>
             </div>
             <div>
-              <Label>Cliente *</Label>
+              <Label>Integrador (parceiro) *</Label>
               <Select value={clienteId} onValueChange={preencherDoCliente}>
-                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione o integrador…" /></SelectTrigger>
                 <SelectContent>
                   {clientes.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                O integrador receberá um link para preencher os dados do cliente final e enviar os documentos.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
