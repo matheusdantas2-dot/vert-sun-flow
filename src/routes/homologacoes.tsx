@@ -322,9 +322,10 @@ function SheetProcesso({ processo, onClose }: { processo: HomologacaoProcesso; o
           </TabsList>
 
           <TabsContent value="processo" className="space-y-3">
-            <Info label="Cliente" value={cliente?.nome ?? "—"} />
+            <Info label="Integrador (parceiro)" value={cliente?.nome ?? "—"} />
+            <Info label="Cliente final" value={processo.dadosCliente?.nome ?? "— (a preencher pelo integrador)"} />
             <Info label="UC" value={processo.uc} />
-            <Info label="Endereço" value={processo.enderecoInstalacao} />
+            <Info label="Endereço de instalação" value={processo.enderecoInstalacao} />
             <Info label="Potência" value={processo.potenciaKwp ? `${processo.potenciaKwp} kWp` : "—"} />
             <div className="flex flex-wrap gap-2 pt-2">
               <Button size="sm" variant="outline" onClick={copiarLink}><Copy className="h-3.5 w-3.5 mr-1" />Copiar link</Button>
