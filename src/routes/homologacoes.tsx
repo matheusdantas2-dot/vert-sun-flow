@@ -133,7 +133,7 @@ function HomologacaoPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Integrador / Cliente final</TableHead>
               <TableHead>UC</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Etapa</TableHead>
@@ -152,9 +152,15 @@ function HomologacaoPage() {
               const obrig = h.documentos.filter((d) => d.obrigatorio);
               const obrigOk = obrig.filter((d) => d.status === "aprovado" || d.status === "recebido").length;
               const completo = obrigOk === obrig.length && obrig.length > 0;
+              const nomeFinal = h.dadosCliente?.nome;
               return (
                 <TableRow key={h.id}>
-                  <TableCell>{clientesById[h.clienteId]?.nome ?? "—"}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{clientesById[h.clienteId]?.nome ?? "—"}</div>
+                    {nomeFinal && (
+                      <div className="text-xs text-muted-foreground">Cliente final: {nomeFinal}</div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{h.uc}</TableCell>
                   <TableCell>{HOMOLOGACAO_TIPO_LABEL[h.tipo]}</TableCell>
                   <TableCell>
