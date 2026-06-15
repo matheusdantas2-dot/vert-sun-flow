@@ -561,7 +561,9 @@ function Filtro({ label, children }: { label: string; children: React.ReactNode 
 // ─── MODAL LANÇAMENTO ───────────────────────────────────────────────────────
 function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onClose: () => void }) {
   const add = useAddLancamento();
+  const addBulk = useAddLancamentosBulk();
   const update = useUpdateLancamento();
+  const addDespesaFixa = useAddDespesaFixa();
   const { data: clientes = [] } = useClientesQuery();
 
   const [tipo, setTipo] = useState<LancamentoTipo>(inicial?.tipo ?? "despesa");
@@ -578,27 +580,104 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
   const [clienteId, setClienteId] = useState(inicial?.clienteId ?? "");
   const [obs, setObs] = useState(inicial?.observacoes ?? "");
 
+  // Parcelamento / Recorrência (somente em criação)
+  const [modo, setModo] = useState<"unico" | "parcelado" | "fixa">("unico");
+  const [parcelas, setParcelas] = useState<number>(2);
+  const [valorTipo, setValorTipo] = useState<"total" | "parcela">("total");
+  const [frequenciaFixa, setFrequenciaFixa] = useState<DespesaFixaFrequencia>("mensal");
+
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
+  const valorNum = Number(valor.replace(",", "."));
+  const podeRecorrer = !inicial;
+
+  // Cálculo de preview de parcelas
+  const previewParcelas = useMemo(() => {
+    if (modo !== "parcelado" || !valorNum || valorNum <= 0 || parcelas < 1) return null;
+    const total = valorTipo === "total" ? valorNum : valorNum * parcelas;
+    const porParcela = +(total / parcelas).toFixed(2);
+    const ajuste = +(total - porParcela * parcelas).toFixed(2);
+    return { total, porParcela, ajuste, n: parcelas };
+  }, [modo, valorNum, parcelas, valorTipo]);
+
+  function addMeses(iso: string, meses: number): string {
+    const [y, m, d] = iso.split("-").map(Number);
+    const base = new Date(y, m - 1, Math.min(d, 28));
+    base.setMonth(base.getMonth() + meses);
+    return base.toISOString().slice(0, 10);
+  }
 
   async function salvar() {
-    const valorNum = Number(valor.replace(",", "."));
     if (!descricao.trim() || !valorNum || valorNum <= 0) return;
-    const payload: Partial<Lancamento> = {
-      tipo,
-      conta,
-      descricao: descricao.trim(),
-      valor: valorNum,
-      categoria,
-      dataVencimento: dataVenc,
-      status: statusV,
-      clienteId: clienteId || undefined,
-      observacoes: obs || undefined,
-    };
+
+    // Edição: comportamento simples sem recorrência
     if (inicial) {
-      await update.mutateAsync({ id: inicial.id, patch: payload });
-    } else {
-      await add.mutateAsync(payload);
+      await update.mutateAsync({
+        id: inicial.id,
+        patch: {
+          tipo, conta, descricao: descricao.trim(), valor: valorNum,
+          categoria, dataVencimento: dataVenc, status: statusV,
+          clienteId: clienteId || undefined, observacoes: obs || undefined,
+        },
+      });
+      onClose();
+      return;
     }
+
+    // Modo parcelado: gera N lançamentos
+    if (modo === "parcelado" && parcelas > 1 && previewParcelas) {
+      const lista: Partial<Lancamento>[] = [];
+      for (let i = 0; i < parcelas; i++) {
+        const isUltima = i === parcelas - 1;
+        const valorParc = isUltima
+          ? +(previewParcelas.porParcela + previewParcelas.ajuste).toFixed(2)
+          : previewParcelas.porParcela;
+        lista.push({
+          tipo, conta, descricao: `${descricao.trim()} (${i + 1}/${parcelas})`,
+          valor: valorParc, categoria,
+          dataVencimento: addMeses(dataVenc, i),
+          status: statusV,
+          clienteId: clienteId || undefined,
+          observacoes: obs || undefined,
+          parcelaNumero: i + 1,
+          parcelaTotal: parcelas,
+        });
+      }
+      await addBulk.mutateAsync(lista);
+      notify.success(`${parcelas} parcelas geradas`);
+      onClose();
+      return;
+    }
+
+    // Modo despesa fixa recorrente: cadastra na tabela despesas_fixas
+    // e já cria o primeiro lançamento previsto deste mês
+    if (modo === "fixa" && tipo === "despesa") {
+      const dia = Number(dataVenc.split("-")[2]);
+      await addDespesaFixa.mutateAsync({
+        conta, descricao: descricao.trim(), valor: valorNum,
+        categoria: categoria as CategoriaFinanceira,
+        frequencia: frequenciaFixa,
+        diaVencimento: dia,
+        ativa: true,
+        proximoVencimento: addMeses(dataVenc, 1),
+        observacoes: obs || undefined,
+      });
+      await add.mutateAsync({
+        tipo, conta, descricao: descricao.trim(), valor: valorNum,
+        categoria, dataVencimento: dataVenc, status: statusV,
+        clienteId: clienteId || undefined,
+        observacoes: (obs ? obs + " — " : "") + "Despesa fixa recorrente",
+      });
+      notify.success("Despesa fixa criada e primeiro lançamento gerado");
+      onClose();
+      return;
+    }
+
+    // Lançamento único padrão
+    await add.mutateAsync({
+      tipo, conta, descricao: descricao.trim(), valor: valorNum,
+      categoria, dataVencimento: dataVenc, status: statusV,
+      clienteId: clienteId || undefined, observacoes: obs || undefined,
+    });
     onClose();
   }
 
@@ -710,6 +789,88 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
               className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none"
             />
           </Field>
+
+          {podeRecorrer && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Repetição
+              </div>
+              <div className="grid grid-cols-3 gap-1 bg-background rounded-lg p-1 border border-border">
+                {([
+                  { id: "unico", label: "Único" },
+                  { id: "parcelado", label: "Parcelado" },
+                  { id: "fixa", label: "Fixa" },
+                ] as { id: typeof modo; label: string }[]).map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    disabled={o.id === "fixa" && tipo !== "despesa"}
+                    onClick={() => setModo(o.id)}
+                    className={cn(
+                      "h-8 rounded-md text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed",
+                      modo === o.id ? "bg-vert text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+
+              {modo === "parcelado" && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Nº de meses">
+                      <input
+                        type="number"
+                        min={1}
+                        max={360}
+                        value={parcelas}
+                        onChange={(e) => setParcelas(Math.max(1, Math.min(360, Number(e.target.value) || 1)))}
+                        className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                      />
+                    </Field>
+                    <Field label="O valor informado é">
+                      <select
+                        value={valorTipo}
+                        onChange={(e) => setValorTipo(e.target.value as "total" | "parcela")}
+                        className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+                      >
+                        <option value="total">Valor total</option>
+                        <option value="parcela">Valor de cada parcela</option>
+                      </select>
+                    </Field>
+                  </div>
+                  {previewParcelas && (
+                    <div className="text-xs bg-background rounded-md border border-border p-2 flex justify-between items-center">
+                      <span className="text-muted-foreground">
+                        {previewParcelas.n}× de <b className="text-foreground tabular-nums">{brl(previewParcelas.porParcela)}</b>
+                      </span>
+                      <span className="font-bold tabular-nums">Total {brl(previewParcelas.total)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {modo === "fixa" && tipo === "despesa" && (
+                <div className="space-y-3">
+                  <Field label="Frequência">
+                    <select
+                      value={frequenciaFixa}
+                      onChange={(e) => setFrequenciaFixa(e.target.value as DespesaFixaFrequencia)}
+                      className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+                    >
+                      {Object.entries(DESPESA_FIXA_FREQUENCIA_LABEL).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <div className="text-[11px] text-muted-foreground">
+                    Cria a despesa recorrente e já gera o lançamento de hoje. Próximas parcelas aparecem na aba <b>Despesas Fixas</b>.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="p-4 border-t border-border flex justify-end gap-2">
           <button onClick={onClose} className="px-4 h-10 rounded-lg border border-border text-sm font-semibold">
@@ -717,7 +878,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
           </button>
           <button
             onClick={salvar}
-            disabled={add.isPending || update.isPending}
+            disabled={add.isPending || update.isPending || addBulk.isPending || addDespesaFixa.isPending}
             className="px-4 h-10 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
           >
             Salvar
