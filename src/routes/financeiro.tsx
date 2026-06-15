@@ -66,7 +66,7 @@ export const Route = createFileRoute("/financeiro")({
   head: () => ({ meta: [{ title: "Financeiro — VertCRM" }] }),
 });
 
-type Aba = "visao" | "lancamentos" | "fixas" | "contas";
+type Aba = "visao" | "lancamentos" | "contas";
 
 
 function FinanceiroPage() {
@@ -90,7 +90,6 @@ function FinanceiroPage() {
             [
               { id: "visao", label: "Visão geral" },
               { id: "lancamentos", label: "Lançamentos" },
-              { id: "fixas", label: "Despesas Fixas" },
               { id: "contas", label: "Contas" },
             ] as { id: Aba; label: string }[]
           ).map((t) => (
@@ -109,9 +108,57 @@ function FinanceiroPage() {
       </header>
 
       {aba === "visao" && <VisaoGeral />}
-      {aba === "lancamentos" && <Lancamentos />}
-      {aba === "fixas" && <DespesasFixasAba />}
+      {aba === "lancamentos" && <LancamentosModulo />}
       {aba === "contas" && <Contas />}
+    </div>
+  );
+}
+
+// ─── MÓDULO LANÇAMENTOS (Movimentos + Recorrências, padrão ERP) ─────────────
+function LancamentosModulo() {
+  const [visao, setVisao] = useState<"movimentos" | "recorrencias">("movimentos");
+  const { data: fixas = [] } = useDespesasFixasQuery();
+  const ativas = fixas.filter((f) => f.ativa).length;
+  const totalMensal = totalMensalComprometido(fixas);
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card rounded-xl border border-border p-1 inline-flex items-center gap-1">
+        <button
+          onClick={() => setVisao("movimentos")}
+          className={cn(
+            "inline-flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition",
+            visao === "movimentos" ? "bg-vert text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <ClipboardList className="h-4 w-4" /> Movimentos
+        </button>
+        <button
+          onClick={() => setVisao("recorrencias")}
+          className={cn(
+            "inline-flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition",
+            visao === "recorrencias" ? "bg-vert text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Repeat className="h-4 w-4" /> Recorrências
+          {ativas > 0 && (
+            <span className={cn(
+              "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold",
+              visao === "recorrencias" ? "bg-white/20 text-white" : "bg-vert/10 text-vert",
+            )}>
+              {ativas}
+            </span>
+          )}
+        </button>
+        {ativas > 0 && (
+          <div className="hidden lg:flex items-center gap-1.5 pl-3 ml-2 border-l border-border text-[11px] text-muted-foreground">
+            <span>Comprometido/mês:</span>
+            <b className="text-foreground tabular-nums">{brl(totalMensal)}</b>
+          </div>
+        )}
+      </div>
+
+      {visao === "movimentos" ? <Lancamentos /> : <DespesasFixasAba />}
     </div>
   );
 }
@@ -865,7 +912,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
                     </select>
                   </Field>
                   <div className="text-[11px] text-muted-foreground">
-                    Cria a despesa recorrente e já gera o lançamento de hoje. Próximas parcelas aparecem na aba <b>Despesas Fixas</b>.
+                    Cria uma recorrência e já gera o lançamento de hoje. Próximas parcelas ficam em <b>Lançamentos → Recorrências</b>.
                   </div>
                 </div>
               )}
@@ -1219,13 +1266,16 @@ function DespesasFixasAba() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="bg-card rounded-xl border border-border p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <h2 className="font-display font-bold text-lg flex items-center gap-2">
-            <Repeat className="h-4 w-4 text-vert" /> Despesas Fixas
-          </h2>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Templates de lançamentos recorrentes
+          </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Total mensal comprometido: <b className="text-foreground tabular-nums">{brl(totalMensal)}</b>
+            {faltantes.length > 0 && (
+              <> · <span className="text-amber-600 font-semibold">{faltantes.length} pendente(s) este mês</span></>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1244,7 +1294,7 @@ function DespesasFixasAba() {
             }}
             className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-vert text-white text-sm font-semibold hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Nova despesa fixa
+            <Plus className="h-4 w-4" /> Nova recorrência
           </button>
         </div>
       </div>
