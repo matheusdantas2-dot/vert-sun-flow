@@ -789,6 +789,88 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
               className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none"
             />
           </Field>
+
+          {podeRecorrer && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Repetição
+              </div>
+              <div className="grid grid-cols-3 gap-1 bg-background rounded-lg p-1 border border-border">
+                {([
+                  { id: "unico", label: "Único" },
+                  { id: "parcelado", label: "Parcelado" },
+                  { id: "fixa", label: "Fixa" },
+                ] as { id: typeof modo; label: string }[]).map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    disabled={o.id === "fixa" && tipo !== "despesa"}
+                    onClick={() => setModo(o.id)}
+                    className={cn(
+                      "h-8 rounded-md text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed",
+                      modo === o.id ? "bg-vert text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+
+              {modo === "parcelado" && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Nº de meses">
+                      <input
+                        type="number"
+                        min={1}
+                        max={360}
+                        value={parcelas}
+                        onChange={(e) => setParcelas(Math.max(1, Math.min(360, Number(e.target.value) || 1)))}
+                        className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                      />
+                    </Field>
+                    <Field label="O valor informado é">
+                      <select
+                        value={valorTipo}
+                        onChange={(e) => setValorTipo(e.target.value as "total" | "parcela")}
+                        className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+                      >
+                        <option value="total">Valor total</option>
+                        <option value="parcela">Valor de cada parcela</option>
+                      </select>
+                    </Field>
+                  </div>
+                  {previewParcelas && (
+                    <div className="text-xs bg-background rounded-md border border-border p-2 flex justify-between items-center">
+                      <span className="text-muted-foreground">
+                        {previewParcelas.n}× de <b className="text-foreground tabular-nums">{brl(previewParcelas.porParcela)}</b>
+                      </span>
+                      <span className="font-bold tabular-nums">Total {brl(previewParcelas.total)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {modo === "fixa" && tipo === "despesa" && (
+                <div className="space-y-3">
+                  <Field label="Frequência">
+                    <select
+                      value={frequenciaFixa}
+                      onChange={(e) => setFrequenciaFixa(e.target.value as DespesaFixaFrequencia)}
+                      className="w-full h-10 px-2 rounded-lg border border-border bg-background text-sm"
+                    >
+                      {Object.entries(DESPESA_FIXA_FREQUENCIA_LABEL).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <div className="text-[11px] text-muted-foreground">
+                    Cria a despesa recorrente e já gera o lançamento de hoje. Próximas parcelas aparecem na aba <b>Despesas Fixas</b>.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="p-4 border-t border-border flex justify-end gap-2">
           <button onClick={onClose} className="px-4 h-10 rounded-lg border border-border text-sm font-semibold">
