@@ -15,6 +15,7 @@ import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as PipelineRouteImport } from './routes/pipeline'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HomologacoesRouteImport } from './routes/homologacoes'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as EngenhariaRouteImport } from './routes/engenharia'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
@@ -26,6 +27,7 @@ import { Route as PipelineIndexRouteImport } from './routes/pipeline.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
 import { Route as PropostasIdRouteImport } from './routes/propostas.$id'
+import { Route as HomologacaoTokenRouteImport } from './routes/homologacao.$token'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
 import { Route as PipelineCardCardIdRouteImport } from './routes/pipeline.card.$cardId'
 import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
@@ -59,6 +61,11 @@ const PipelineRoute = PipelineRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomologacoesRoute = HomologacoesRouteImport.update({
+  id: '/homologacoes',
+  path: '/homologacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroRoute = FinanceiroRouteImport.update({
@@ -116,6 +123,11 @@ const PropostasIdRoute = PropostasIdRouteImport.update({
   path: '/propostas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomologacaoTokenRoute = HomologacaoTokenRouteImport.update({
+  id: '/homologacao/$token',
+  path: '/homologacao/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientesIdRoute = ClientesIdRouteImport.update({
   id: '/clientes/$id',
   path: '/clientes/$id',
@@ -145,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof ConfiguracoesRoute
   '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
+  '/homologacoes': typeof HomologacoesRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
@@ -152,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -168,12 +182,14 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof ConfiguracoesRoute
   '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
+  '/homologacoes': typeof HomologacoesRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
@@ -191,6 +207,7 @@ export interface FileRoutesById {
   '/configuracoes': typeof ConfiguracoesRoute
   '/engenharia': typeof EngenhariaRoute
   '/financeiro': typeof FinanceiroRoute
+  '/homologacoes': typeof HomologacoesRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
   '/produtos': typeof ProdutosRoute
@@ -198,6 +215,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -216,6 +234,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/engenharia'
     | '/financeiro'
+    | '/homologacoes'
     | '/login'
     | '/pipeline'
     | '/produtos'
@@ -223,6 +242,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -239,12 +259,14 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/engenharia'
     | '/financeiro'
+    | '/homologacoes'
     | '/login'
     | '/produtos'
     | '/recuperar-senha'
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes'
@@ -261,6 +283,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/engenharia'
     | '/financeiro'
+    | '/homologacoes'
     | '/login'
     | '/pipeline'
     | '/produtos'
@@ -268,6 +291,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -285,6 +309,7 @@ export interface RootRouteChildren {
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   EngenhariaRoute: typeof EngenhariaRoute
   FinanceiroRoute: typeof FinanceiroRoute
+  HomologacoesRoute: typeof HomologacoesRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRouteWithChildren
   ProdutosRoute: typeof ProdutosRoute
@@ -292,6 +317,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ClientesIdRoute: typeof ClientesIdRoute
+  HomologacaoTokenRoute: typeof HomologacaoTokenRoute
   PropostasIdRoute: typeof PropostasIdRoute
   PropostasNovaRoute: typeof PropostasNovaRoute
   ClientesIndexRoute: typeof ClientesIndexRoute
@@ -342,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/homologacoes': {
+      id: '/homologacoes'
+      path: '/homologacoes'
+      fullPath: '/homologacoes'
+      preLoaderRoute: typeof HomologacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro': {
@@ -421,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropostasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/homologacao/$token': {
+      id: '/homologacao/$token'
+      path: '/homologacao/$token'
+      fullPath: '/homologacao/$token'
+      preLoaderRoute: typeof HomologacaoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clientes/$id': {
       id: '/clientes/$id'
       path: '/clientes/$id'
@@ -473,6 +513,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesRoute: ConfiguracoesRoute,
   EngenhariaRoute: EngenhariaRoute,
   FinanceiroRoute: FinanceiroRoute,
+  HomologacoesRoute: HomologacoesRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRouteWithChildren,
   ProdutosRoute: ProdutosRoute,
@@ -480,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ClientesIdRoute: ClientesIdRoute,
+  HomologacaoTokenRoute: HomologacaoTokenRoute,
   PropostasIdRoute: PropostasIdRoute,
   PropostasNovaRoute: PropostasNovaRoute,
   ClientesIndexRoute: ClientesIndexRoute,
@@ -490,12 +532,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
