@@ -429,6 +429,102 @@ export type Database = {
           },
         ]
       }
+      homologacoes: {
+        Row: {
+          card_id: string | null
+          cliente_id: string
+          concessionaria: string
+          consultor_id: string | null
+          created_at: string
+          dados_cliente: Json
+          data_aprovacao: string | null
+          data_medidor: string | null
+          data_previsao_resposta: string | null
+          data_protocolo: string | null
+          documentos: Json
+          endereco_instalacao: string
+          etapa: string
+          id: string
+          mensagem_cliente: string | null
+          numero_protocolo: string | null
+          observacoes_internas: string | null
+          potencia_kwp: number | null
+          processo_original_data: string | null
+          processo_original_numero: string | null
+          tipo: string
+          token: string
+          uc: string
+          updated_at: string
+        }
+        Insert: {
+          card_id?: string | null
+          cliente_id: string
+          concessionaria?: string
+          consultor_id?: string | null
+          created_at?: string
+          dados_cliente?: Json
+          data_aprovacao?: string | null
+          data_medidor?: string | null
+          data_previsao_resposta?: string | null
+          data_protocolo?: string | null
+          documentos?: Json
+          endereco_instalacao: string
+          etapa?: string
+          id?: string
+          mensagem_cliente?: string | null
+          numero_protocolo?: string | null
+          observacoes_internas?: string | null
+          potencia_kwp?: number | null
+          processo_original_data?: string | null
+          processo_original_numero?: string | null
+          tipo: string
+          token?: string
+          uc: string
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string | null
+          cliente_id?: string
+          concessionaria?: string
+          consultor_id?: string | null
+          created_at?: string
+          dados_cliente?: Json
+          data_aprovacao?: string | null
+          data_medidor?: string | null
+          data_previsao_resposta?: string | null
+          data_protocolo?: string | null
+          documentos?: Json
+          endereco_instalacao?: string
+          etapa?: string
+          id?: string
+          mensagem_cliente?: string | null
+          numero_protocolo?: string | null
+          observacoes_internas?: string | null
+          potencia_kwp?: number | null
+          processo_original_data?: string | null
+          processo_original_numero?: string | null
+          tipo?: string
+          token?: string
+          uc?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homologacoes_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homologacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interacoes: {
         Row: {
           cliente_id: string
