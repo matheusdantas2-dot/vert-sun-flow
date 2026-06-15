@@ -26,6 +26,8 @@ import { Route as PipelineIndexRouteImport } from './routes/pipeline.index'
 import { Route as ClientesIndexRouteImport } from './routes/clientes.index'
 import { Route as PropostasNovaRouteImport } from './routes/propostas.nova'
 import { Route as PropostasIdRouteImport } from './routes/propostas.$id'
+import { Route as HomologacaoTokenRouteImport } from './routes/homologacao.$token'
+import { Route as EngenhariaHomologacaoRouteImport } from './routes/engenharia.homologacao'
 import { Route as ClientesIdRouteImport } from './routes/clientes.$id'
 import { Route as PipelineCardCardIdRouteImport } from './routes/pipeline.card.$cardId'
 import { Route as ClienteAcompanhamentoTokenRouteImport } from './routes/cliente.acompanhamento.$token'
@@ -116,6 +118,16 @@ const PropostasIdRoute = PropostasIdRouteImport.update({
   path: '/propostas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomologacaoTokenRoute = HomologacaoTokenRouteImport.update({
+  id: '/homologacao/$token',
+  path: '/homologacao/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngenhariaHomologacaoRoute = EngenhariaHomologacaoRouteImport.update({
+  id: '/homologacao',
+  path: '/homologacao',
+  getParentRoute: () => EngenhariaRoute,
+} as any)
 const ClientesIdRoute = ClientesIdRouteImport.update({
   id: '/clientes/$id',
   path: '/clientes/$id',
@@ -143,7 +155,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/engenharia': typeof EngenhariaRoute
+  '/engenharia': typeof EngenhariaRouteWithChildren
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
@@ -152,6 +164,8 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/engenharia/homologacao': typeof EngenhariaHomologacaoRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -166,7 +180,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/engenharia': typeof EngenhariaRoute
+  '/engenharia': typeof EngenhariaRouteWithChildren
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/produtos': typeof ProdutosRoute
@@ -174,6 +188,8 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/engenharia/homologacao': typeof EngenhariaHomologacaoRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes': typeof ClientesIndexRoute
@@ -189,7 +205,7 @@ export interface FileRoutesById {
   '/agenda': typeof AgendaRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
-  '/engenharia': typeof EngenhariaRoute
+  '/engenharia': typeof EngenhariaRouteWithChildren
   '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/pipeline': typeof PipelineRouteWithChildren
@@ -198,6 +214,8 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/clientes/$id': typeof ClientesIdRoute
+  '/engenharia/homologacao': typeof EngenhariaHomologacaoRoute
+  '/homologacao/$token': typeof HomologacaoTokenRoute
   '/propostas/$id': typeof PropostasIdRoute
   '/propostas/nova': typeof PropostasNovaRoute
   '/clientes/': typeof ClientesIndexRoute
@@ -223,6 +241,8 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/engenharia/homologacao'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -245,6 +265,8 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/engenharia/homologacao'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes'
@@ -268,6 +290,8 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/reset-password'
     | '/clientes/$id'
+    | '/engenharia/homologacao'
+    | '/homologacao/$token'
     | '/propostas/$id'
     | '/propostas/nova'
     | '/clientes/'
@@ -283,7 +307,7 @@ export interface RootRouteChildren {
   AgendaRoute: typeof AgendaRoute
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
-  EngenhariaRoute: typeof EngenhariaRoute
+  EngenhariaRoute: typeof EngenhariaRouteWithChildren
   FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
   PipelineRoute: typeof PipelineRouteWithChildren
@@ -292,6 +316,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ClientesIdRoute: typeof ClientesIdRoute
+  HomologacaoTokenRoute: typeof HomologacaoTokenRoute
   PropostasIdRoute: typeof PropostasIdRoute
   PropostasNovaRoute: typeof PropostasNovaRoute
   ClientesIndexRoute: typeof ClientesIndexRoute
@@ -421,6 +446,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropostasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/homologacao/$token': {
+      id: '/homologacao/$token'
+      path: '/homologacao/$token'
+      fullPath: '/homologacao/$token'
+      preLoaderRoute: typeof HomologacaoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engenharia/homologacao': {
+      id: '/engenharia/homologacao'
+      path: '/homologacao'
+      fullPath: '/engenharia/homologacao'
+      preLoaderRoute: typeof EngenhariaHomologacaoRouteImport
+      parentRoute: typeof EngenhariaRoute
+    }
     '/clientes/$id': {
       id: '/clientes/$id'
       path: '/clientes/$id'
@@ -452,6 +491,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface EngenhariaRouteChildren {
+  EngenhariaHomologacaoRoute: typeof EngenhariaHomologacaoRoute
+}
+
+const EngenhariaRouteChildren: EngenhariaRouteChildren = {
+  EngenhariaHomologacaoRoute: EngenhariaHomologacaoRoute,
+}
+
+const EngenhariaRouteWithChildren = EngenhariaRoute._addFileChildren(
+  EngenhariaRouteChildren,
+)
+
 interface PipelineRouteChildren {
   PipelineIndexRoute: typeof PipelineIndexRoute
   PipelineCardCardIdRoute: typeof PipelineCardCardIdRoute
@@ -471,7 +522,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaRoute: AgendaRoute,
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
-  EngenhariaRoute: EngenhariaRoute,
+  EngenhariaRoute: EngenhariaRouteWithChildren,
   FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
   PipelineRoute: PipelineRouteWithChildren,
@@ -480,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ClientesIdRoute: ClientesIdRoute,
+  HomologacaoTokenRoute: HomologacaoTokenRoute,
   PropostasIdRoute: PropostasIdRoute,
   PropostasNovaRoute: PropostasNovaRoute,
   ClientesIndexRoute: ClientesIndexRoute,
