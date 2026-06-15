@@ -9,6 +9,7 @@ import {
   BarChart3,
   Wallet,
   HardHat,
+  ClipboardCheck,
   Settings,
   Zap,
 } from "lucide-react";
@@ -26,8 +27,10 @@ const items: { to: string; icon: React.ComponentType<{ className?: string }>; la
   { to: "/relatorios", icon: BarChart3, label: "Relatórios", acao: "ver_relatorios" },
   { to: "/financeiro", icon: Wallet, label: "Financeiro", acao: "ver_financeiro" },
   { to: "/engenharia", icon: HardHat, label: "Engenharia", acao: "ver_engenharia" },
+  { to: "/engenharia/homologacao", icon: ClipboardCheck, label: "Homologações", acao: "ver_engenharia" },
   { to: "/configuracoes", icon: Settings, label: "Configurações", acao: "ver_configuracoes" },
 ];
+
 
 export function AppSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
