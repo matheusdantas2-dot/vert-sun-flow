@@ -912,7 +912,7 @@ function LancamentoModal({ inicial, onClose }: { inicial: Lancamento | null; onC
                     </select>
                   </Field>
                   <div className="text-[11px] text-muted-foreground">
-                    Cria a despesa recorrente e já gera o lançamento de hoje. Próximas parcelas aparecem na aba <b>Despesas Fixas</b>.
+                    Cria uma recorrência e já gera o lançamento de hoje. Próximas parcelas ficam em <b>Lançamentos → Recorrências</b>.
                   </div>
                 </div>
               )}
