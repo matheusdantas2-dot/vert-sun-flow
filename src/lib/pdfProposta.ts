@@ -812,12 +812,18 @@ function paginaContrato(ctx: Ctx, pagina: number, totalPaginas: number) {
   pdf.setLineWidth(0.4);
   pdf.line(M, y, M + sigW, y);
   pdf.line(M + sigW + 8, y, W - M, y);
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.text(cliente.nome, M, y + 5);
+  pdf.text(empresa.razaoSocial ?? "", M + sigW + 8, y + 5);
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.text(`${cliente.nome} · ${formatDoc(cliente.documento)}`, M, y + 5);
-  pdf.text(`${empresa.razaoSocial}`, M + sigW + 8, y + 5);
-  pdf.text(`Data: ___/___/_____`, M, y + 11);
-  pdf.text(`${consultor?.nome ?? ""}`, M + sigW + 8, y + 11);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${cliente.documento ? formatDoc(cliente.documento) : "—"}`, M, y + 10);
+  pdf.text(`CNPJ: ${empresa.cnpj ?? "—"}`, M + sigW + 8, y + 10);
+  pdf.text("Data: ___/___/_____", M, y + 15);
+  pdf.text(consultor?.nome ?? "", M + sigW + 8, y + 15);
 }
 
 interface GerarOpts {
