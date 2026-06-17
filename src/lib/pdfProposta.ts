@@ -156,9 +156,15 @@ function paginaCapa(ctx: Ctx) {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}  ${formatDoc(cliente.documento)}`, M + 6, 204);
-  pdf.text(`${cliente.endereco.cidade}/${cliente.endereco.uf}`, M + 6, 211);
-  pdf.text(`${formatTel(cliente.telefone)}  ·  ${cliente.email}`, M + 6, 218);
+  const docFmt = cliente.documento ? formatDoc(cliente.documento) : "—";
+  const cidadeUf = cliente.endereco?.cidade && cliente.endereco?.uf
+    ? `${cliente.endereco.cidade}/${cliente.endereco.uf}`
+    : (cliente.endereco?.cidade ?? "—");
+  const telFmt = cliente.telefone ? formatTel(cliente.telefone) : "—";
+  const emailFmt = cliente.email || "—";
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}  ${docFmt}`, M + 6, 204);
+  pdf.text(cidadeUf, M + 6, 211);
+  pdf.text(`${telFmt}  ·  ${emailFmt}`, M + 6, 218);
 
   pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   pdf.line(M + 6, 222, W - M - 6, 222);
