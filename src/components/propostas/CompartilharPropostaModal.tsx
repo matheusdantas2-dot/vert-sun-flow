@@ -13,6 +13,7 @@ import {
 } from "@/lib/shareProposta";
 import { notify } from "@/lib/notificacoes";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { gerarPdfPropostaResumo } from "@/lib/pdfPropostaResumo";
 import { useStore } from "@/lib/store";
 import { usePropostasQuery } from "@/lib/propostas.api";
 import { useClientesQuery } from "@/lib/clientes.api";
