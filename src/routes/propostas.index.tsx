@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { brl, dataBR } from "@/lib/format";
-import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
+import { STATUS_PROPOSTA_LABEL, type PropostaStatus, type Proposta } from "@/lib/types";
 import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "lucide-react";
 import { exportPropostasCsv } from "@/lib/exportCsv";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { gerarPdfComparativo } from "@/lib/pdfPropostaComparativa";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
 import { CompartilharPropostaModal } from "@/components/propostas/CompartilharPropostaModal";
+import { TierGroupCard } from "@/components/propostas/TierGroupCard";
 import { useClientesQuery } from "@/lib/clientes.api";
 import { useProdutosQuery } from "@/lib/produtos.api";
 import { useProfilesQuery } from "@/lib/profiles.api";
@@ -33,6 +35,21 @@ function PropostasList() {
   const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
 
+  // Separa propostas em "avulsas" e "grupos de tier"
+  const { avulsas, grupos } = useMemo(() => {
+    const grupos = new Map<string, Proposta[]>();
+    const avulsas: Proposta[] = [];
+    propostas.forEach((p) => {
+      if (p.grupoTierId) {
+        if (!grupos.has(p.grupoTierId)) grupos.set(p.grupoTierId, []);
+        grupos.get(p.grupoTierId)!.push(p);
+      } else {
+        avulsas.push(p);
+      }
+    });
+    return { avulsas, grupos };
+  }, [propostas]);
+
   const buildPdf = (id: string, modo: "save" | "blob") => {
     const p = propostas.find((x) => x.id === id);
     const cliente = clientes.find((c) => c.id === p?.clienteId);
@@ -56,6 +73,21 @@ function PropostasList() {
     }
   };
 
+  const visualizarComparativo = (grupoId: string) => {
+    const lista = grupos.get(grupoId) ?? [];
+    if (lista.length === 0) return;
+    const cliente = clientes.find((c) => c.id === lista[0].clienteId);
+    if (!cliente) return;
+    const profile = profiles.find((u) => u.id === lista[0].consultorId);
+    const consultor = profile
+      ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
+      : undefined;
+    const url = gerarPdfComparativo({ propostas: lista, cliente, empresa, consultor, produtos, modo: "blob" });
+    if (typeof url === "string") {
+      setPreview({ url, titulo: `Comparativo · ${cliente.nome}`, propostaId: lista[0].id });
+    }
+  };
+
   const mudarStatus = (id: string, status: PropostaStatus) => {
     updateStatus.mutate({ id, status });
     notify.success("Status atualizado", STATUS_PROPOSTA_LABEL[status]);
@@ -63,13 +95,13 @@ function PropostasList() {
 
   const STATUS_LIST: PropostaStatus[] = ["rascunho", "enviada", "negociacao", "aceita", "recusada", "expirada"];
 
-  const calcTotal = (p: typeof propostas[number]) =>
+  const calcTotal = (p: Proposta) =>
     p.itens.reduce((a, it) => {
       const prod = produtos.find((x) => x.id === it.produtoId);
       return a + (it.precoUnitario ?? prod?.precoVenda ?? 0) * it.quantidade;
     }, 0);
 
-  const calcKwp = (p: typeof propostas[number]) =>
+  const calcKwp = (p: Proposta) =>
     p.itens.reduce((a, it) => {
       const prod = produtos.find((x) => x.id === it.produtoId);
       if (prod?.categoria === "modulo" && prod.potenciaW) return a + (prod.potenciaW * it.quantidade) / 1000;
@@ -90,7 +122,9 @@ function PropostasList() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl lg:text-3xl font-extrabold tracking-tight">Propostas</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{propostas.length} propostas geradas</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {propostas.length} propostas · {grupos.size} grupo(s) comparativo(s)
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -110,6 +144,31 @@ function PropostasList() {
         </div>
       </header>
 
+      {grupos.size > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+            Comparativos (3 tiers)
+          </h2>
+          {Array.from(grupos.entries()).map(([gid, lista]) => {
+            const cliente = clientes.find((c) => c.id === lista[0].clienteId);
+            return (
+              <TierGroupCard
+                key={gid}
+                grupoId={gid}
+                propostas={lista}
+                cliente={cliente}
+                produtos={produtos}
+                onVisualizar={visualizarPdf}
+                onBaixar={baixarPdf}
+                onCompartilhar={(id) => setShareId(id)}
+                onCompartilharComparativo={visualizarComparativo}
+                podePdf={podePdf}
+              />
+            );
+          })}
+        </section>
+      )}
+
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -126,7 +185,7 @@ function PropostasList() {
               </tr>
             </thead>
             <tbody>
-              {propostas.map((p) => {
+              {avulsas.map((p) => {
                 const cliente = clientes.find((c) => c.id === p.clienteId);
                 const consultor = profiles.find((u) => u.id === p.consultorId);
                 return (
@@ -179,7 +238,7 @@ function PropostasList() {
                   </tr>
                 );
               })}
-              {propostas.length === 0 && (
+              {avulsas.length === 0 && grupos.size === 0 && (
                 <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Nenhuma proposta ainda.</td></tr>
               )}
             </tbody>
