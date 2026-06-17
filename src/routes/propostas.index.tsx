@@ -132,7 +132,20 @@ function PropostasList() {
             {propostas.length} propostas · {grupos.size} grupo(s) comparativo(s)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card">
+            <FileText className="h-3.5 w-3.5 text-vert" />
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Modelo</span>
+            <select
+              value={modelo}
+              onChange={(e) => setModelo(e.target.value as ModeloPdf)}
+              className="bg-transparent text-xs font-semibold outline-none cursor-pointer"
+              title="Modelo do PDF para visualizar/baixar/compartilhar"
+            >
+              <option value="completa">Completa (7 págs)</option>
+              <option value="resumo">Resumo (1 pág)</option>
+            </select>
+          </div>
           <button
             onClick={() => exportPropostasCsv(propostas, clientes)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-accent"
