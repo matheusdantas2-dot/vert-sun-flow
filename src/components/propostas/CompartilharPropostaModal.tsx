@@ -235,6 +235,17 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
           <section className="rounded-lg border border-border p-4 bg-muted/30">
             <div className="flex flex-wrap items-end gap-3">
               <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modelo do PDF</label>
+                <select
+                  value={modeloPdf}
+                  onChange={(e) => setModeloPdf(e.target.value as "completa" | "resumo")}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                >
+                  <option value="completa">Completa (7 págs)</option>
+                  <option value="resumo">Resumo (1 pág)</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Validade do link</label>
                 <select
                   value={diasValidade}
