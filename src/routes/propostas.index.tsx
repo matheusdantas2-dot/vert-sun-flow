@@ -5,7 +5,10 @@ import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "luc
 import { exportPropostasCsv } from "@/lib/exportCsv";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { gerarPdfComparativo } from "@/lib/pdfPropostaComparativa";
+import { gerarPdfPropostaResumo } from "@/lib/pdfPropostaResumo";
 import { usePode } from "@/lib/permissoes";
+
+type ModeloPdf = "completa" | "resumo";
 import { notify } from "@/lib/notificacoes";
 import { useMemo, useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
