@@ -72,6 +72,7 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
   const [copiado, setCopiado] = useState<string | null>(null);
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   const [diasValidade, setDiasValidade] = useState(7);
+  const [modeloPdf, setModeloPdf] = useState<"completa" | "resumo">("completa");
 
   const ativos = useMemo(
     () => shares.filter((s) => s.ativo && new Date(s.expira_em).getTime() > Date.now()),
