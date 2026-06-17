@@ -537,12 +537,15 @@ function paginaRetorno(ctx: Ctx, pagina: number, totalPaginas: number) {
   pageFrame(ctx, pagina, "Retorno do investimento", totalPaginas);
 
   sectionTitle(pdf, 26, "Indicadores financeiros");
-  const cardW = (W - 2 * M - 9) / 4;
-  kvBox(pdf, M, 36, cardW, 24, "Investimento", brl(totais.valorVenda));
-  kvBox(pdf, M + cardW + 3, 36, cardW, 24, "Economia / mês", brl(econ.economiaMes), true);
+  const cardW = (W - 2 * M - 12) / 5;
+  const tir = calcularTIR(totais.valorVenda, econ.economiaAno, proposta.inflacao);
+  kvBox(pdf, M + 0 * (cardW + 3), 36, cardW, 24, "Investimento", brl(totais.valorVenda));
+  kvBox(pdf, M + 1 * (cardW + 3), 36, cardW, 24, "Economia / mês", brl(econ.economiaMes), true);
   kvBox(pdf, M + 2 * (cardW + 3), 36, cardW, 24, "Payback",
     Number.isFinite(paybackMeses) ? `${(paybackMeses / 12).toFixed(1)} anos` : "—");
   kvBox(pdf, M + 3 * (cardW + 3), 36, cardW, 24, "Economia 20 anos", brl(economia20), true);
+  kvBox(pdf, M + 4 * (cardW + 3), 36, cardW, 24, "TIR 20 anos",
+    Number.isFinite(tir) ? `${tir.toFixed(1)}% a.a.` : "—");
 
   // Curva acumulada
   sectionTitle(pdf, 70, "Projeção de economia em 20 anos", `Reajuste tarifário ${proposta.inflacao.toFixed(1)}% a.a.`);
