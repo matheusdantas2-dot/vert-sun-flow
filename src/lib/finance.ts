@@ -100,3 +100,38 @@ export function projecao20Anos(
   }
   return total;
 }
+
+/**
+ * Calcula a Taxa Interna de Retorno (TIR) anual aproximada via Newton-Raphson.
+ * Fluxo de caixa: [-investimento, eco ano1, eco ano2 * fator, ...] por `anos` períodos.
+ * @returns TIR em % a.a. (ex.: 18.4) ou NaN se não convergir
+ */
+export function calcularTIR(
+  investimento: number,
+  economiaAno1: number,
+  inflacaoAA: number,
+  degradacaoAA = 0.5,
+  anos = 20,
+): number {
+  if (investimento <= 0 || economiaAno1 <= 0) return NaN;
+  const fluxos: number[] = [-investimento];
+  let eco = economiaAno1;
+  for (let i = 0; i < anos; i++) {
+    fluxos.push(eco);
+    eco *= (1 + inflacaoAA / 100) * (1 - degradacaoAA / 100);
+  }
+  let tir = 0.15;
+  for (let iter = 0; iter < 100; iter++) {
+    let npv = 0, dnpv = 0;
+    fluxos.forEach((fc, t) => {
+      npv += fc / Math.pow(1 + tir, t);
+      dnpv -= (t * fc) / Math.pow(1 + tir, t + 1);
+    });
+    if (dnpv === 0) break;
+    const delta = npv / dnpv;
+    tir -= delta;
+    if (!Number.isFinite(tir)) return NaN;
+    if (Math.abs(delta) < 1e-7) break;
+  }
+  return +(tir * 100).toFixed(1);
+}
