@@ -153,7 +153,8 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
     if (!proposta || !cliente) return;
     setCriando(true);
     try {
-      const blob = gerarPdfProposta({ proposta, cliente, consultor, produtos, empresa, modo: "blob-data" });
+      const gerador = modeloPdf === "resumo" ? gerarPdfPropostaResumo : gerarPdfProposta;
+      const blob = gerador({ proposta, cliente, consultor, produtos, empresa, modo: "blob-data" });
       if (!(blob instanceof Blob)) throw new Error("Falha ao gerar PDF");
       const novo = await criarShareProposta({
         propostaId: proposta.id,
