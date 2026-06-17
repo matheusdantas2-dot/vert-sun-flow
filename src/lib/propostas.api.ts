@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Proposta, PropostaItem, PropostaStatus } from "./types";
+import type { Proposta, PropostaItem, PropostaStatus, PropostaTier } from "./types";
 
 type DbProposta = {
   id: string;
@@ -21,6 +21,9 @@ type DbProposta = {
   kit_nome: string | null;
   kit_consumo_kwh: number | null;
   mostrar_como_kit: boolean | null;
+  tier: string | null;
+  grupo_tier_id: string | null;
+  tier_principal: boolean | null;
 };
 
 type DbPropostaItem = {
@@ -60,6 +63,9 @@ function dbToProposta(p: DbProposta, items: DbPropostaItem[]): Proposta {
     kitNome: p.kit_nome ?? undefined,
     kitConsumoKwh: p.kit_consumo_kwh ?? undefined,
     mostrarComoKit: p.mostrar_como_kit ?? false,
+    tier: (p.tier as PropostaTier | null) ?? undefined,
+    grupoTierId: p.grupo_tier_id ?? undefined,
+    tierPrincipal: p.tier_principal ?? false,
   };
 }
 
