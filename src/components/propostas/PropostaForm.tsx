@@ -286,6 +286,54 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
     const validadeISO = editing && existing ? existing.validadeAte : validade.toISOString();
+
+    // ── Modo Comparativo: cria 3 propostas com mesmo grupoTierId ───────────
+    if (modoTier && !editing) {
+      try {
+        // Snapshot do tier ativo no estado atual
+        const dataMap: Record<PropostaTier, TierSnap> = {
+          basico: tiersData.basico ?? snapshotAtual(),
+          ideal: tiersData.ideal ?? snapshotAtual(),
+          premium: tiersData.premium ?? snapshotAtual(),
+        };
+        dataMap[activeTier] = snapshotAtual();
+        const principal = (Object.keys(dataMap) as PropostaTier[]).find((t) => dataMap[t].tierPrincipal) ?? "ideal";
+        const grupoTierId = crypto.randomUUID();
+        const criadas = [];
+        for (const t of PROPOSTA_TIERS_ORDEM) {
+          const snap = dataMap[t];
+          if (snap.itens.length === 0) continue;
+          const novaProp = await addPropostaM.mutateAsync({
+            clienteId: cliente.id,
+            consultorId: currentUserId,
+            validadeAte: validadeISO,
+            status,
+            itens: snap.itens,
+            irradiacao,
+            eficiencia,
+            cobertura: snap.cobertura,
+            inflacao,
+            taxaFinanciamento: taxaFin,
+            taxaCartao: taxaCart,
+            kitNome: snap.kitNome || undefined,
+            kitConsumoKwh: kitConsumo,
+            mostrarComoKit,
+            observacoes: snap.observacoes || undefined,
+            tier: t,
+            grupoTierId,
+            tierPrincipal: t === principal,
+          });
+          criadas.push(novaProp);
+        }
+        notify.success(`${criadas.length} propostas criadas`, "Básico, Ideal e Premium salvas com sucesso.");
+        navigate({ to: "/propostas" });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Erro ao salvar comparativo.";
+        notify.error("Falha ao salvar comparativo", msg);
+      }
+      return;
+    }
+
     try {
       let nova;
       if (editing && existing) {
