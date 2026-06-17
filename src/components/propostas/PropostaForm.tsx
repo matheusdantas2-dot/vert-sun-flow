@@ -63,6 +63,88 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
   const [observacoes, setObservacoes] = useState<string>("");
   const [hidratado, setHidratado] = useState(!editing);
 
+  // ── Modo Comparativo (3 tiers) ─────────────────────────────────────────────
+  type TierSnap = {
+    itens: { produtoId: string; quantidade: number; precoUnitario: number }[];
+    cobertura: number;
+    kitNome: string;
+    observacoes: string;
+    tierPrincipal: boolean;
+  };
+  const [modoTier, setModoTier] = useState(false);
+  const [activeTier, setActiveTier] = useState<PropostaTier>("ideal");
+  const [tiersData, setTiersData] = useState<Record<PropostaTier, TierSnap | undefined>>({
+    basico: undefined,
+    ideal: undefined,
+    premium: undefined,
+  });
+
+  const snapshotAtual = (): TierSnap => ({
+    itens: itens.map((it) => ({ ...it })),
+    cobertura,
+    kitNome,
+    observacoes,
+    tierPrincipal: activeTier === "ideal",
+  });
+
+  const aplicarSnap = (snap: TierSnap | undefined) => {
+    if (!snap) return;
+    setItens(snap.itens.map((it) => ({ ...it })));
+    setCobertura(snap.cobertura);
+    setKitNome(snap.kitNome);
+    setObservacoes(snap.observacoes);
+  };
+
+  const ativarModoTier = (v: boolean) => {
+    if (v && !modoTier) {
+      // Ao ligar: snapshot do estado atual vira a aba Ideal
+      const snap = snapshotAtual();
+      setTiersData({
+        basico: undefined,
+        ideal: { ...snap, tierPrincipal: true },
+        premium: undefined,
+      });
+      setActiveTier("ideal");
+    }
+    setModoTier(v);
+  };
+
+  const trocarTier = (novo: PropostaTier) => {
+    if (novo === activeTier) return;
+    const snap = snapshotAtual();
+    setTiersData((prev) => ({ ...prev, [activeTier]: snap }));
+    const proximo = tiersData[novo] ?? snap; // se aba vazia, copia atual
+    aplicarSnap(proximo);
+    setActiveTier(novo);
+  };
+
+  const distribuirAuto = () => {
+    if (!confirm("Isso vai sobrescrever as configurações de Básico e Premium com base na aba Ideal. Confirmar?")) return;
+    const idealSnap: TierSnap = activeTier === "ideal" ? snapshotAtual() : (tiersData.ideal ?? snapshotAtual());
+    const cfg = gerarConfigTiers({
+      itens: idealSnap.itens,
+      cobertura: idealSnap.cobertura,
+      kitNome: idealSnap.kitNome,
+      observacoes: idealSnap.observacoes,
+    });
+    const toSnap = (parcial: typeof cfg.basico, principal: boolean): TierSnap => ({
+      itens: (parcial.itens ?? []).map((it) => ({ ...it })),
+      cobertura: parcial.cobertura ?? idealSnap.cobertura,
+      kitNome: parcial.kitNome ?? "",
+      observacoes: parcial.observacoes ?? "",
+      tierPrincipal: principal,
+    });
+    const novoMap = {
+      basico: toSnap(cfg.basico, false),
+      ideal: toSnap(cfg.ideal, true),
+      premium: toSnap(cfg.premium, false),
+    };
+    setTiersData(novoMap);
+    aplicarSnap(novoMap[activeTier]);
+    notify.success("Distribuído", "Básico e Premium gerados a partir da aba Ideal.");
+  };
+
+
   // Hidrata estado a partir da proposta existente
   useEffect(() => {
     if (!editing || !existing || hidratado) return;
