@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye, Save } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye, Save, Layers, Sparkles, Star } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
@@ -14,7 +14,15 @@ import { useProfilesQuery } from "@/lib/profiles.api";
 import { useAddProposta, useUpdateProposta, usePropostasQuery } from "@/lib/propostas.api";
 import { useAuth } from "@/lib/auth";
 import { KITS_PRESETS, escolherProdutosParaKit, type KitPreset } from "@/lib/kits";
-import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
+import {
+  STATUS_PROPOSTA_LABEL,
+  PROPOSTA_TIER_LABEL,
+  PROPOSTA_TIER_COR,
+  PROPOSTA_TIERS_ORDEM,
+  type PropostaStatus,
+  type PropostaTier,
+} from "@/lib/types";
+import { gerarConfigTiers } from "@/lib/gerarTiers";
 
 interface Props {
   propostaId?: string;
