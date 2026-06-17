@@ -37,6 +37,7 @@ function PropostasList() {
 
   const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
+  const [modelo, setModelo] = useState<ModeloPdf>("completa");
 
   // Separa propostas em "avulsas" e "grupos de tier"
   const { avulsas, grupos } = useMemo(() => {
