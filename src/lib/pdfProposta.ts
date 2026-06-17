@@ -645,67 +645,108 @@ function paginaPagamento(ctx: Ctx, pagina: number, totalPaginas: number) {
   pdf.setFontSize(9);
   pdf.text("Escolha a modalidade que melhor se adapta ao seu fluxo de caixa.", M, 38);
 
-  // À vista
-  let y = 48;
+  // ── Parcelamento próprio Vert (50/30/20)
+  let y = 46;
+  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
+  pdf.roundedRect(M, y, W - 2 * M, 30, 3, 3, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.text("PARCELAMENTO VERT · SEM JUROS", M + 6, y + 8);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.text("50% na assinatura · 30% na entrega · 20% na ativação", M + 6, y + 14);
+  const e50 = totais.valorVenda * 0.5;
+  const e30 = totais.valorVenda * 0.3;
+  const e20 = totais.valorVenda * 0.2;
+  const colP = (W - 2 * M - 12) / 3;
+  const yp = y + 18;
+  [["Entrada", e50], ["Entrega", e30], ["Ativação", e20]].forEach(([l, v], i) => {
+    const xx = M + 6 + i * (colP + 3);
+    pdf.setFontSize(7);
+    pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+    pdf.text(String(l).toUpperCase(), xx, yp);
+    pdf.setFontSize(11);
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(brl(Number(v)), xx, yp + 7);
+    pdf.setFont("helvetica", "normal");
+  });
+
+  // ── À vista
+  y += 36;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.roundedRect(M, y, W - 2 * M, 26, 3, 3, "F");
+  pdf.roundedRect(M, y, W - 2 * M, 22, 3, 3, "F");
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
-  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 10);
+  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 9);
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(20);
-  pdf.text(brl(totais.valorVenda * 0.95), W - M - 6, y + 18, { align: "right" });
+  pdf.setFontSize(18);
+  pdf.text(brl(totais.valorVenda * 0.95), W - M - 6, y + 16, { align: "right" });
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.text(`Economia de ${brl(totais.valorVenda * 0.05)}`, M + 6, y + 20);
+  pdf.text(`Economia de ${brl(totais.valorVenda * 0.05)}`, M + 6, y + 18);
 
-  y += 34;
-  // Financiamento
+  y += 30;
+  // ── Financiamento
   sectionTitle(pdf, y, "Financiamento bancário", `${proposta.taxaFinanciamento.toFixed(2)}% a.m. · sujeito à aprovação`);
-  y += 12;
+  y += 10;
   const planosFin = [24, 36, 48, 60, 72, 84];
   const colW = (W - 2 * M - 6) / 3;
   planosFin.forEach((n, i) => {
     const col = i % 3;
     const linha = Math.floor(i / 3);
     const x = M + col * (colW + 3);
-    const yy = y + linha * 18;
+    const yy = y + linha * 22;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, colW, 16, 2, 2, "F");
+    pdf.roundedRect(x, yy, colW, 20, 2, 2, "F");
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
+    pdf.setFontSize(12);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaFinanciamento, n);
-    pdf.text(brlPrec(parc), x + colW - 4, yy + 12, { align: "right" });
+    pdf.text(brlPrec(parc), x + colW - 4, yy + 11, { align: "right" });
+    // Total e juros
+    const total = parc * n;
+    const juros = total - totais.valorVenda;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.text(`Total ${brl(total)} · Juros ${brl(juros)}`, x + 4, yy + 17);
   });
 
-  y += 18 * 2 + 10;
+  y += 22 * 2 + 6;
   sectionTitle(pdf, y, "Cartão de crédito", `${proposta.taxaCartao.toFixed(2)}% a.m. · até 21 vezes`);
-  y += 12;
+  y += 10;
   const planosCart = [10, 12, 18, 21];
   planosCart.forEach((n, i) => {
     const col = i % 2;
     const linha = Math.floor(i / 2);
     const cw = (W - 2 * M - 3) / 2;
     const x = M + col * (cw + 3);
-    const yy = y + linha * 18;
+    const yy = y + linha * 22;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, cw, 16, 2, 2, "F");
+    pdf.roundedRect(x, yy, cw, 20, 2, 2, "F");
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
+    pdf.setFontSize(12);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaCartao, n);
-    pdf.text(brlPrec(parc), x + cw - 4, yy + 12, { align: "right" });
+    pdf.text(brlPrec(parc), x + cw - 4, yy + 11, { align: "right" });
+    const total = parc * n;
+    const juros = total - totais.valorVenda;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.text(`Total ${brl(total)} · Juros ${brl(juros)}`, x + 4, yy + 17);
   });
 }
 
