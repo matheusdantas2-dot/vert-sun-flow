@@ -974,6 +974,7 @@ export type Database = {
           consultor_id: string | null
           created_at: string
           eficiencia: number | null
+          grupo_tier_id: string | null
           id: string
           inflacao: number | null
           irradiacao: number | null
@@ -985,6 +986,8 @@ export type Database = {
           status: string
           taxa_cartao: number | null
           taxa_financiamento: number | null
+          tier: string | null
+          tier_principal: boolean | null
           updated_at: string
           validade_ate: string
           versao: number
@@ -995,6 +998,7 @@ export type Database = {
           consultor_id?: string | null
           created_at?: string
           eficiencia?: number | null
+          grupo_tier_id?: string | null
           id?: string
           inflacao?: number | null
           irradiacao?: number | null
@@ -1006,6 +1010,8 @@ export type Database = {
           status?: string
           taxa_cartao?: number | null
           taxa_financiamento?: number | null
+          tier?: string | null
+          tier_principal?: boolean | null
           updated_at?: string
           validade_ate: string
           versao?: number
@@ -1016,6 +1022,7 @@ export type Database = {
           consultor_id?: string | null
           created_at?: string
           eficiencia?: number | null
+          grupo_tier_id?: string | null
           id?: string
           inflacao?: number | null
           irradiacao?: number | null
@@ -1027,6 +1034,8 @@ export type Database = {
           status?: string
           taxa_cartao?: number | null
           taxa_financiamento?: number | null
+          tier?: string | null
+          tier_principal?: boolean | null
           updated_at?: string
           validade_ate?: string
           versao?: number
