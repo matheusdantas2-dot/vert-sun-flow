@@ -305,7 +305,8 @@ function paginaConsumo(ctx: Ctx) {
   const baseY = 110 + barMaxH;
 
   const drawBar = (x: number, valor: number, label: string, cor: [number, number, number], escuro = false) => {
-    const h = (valor / max) * barMaxH;
+    // Altura mínima de 8mm para garantir legibilidade da barra "Com solar"
+    const h = Math.max(8, (valor / max) * barMaxH);
     pdf.setFillColor(cor[0], cor[1], cor[2]);
     pdf.roundedRect(x, baseY - h, barW, h, 2, 2, "F");
     pdf.setTextColor(escuro ? 255 : VERT_DARK[0], escuro ? 255 : VERT_DARK[1], escuro ? 255 : VERT_DARK[2]);
@@ -319,6 +320,17 @@ function paginaConsumo(ctx: Ctx) {
   };
   drawBar(M + 5, econ.faturaAtual, "Sem solar", [220, 100, 90], true);
   drawBar(M + 20 + barW, econ.faturaSolar, "Com solar", VERT, true);
+
+  // Nota explicativa da taxa de disponibilidade
+  pdf.setFont("helvetica", "italic");
+  pdf.setFontSize(7);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.text(
+    `* ${brl(econ.faturaSolar)} corresponde à taxa de disponibilidade da concessionária (mínimo faturável)`,
+    M + 20 + barW + barW / 2,
+    baseY + 11,
+    { align: "center" },
+  );
 
   // Highlight economia
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
