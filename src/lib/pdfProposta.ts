@@ -2,7 +2,7 @@
 import jsPDF from "jspdf";
 import type { Proposta, Cliente, Produto, Empresa, Usuario } from "./types";
 import { brl, brlPrec, kwh, kwp, dataBR, formatDoc, formatTel } from "./format";
-import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "./finance";
+import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice, calcularTIR } from "./finance";
 import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
 
 // Aspect ratio of the logo PNG (577 x 351)
