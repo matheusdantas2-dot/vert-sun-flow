@@ -62,18 +62,20 @@ function PropostasList() {
       ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
       : undefined;
     if (!p || !cliente) return null;
-    return { result: gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
+    const gerador = modelo === "resumo" ? gerarPdfPropostaResumo : gerarPdfProposta;
+    return { result: gerador({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
   };
 
   const baixarPdf = (id: string) => {
     const r = buildPdf(id, "save");
-    if (r) notify.success("PDF gerado", `Proposta ${r.p.numero} baixada.`);
+    if (r) notify.success("PDF gerado", `Proposta ${r.p.numero} (${modelo === "resumo" ? "Resumo" : "Completa"}) baixada.`);
   };
 
   const visualizarPdf = (id: string) => {
     const r = buildPdf(id, "blob");
     if (r && typeof r.result === "string") {
-      setPreview({ url: r.result, titulo: `${r.p.numero} · ${r.cliente.nome}`, propostaId: id });
+      const tag = modelo === "resumo" ? "Resumo" : "Completa";
+      setPreview({ url: r.result, titulo: `${r.p.numero} · ${r.cliente.nome} · ${tag}`, propostaId: id });
     }
   };
 
