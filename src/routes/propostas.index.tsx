@@ -5,7 +5,10 @@ import { Plus, FileText, ExternalLink, Download, Eye, Share2, Pencil } from "luc
 import { exportPropostasCsv } from "@/lib/exportCsv";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { gerarPdfComparativo } from "@/lib/pdfPropostaComparativa";
+import { gerarPdfPropostaResumo } from "@/lib/pdfPropostaResumo";
 import { usePode } from "@/lib/permissoes";
+
+type ModeloPdf = "completa" | "resumo";
 import { notify } from "@/lib/notificacoes";
 import { useMemo, useState } from "react";
 import { PdfPreviewModal } from "@/components/propostas/PdfPreviewModal";
@@ -34,6 +37,7 @@ function PropostasList() {
 
   const [preview, setPreview] = useState<{ url: string; titulo: string; propostaId: string } | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
+  const [modelo, setModelo] = useState<ModeloPdf>("completa");
 
   // Separa propostas em "avulsas" e "grupos de tier"
   const { avulsas, grupos } = useMemo(() => {
@@ -58,18 +62,20 @@ function PropostasList() {
       ? { id: profile.id, nome: profile.nome, email: profile.email ?? "", perfil: "consultor" as const, cor: profile.cor, ativo: profile.ativo }
       : undefined;
     if (!p || !cliente) return null;
-    return { result: gerarPdfProposta({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
+    const gerador = modelo === "resumo" ? gerarPdfPropostaResumo : gerarPdfProposta;
+    return { result: gerador({ proposta: p, cliente, consultor, produtos, empresa, modo }), p, cliente };
   };
 
   const baixarPdf = (id: string) => {
     const r = buildPdf(id, "save");
-    if (r) notify.success("PDF gerado", `Proposta ${r.p.numero} baixada.`);
+    if (r) notify.success("PDF gerado", `Proposta ${r.p.numero} (${modelo === "resumo" ? "Resumo" : "Completa"}) baixada.`);
   };
 
   const visualizarPdf = (id: string) => {
     const r = buildPdf(id, "blob");
     if (r && typeof r.result === "string") {
-      setPreview({ url: r.result, titulo: `${r.p.numero} · ${r.cliente.nome}`, propostaId: id });
+      const tag = modelo === "resumo" ? "Resumo" : "Completa";
+      setPreview({ url: r.result, titulo: `${r.p.numero} · ${r.cliente.nome} · ${tag}`, propostaId: id });
     }
   };
 
@@ -126,7 +132,20 @@ function PropostasList() {
             {propostas.length} propostas · {grupos.size} grupo(s) comparativo(s)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-border bg-card">
+            <FileText className="h-3.5 w-3.5 text-vert" />
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Modelo</span>
+            <select
+              value={modelo}
+              onChange={(e) => setModelo(e.target.value as ModeloPdf)}
+              className="bg-transparent text-xs font-semibold outline-none cursor-pointer"
+              title="Modelo do PDF para visualizar/baixar/compartilhar"
+            >
+              <option value="completa">Completa (7 págs)</option>
+              <option value="resumo">Resumo (1 pág)</option>
+            </select>
+          </div>
           <button
             onClick={() => exportPropostasCsv(propostas, clientes)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-accent"

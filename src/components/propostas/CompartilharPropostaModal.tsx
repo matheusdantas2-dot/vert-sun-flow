@@ -13,6 +13,7 @@ import {
 } from "@/lib/shareProposta";
 import { notify } from "@/lib/notificacoes";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
+import { gerarPdfPropostaResumo } from "@/lib/pdfPropostaResumo";
 import { useStore } from "@/lib/store";
 import { usePropostasQuery } from "@/lib/propostas.api";
 import { useClientesQuery } from "@/lib/clientes.api";
@@ -71,6 +72,7 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
   const [copiado, setCopiado] = useState<string | null>(null);
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
   const [diasValidade, setDiasValidade] = useState(7);
+  const [modeloPdf, setModeloPdf] = useState<"completa" | "resumo">("completa");
 
   const ativos = useMemo(
     () => shares.filter((s) => s.ativo && new Date(s.expira_em).getTime() > Date.now()),
@@ -151,7 +153,8 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
     if (!proposta || !cliente) return;
     setCriando(true);
     try {
-      const blob = gerarPdfProposta({ proposta, cliente, consultor, produtos, empresa, modo: "blob-data" });
+      const gerador = modeloPdf === "resumo" ? gerarPdfPropostaResumo : gerarPdfProposta;
+      const blob = gerador({ proposta, cliente, consultor, produtos, empresa, modo: "blob-data" });
       if (!(blob instanceof Blob)) throw new Error("Falha ao gerar PDF");
       const novo = await criarShareProposta({
         propostaId: proposta.id,
@@ -231,6 +234,17 @@ export function CompartilharPropostaModal({ propostaId, onClose }: Props) {
           {/* Gerar novo link */}
           <section className="rounded-lg border border-border p-4 bg-muted/30">
             <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modelo do PDF</label>
+                <select
+                  value={modeloPdf}
+                  onChange={(e) => setModeloPdf(e.target.value as "completa" | "resumo")}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                >
+                  <option value="completa">Completa (7 págs)</option>
+                  <option value="resumo">Resumo (1 pág)</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Validade do link</label>
                 <select
