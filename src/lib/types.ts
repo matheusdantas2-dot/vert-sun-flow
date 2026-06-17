@@ -138,6 +138,28 @@ export type PropostaStatus =
   | "recusada"
   | "expirada";
 
+export type PropostaTier = "basico" | "ideal" | "premium";
+
+export const PROPOSTA_TIER_LABEL: Record<PropostaTier, string> = {
+  basico: "Básico",
+  ideal: "Ideal",
+  premium: "Premium",
+};
+
+export const PROPOSTA_TIER_DESC: Record<PropostaTier, string> = {
+  basico: "Sistema de entrada — melhor custo-benefício imediato",
+  ideal: "Sistema balanceado — recomendado para a maioria dos clientes",
+  premium: "Sistema completo — máxima geração e diferenciais premium",
+};
+
+export const PROPOSTA_TIER_COR: Record<PropostaTier, string> = {
+  basico: "bg-slate-100 text-slate-700",
+  ideal: "bg-blue-100 text-blue-700",
+  premium: "bg-amber-100 text-amber-700",
+};
+
+export const PROPOSTA_TIERS_ORDEM: PropostaTier[] = ["basico", "ideal", "premium"];
+
 export interface Proposta {
   id: string;
   numero: string;
@@ -160,6 +182,10 @@ export interface Proposta {
   kitNome?: string;
   kitConsumoKwh?: number;
   mostrarComoKit?: boolean;
+  // tiers comparativos (opcional — undefined = proposta avulsa)
+  tier?: PropostaTier;
+  grupoTierId?: string;
+  tierPrincipal?: boolean;
 }
 
 export type UsuarioPerfil = "admin" | "consultor" | "instalador";

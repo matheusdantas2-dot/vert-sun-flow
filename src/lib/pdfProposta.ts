@@ -2,7 +2,7 @@
 import jsPDF from "jspdf";
 import type { Proposta, Cliente, Produto, Empresa, Usuario } from "./types";
 import { brl, brlPrec, kwh, kwp, dataBR, formatDoc, formatTel } from "./format";
-import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "./finance";
+import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice, calcularTIR } from "./finance";
 import { VERT_LOGO_PNG_BASE64 } from "@/assets/vertLogoBase64";
 
 // Aspect ratio of the logo PNG (577 x 351)
@@ -59,10 +59,10 @@ function footer(ctx: Ctx) {
   pdf.setFontSize(7);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`${empresa.razaoSocial} · CNPJ ${empresa.cnpj}`, M, H - 9);
+  pdf.text(`${empresa.razaoSocial ?? ""} · CNPJ ${empresa.cnpj ?? "—"}`, M, H - 9);
   pdf.text(`Proposta ${proposta.numero} · Validade ${dataBR(proposta.validadeAte)}`, W - M, H - 9, { align: "right" });
-  pdf.text(empresa.endereco, M, H - 5);
-  pdf.text(`${empresa.telefone} · ${empresa.email}`, W - M, H - 5, { align: "right" });
+  pdf.text(empresa.endereco || "—", M, H - 5);
+  pdf.text(`${empresa.telefone || ""}${empresa.telefone && empresa.email ? " · " : ""}${empresa.email || ""}`, W - M, H - 5, { align: "right" });
 }
 
 function pageFrame(ctx: Ctx, pagina: number, titulo: string, totalPaginas = 7) {
@@ -156,9 +156,15 @@ function paginaCapa(ctx: Ctx) {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}  ${formatDoc(cliente.documento)}`, M + 6, 204);
-  pdf.text(`${cliente.endereco.cidade}/${cliente.endereco.uf}`, M + 6, 211);
-  pdf.text(`${formatTel(cliente.telefone)}  ·  ${cliente.email}`, M + 6, 218);
+  const docFmt = cliente.documento ? formatDoc(cliente.documento) : "—";
+  const cidadeUf = cliente.endereco?.cidade && cliente.endereco?.uf
+    ? `${cliente.endereco.cidade}/${cliente.endereco.uf}`
+    : (cliente.endereco?.cidade ?? "—");
+  const telFmt = cliente.telefone ? formatTel(cliente.telefone) : "—";
+  const emailFmt = cliente.email || "—";
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}  ${docFmt}`, M + 6, 204);
+  pdf.text(cidadeUf, M + 6, 211);
+  pdf.text(`${telFmt}  ·  ${emailFmt}`, M + 6, 218);
 
   pdf.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   pdf.line(M + 6, 222, W - M - 6, 222);
@@ -299,7 +305,8 @@ function paginaConsumo(ctx: Ctx) {
   const baseY = 110 + barMaxH;
 
   const drawBar = (x: number, valor: number, label: string, cor: [number, number, number], escuro = false) => {
-    const h = (valor / max) * barMaxH;
+    // Altura mínima de 8mm para garantir legibilidade da barra "Com solar"
+    const h = Math.max(8, (valor / max) * barMaxH);
     pdf.setFillColor(cor[0], cor[1], cor[2]);
     pdf.roundedRect(x, baseY - h, barW, h, 2, 2, "F");
     pdf.setTextColor(escuro ? 255 : VERT_DARK[0], escuro ? 255 : VERT_DARK[1], escuro ? 255 : VERT_DARK[2]);
@@ -313,6 +320,17 @@ function paginaConsumo(ctx: Ctx) {
   };
   drawBar(M + 5, econ.faturaAtual, "Sem solar", [220, 100, 90], true);
   drawBar(M + 20 + barW, econ.faturaSolar, "Com solar", VERT, true);
+
+  // Nota explicativa da taxa de disponibilidade
+  pdf.setFont("helvetica", "italic");
+  pdf.setFontSize(7);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.text(
+    `* ${brl(econ.faturaSolar)} corresponde à taxa de disponibilidade da concessionária (mínimo faturável)`,
+    M + 20 + barW + barW / 2,
+    baseY + 11,
+    { align: "center" },
+  );
 
   // Highlight economia
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
@@ -519,12 +537,15 @@ function paginaRetorno(ctx: Ctx, pagina: number, totalPaginas: number) {
   pageFrame(ctx, pagina, "Retorno do investimento", totalPaginas);
 
   sectionTitle(pdf, 26, "Indicadores financeiros");
-  const cardW = (W - 2 * M - 9) / 4;
-  kvBox(pdf, M, 36, cardW, 24, "Investimento", brl(totais.valorVenda));
-  kvBox(pdf, M + cardW + 3, 36, cardW, 24, "Economia / mês", brl(econ.economiaMes), true);
+  const cardW = (W - 2 * M - 12) / 5;
+  const tir = calcularTIR(totais.valorVenda, econ.economiaAno, proposta.inflacao);
+  kvBox(pdf, M + 0 * (cardW + 3), 36, cardW, 24, "Investimento", brl(totais.valorVenda));
+  kvBox(pdf, M + 1 * (cardW + 3), 36, cardW, 24, "Economia / mês", brl(econ.economiaMes), true);
   kvBox(pdf, M + 2 * (cardW + 3), 36, cardW, 24, "Payback",
     Number.isFinite(paybackMeses) ? `${(paybackMeses / 12).toFixed(1)} anos` : "—");
   kvBox(pdf, M + 3 * (cardW + 3), 36, cardW, 24, "Economia 20 anos", brl(economia20), true);
+  kvBox(pdf, M + 4 * (cardW + 3), 36, cardW, 24, "TIR 20 anos",
+    Number.isFinite(tir) ? `${tir.toFixed(1)}% a.a.` : "—");
 
   // Curva acumulada
   sectionTitle(pdf, 70, "Projeção de economia em 20 anos", `Reajuste tarifário ${proposta.inflacao.toFixed(1)}% a.a.`);
@@ -624,67 +645,108 @@ function paginaPagamento(ctx: Ctx, pagina: number, totalPaginas: number) {
   pdf.setFontSize(9);
   pdf.text("Escolha a modalidade que melhor se adapta ao seu fluxo de caixa.", M, 38);
 
-  // À vista
-  let y = 48;
+  // ── Parcelamento próprio Vert (50/30/20)
+  let y = 46;
+  pdf.setFillColor(VERT[0], VERT[1], VERT[2]);
+  pdf.roundedRect(M, y, W - 2 * M, 30, 3, 3, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.text("PARCELAMENTO VERT · SEM JUROS", M + 6, y + 8);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.text("50% na assinatura · 30% na entrega · 20% na ativação", M + 6, y + 14);
+  const e50 = totais.valorVenda * 0.5;
+  const e30 = totais.valorVenda * 0.3;
+  const e20 = totais.valorVenda * 0.2;
+  const colP = (W - 2 * M - 12) / 3;
+  const yp = y + 18;
+  [["Entrada", e50], ["Entrega", e30], ["Ativação", e20]].forEach(([l, v], i) => {
+    const xx = M + 6 + i * (colP + 3);
+    pdf.setFontSize(7);
+    pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
+    pdf.text(String(l).toUpperCase(), xx, yp);
+    pdf.setFontSize(11);
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(brl(Number(v)), xx, yp + 7);
+    pdf.setFont("helvetica", "normal");
+  });
+
+  // ── À vista
+  y += 36;
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
-  pdf.roundedRect(M, y, W - 2 * M, 26, 3, 3, "F");
+  pdf.roundedRect(M, y, W - 2 * M, 22, 3, 3, "F");
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
-  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 10);
+  pdf.text("À VISTA · 5% DE DESCONTO", M + 6, y + 9);
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(20);
-  pdf.text(brl(totais.valorVenda * 0.95), W - M - 6, y + 18, { align: "right" });
+  pdf.setFontSize(18);
+  pdf.text(brl(totais.valorVenda * 0.95), W - M - 6, y + 16, { align: "right" });
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(VERT_GLOW[0], VERT_GLOW[1], VERT_GLOW[2]);
-  pdf.text(`Economia de ${brl(totais.valorVenda * 0.05)}`, M + 6, y + 20);
+  pdf.text(`Economia de ${brl(totais.valorVenda * 0.05)}`, M + 6, y + 18);
 
-  y += 34;
-  // Financiamento
+  y += 30;
+  // ── Financiamento
   sectionTitle(pdf, y, "Financiamento bancário", `${proposta.taxaFinanciamento.toFixed(2)}% a.m. · sujeito à aprovação`);
-  y += 12;
+  y += 10;
   const planosFin = [24, 36, 48, 60, 72, 84];
   const colW = (W - 2 * M - 6) / 3;
   planosFin.forEach((n, i) => {
     const col = i % 3;
     const linha = Math.floor(i / 3);
     const x = M + col * (colW + 3);
-    const yy = y + linha * 18;
+    const yy = y + linha * 22;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, colW, 16, 2, 2, "F");
+    pdf.roundedRect(x, yy, colW, 20, 2, 2, "F");
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
+    pdf.setFontSize(12);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaFinanciamento, n);
-    pdf.text(brlPrec(parc), x + colW - 4, yy + 12, { align: "right" });
+    pdf.text(brlPrec(parc), x + colW - 4, yy + 11, { align: "right" });
+    // Total e juros
+    const total = parc * n;
+    const juros = total - totais.valorVenda;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.text(`Total ${brl(total)} · Juros ${brl(juros)}`, x + 4, yy + 17);
   });
 
-  y += 18 * 2 + 10;
+  y += 22 * 2 + 6;
   sectionTitle(pdf, y, "Cartão de crédito", `${proposta.taxaCartao.toFixed(2)}% a.m. · até 21 vezes`);
-  y += 12;
+  y += 10;
   const planosCart = [10, 12, 18, 21];
   planosCart.forEach((n, i) => {
     const col = i % 2;
     const linha = Math.floor(i / 2);
     const cw = (W - 2 * M - 3) / 2;
     const x = M + col * (cw + 3);
-    const yy = y + linha * 18;
+    const yy = y + linha * 22;
     pdf.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-    pdf.roundedRect(x, yy, cw, 16, 2, 2, "F");
+    pdf.roundedRect(x, yy, cw, 20, 2, 2, "F");
     pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.text(`${n}x`, x + 4, yy + 6);
     pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
+    pdf.setFontSize(12);
     const parc = tabelaPrice(totais.valorVenda, proposta.taxaCartao, n);
-    pdf.text(brlPrec(parc), x + cw - 4, yy + 12, { align: "right" });
+    pdf.text(brlPrec(parc), x + cw - 4, yy + 11, { align: "right" });
+    const total = parc * n;
+    const juros = total - totais.valorVenda;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    pdf.text(`Total ${brl(total)} · Juros ${brl(juros)}`, x + 4, yy + 17);
   });
 }
 
@@ -750,12 +812,18 @@ function paginaContrato(ctx: Ctx, pagina: number, totalPaginas: number) {
   pdf.setLineWidth(0.4);
   pdf.line(M, y, M + sigW, y);
   pdf.line(M + sigW + 8, y, W - M, y);
-  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.text(cliente.nome, M, y + 5);
+  pdf.text(empresa.razaoSocial ?? "", M + sigW + 8, y + 5);
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.text(`${cliente.nome} · ${formatDoc(cliente.documento)}`, M, y + 5);
-  pdf.text(`${empresa.razaoSocial}`, M + sigW + 8, y + 5);
-  pdf.text(`Data: ___/___/_____`, M, y + 11);
-  pdf.text(`${consultor?.nome ?? ""}`, M + sigW + 8, y + 11);
+  pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  pdf.text(`${cliente.tipo === "pj" ? "CNPJ" : "CPF"}: ${cliente.documento ? formatDoc(cliente.documento) : "—"}`, M, y + 10);
+  pdf.text(`CNPJ: ${empresa.cnpj ?? "—"}`, M + sigW + 8, y + 10);
+  pdf.text("Data: ___/___/_____", M, y + 15);
+  pdf.text(consultor?.nome ?? "", M + sigW + 8, y + 15);
 }
 
 interface GerarOpts {

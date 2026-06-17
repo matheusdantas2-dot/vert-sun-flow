@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { useState, useMemo, useEffect } from "react";
 import { brl, brlPrec, kwh, kwp } from "@/lib/format";
 import { dimensionarSistema, calcularEconomia, payback, projecao20Anos, tabelaPrice } from "@/lib/finance";
-import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye, Save } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, ExternalLink, Download, Zap, Eye, Save, Layers, Sparkles, Star } from "lucide-react";
 import { gerarPdfProposta } from "@/lib/pdfProposta";
 import { usePode } from "@/lib/permissoes";
 import { notify } from "@/lib/notificacoes";
@@ -14,7 +14,15 @@ import { useProfilesQuery } from "@/lib/profiles.api";
 import { useAddProposta, useUpdateProposta, usePropostasQuery } from "@/lib/propostas.api";
 import { useAuth } from "@/lib/auth";
 import { KITS_PRESETS, escolherProdutosParaKit, type KitPreset } from "@/lib/kits";
-import { STATUS_PROPOSTA_LABEL, type PropostaStatus } from "@/lib/types";
+import {
+  STATUS_PROPOSTA_LABEL,
+  PROPOSTA_TIER_LABEL,
+  PROPOSTA_TIER_COR,
+  PROPOSTA_TIERS_ORDEM,
+  type PropostaStatus,
+  type PropostaTier,
+} from "@/lib/types";
+import { gerarConfigTiers } from "@/lib/gerarTiers";
 
 interface Props {
   propostaId?: string;
@@ -54,6 +62,88 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
   const [mostrarComoKit, setMostrarComoKit] = useState<boolean>(false);
   const [observacoes, setObservacoes] = useState<string>("");
   const [hidratado, setHidratado] = useState(!editing);
+
+  // ── Modo Comparativo (3 tiers) ─────────────────────────────────────────────
+  type TierSnap = {
+    itens: { produtoId: string; quantidade: number; precoUnitario: number }[];
+    cobertura: number;
+    kitNome: string;
+    observacoes: string;
+    tierPrincipal: boolean;
+  };
+  const [modoTier, setModoTier] = useState(false);
+  const [activeTier, setActiveTier] = useState<PropostaTier>("ideal");
+  const [tiersData, setTiersData] = useState<Record<PropostaTier, TierSnap | undefined>>({
+    basico: undefined,
+    ideal: undefined,
+    premium: undefined,
+  });
+
+  const snapshotAtual = (): TierSnap => ({
+    itens: itens.map((it) => ({ ...it })),
+    cobertura,
+    kitNome,
+    observacoes,
+    tierPrincipal: activeTier === "ideal",
+  });
+
+  const aplicarSnap = (snap: TierSnap | undefined) => {
+    if (!snap) return;
+    setItens(snap.itens.map((it) => ({ ...it })));
+    setCobertura(snap.cobertura);
+    setKitNome(snap.kitNome);
+    setObservacoes(snap.observacoes);
+  };
+
+  const ativarModoTier = (v: boolean) => {
+    if (v && !modoTier) {
+      // Ao ligar: snapshot do estado atual vira a aba Ideal
+      const snap = snapshotAtual();
+      setTiersData({
+        basico: undefined,
+        ideal: { ...snap, tierPrincipal: true },
+        premium: undefined,
+      });
+      setActiveTier("ideal");
+    }
+    setModoTier(v);
+  };
+
+  const trocarTier = (novo: PropostaTier) => {
+    if (novo === activeTier) return;
+    const snap = snapshotAtual();
+    setTiersData((prev) => ({ ...prev, [activeTier]: snap }));
+    const proximo = tiersData[novo] ?? snap; // se aba vazia, copia atual
+    aplicarSnap(proximo);
+    setActiveTier(novo);
+  };
+
+  const distribuirAuto = () => {
+    if (!confirm("Isso vai sobrescrever as configurações de Básico e Premium com base na aba Ideal. Confirmar?")) return;
+    const idealSnap: TierSnap = activeTier === "ideal" ? snapshotAtual() : (tiersData.ideal ?? snapshotAtual());
+    const cfg = gerarConfigTiers({
+      itens: idealSnap.itens,
+      cobertura: idealSnap.cobertura,
+      kitNome: idealSnap.kitNome,
+      observacoes: idealSnap.observacoes,
+    });
+    const toSnap = (parcial: typeof cfg.basico, principal: boolean): TierSnap => ({
+      itens: (parcial.itens ?? []).map((it) => ({ ...it })),
+      cobertura: parcial.cobertura ?? idealSnap.cobertura,
+      kitNome: parcial.kitNome ?? "",
+      observacoes: parcial.observacoes ?? "",
+      tierPrincipal: principal,
+    });
+    const novoMap = {
+      basico: toSnap(cfg.basico, false),
+      ideal: toSnap(cfg.ideal, true),
+      premium: toSnap(cfg.premium, false),
+    };
+    setTiersData(novoMap);
+    aplicarSnap(novoMap[activeTier]);
+    notify.success("Distribuído", "Básico e Premium gerados a partir da aba Ideal.");
+  };
+
 
   // Hidrata estado a partir da proposta existente
   useEffect(() => {
@@ -196,6 +286,54 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
     const validade = new Date();
     validade.setDate(validade.getDate() + validadeDias);
     const validadeISO = editing && existing ? existing.validadeAte : validade.toISOString();
+
+    // ── Modo Comparativo: cria 3 propostas com mesmo grupoTierId ───────────
+    if (modoTier && !editing) {
+      try {
+        // Snapshot do tier ativo no estado atual
+        const dataMap: Record<PropostaTier, TierSnap> = {
+          basico: tiersData.basico ?? snapshotAtual(),
+          ideal: tiersData.ideal ?? snapshotAtual(),
+          premium: tiersData.premium ?? snapshotAtual(),
+        };
+        dataMap[activeTier] = snapshotAtual();
+        const principal = (Object.keys(dataMap) as PropostaTier[]).find((t) => dataMap[t].tierPrincipal) ?? "ideal";
+        const grupoTierId = crypto.randomUUID();
+        const criadas = [];
+        for (const t of PROPOSTA_TIERS_ORDEM) {
+          const snap = dataMap[t];
+          if (snap.itens.length === 0) continue;
+          const novaProp = await addPropostaM.mutateAsync({
+            clienteId: cliente.id,
+            consultorId: currentUserId,
+            validadeAte: validadeISO,
+            status,
+            itens: snap.itens,
+            irradiacao,
+            eficiencia,
+            cobertura: snap.cobertura,
+            inflacao,
+            taxaFinanciamento: taxaFin,
+            taxaCartao: taxaCart,
+            kitNome: snap.kitNome || undefined,
+            kitConsumoKwh: kitConsumo,
+            mostrarComoKit,
+            observacoes: snap.observacoes || undefined,
+            tier: t,
+            grupoTierId,
+            tierPrincipal: t === principal,
+          });
+          criadas.push(novaProp);
+        }
+        notify.success(`${criadas.length} propostas criadas`, "Básico, Ideal e Premium salvas com sucesso.");
+        navigate({ to: "/propostas" });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Erro ao salvar comparativo.";
+        notify.error("Falha ao salvar comparativo", msg);
+      }
+      return;
+    }
+
     try {
       let nova;
       if (editing && existing) {
@@ -363,7 +501,93 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
         </div>
       </header>
 
+      {!editing && (
+        <div className={`rounded-xl border p-4 ${modoTier ? "border-blue-300 bg-blue-50/40" : "border-border bg-card"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Layers className={`h-5 w-5 ${modoTier ? "text-blue-700" : "text-muted-foreground"}`} />
+              <div>
+                <div className="font-display font-bold text-sm">
+                  Proposta comparativa (Básico / Ideal / Premium)
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Gera 3 versões para o cliente comparar. Cada aba tem itens, cobertura e observações próprias.
+                </div>
+              </div>
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={modoTier}
+                onChange={(e) => ativarModoTier(e.target.checked)}
+                className="h-4 w-4 accent-blue-600"
+              />
+              {modoTier ? "Ativado" : "Ativar"}
+            </label>
+          </div>
+
+          {modoTier && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {PROPOSTA_TIERS_ORDEM.map((t) => {
+                  const snap = t === activeTier ? snapshotAtual() : tiersData[t];
+                  const preenchida = !!snap && snap.itens.length > 0;
+                  const isActive = t === activeTier;
+                  const isPrincipal = (t === activeTier ? activeTier === "ideal" : tiersData[t]?.tierPrincipal) ?? t === "ideal";
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => trocarTier(t)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition flex items-center gap-1.5 ${
+                        isActive
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : preenchida
+                            ? `${PROPOSTA_TIER_COR[t]} border-transparent`
+                            : "border-dashed border-border text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {PROPOSTA_TIER_LABEL[t]}
+                      {isPrincipal && <Star className="h-3 w-3 fill-current" />}
+                      {!preenchida && <span className="text-[10px] uppercase">vazia</span>}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={distribuirAuto}
+                  className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 text-sm font-semibold hover:bg-blue-100"
+                >
+                  <Sparkles className="h-4 w-4" /> Distribuir automaticamente
+                </button>
+              </div>
+              <label className="inline-flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeTier === "ideal"
+                    ? true /* indicador, toggling abaixo via outro caminho */
+                    : (tiersData[activeTier]?.tierPrincipal ?? false)
+                  }
+                  onChange={(e) => {
+                    // marca este tier como principal (e desmarca os outros)
+                    const snap = snapshotAtual();
+                    const novo = { ...tiersData, [activeTier]: { ...snap, tierPrincipal: e.target.checked } };
+                    if (e.target.checked) {
+                      (Object.keys(novo) as PropostaTier[]).forEach((k) => {
+                        if (k !== activeTier && novo[k]) novo[k] = { ...novo[k]!, tierPrincipal: false };
+                      });
+                    }
+                    setTiersData(novo);
+                  }}
+                  className="h-3.5 w-3.5 accent-amber-600"
+                />
+                Recomendar esta opção (aparece destacada no comparativo)
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-card rounded-xl border border-border p-5 space-y-3">
             <h2 className="font-display font-bold text-sm uppercase tracking-wider text-vert">Cliente</h2>
