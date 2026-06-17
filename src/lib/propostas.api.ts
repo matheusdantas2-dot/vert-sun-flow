@@ -132,6 +132,9 @@ export function useAddProposta() {
           kit_nome: input.kitNome ?? null,
           kit_consumo_kwh: input.kitConsumoKwh ?? null,
           mostrar_como_kit: input.mostrarComoKit ?? false,
+          tier: input.tier ?? null,
+          grupo_tier_id: input.grupoTierId ?? null,
+          tier_principal: input.tierPrincipal ?? false,
         } as never)
         .select("*")
         .single();
