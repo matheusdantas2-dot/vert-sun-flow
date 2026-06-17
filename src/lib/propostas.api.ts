@@ -189,6 +189,9 @@ export function useUpdateProposta() {
       if (patch.kitNome !== undefined) upd.kit_nome = patch.kitNome ?? null;
       if (patch.kitConsumoKwh !== undefined) upd.kit_consumo_kwh = patch.kitConsumoKwh ?? null;
       if (patch.mostrarComoKit !== undefined) upd.mostrar_como_kit = patch.mostrarComoKit;
+      if (patch.tier !== undefined) upd.tier = patch.tier ?? null;
+      if (patch.grupoTierId !== undefined) upd.grupo_tier_id = patch.grupoTierId ?? null;
+      if (patch.tierPrincipal !== undefined) upd.tier_principal = patch.tierPrincipal;
       if (Object.keys(upd).length > 0) {
         const { error } = await supabase.from("propostas").update(upd as never).eq("id", id);
         if (error) throw error;
