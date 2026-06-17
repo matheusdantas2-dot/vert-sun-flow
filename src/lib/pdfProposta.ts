@@ -59,10 +59,10 @@ function footer(ctx: Ctx) {
   pdf.setFontSize(7);
   pdf.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   pdf.setFont("helvetica", "normal");
-  pdf.text(`${empresa.razaoSocial} · CNPJ ${empresa.cnpj}`, M, H - 9);
+  pdf.text(`${empresa.razaoSocial ?? ""} · CNPJ ${empresa.cnpj ?? "—"}`, M, H - 9);
   pdf.text(`Proposta ${proposta.numero} · Validade ${dataBR(proposta.validadeAte)}`, W - M, H - 9, { align: "right" });
-  pdf.text(empresa.endereco, M, H - 5);
-  pdf.text(`${empresa.telefone} · ${empresa.email}`, W - M, H - 5, { align: "right" });
+  pdf.text(empresa.endereco || "—", M, H - 5);
+  pdf.text(`${empresa.telefone || ""}${empresa.telefone && empresa.email ? " · " : ""}${empresa.email || ""}`, W - M, H - 5, { align: "right" });
 }
 
 function pageFrame(ctx: Ctx, pagina: number, titulo: string, totalPaginas = 7) {
