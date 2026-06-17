@@ -501,7 +501,93 @@ export function PropostaForm({ propostaId, initialClienteId }: Props) {
         </div>
       </header>
 
+      {!editing && (
+        <div className={`rounded-xl border p-4 ${modoTier ? "border-blue-300 bg-blue-50/40" : "border-border bg-card"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Layers className={`h-5 w-5 ${modoTier ? "text-blue-700" : "text-muted-foreground"}`} />
+              <div>
+                <div className="font-display font-bold text-sm">
+                  Proposta comparativa (Básico / Ideal / Premium)
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Gera 3 versões para o cliente comparar. Cada aba tem itens, cobertura e observações próprias.
+                </div>
+              </div>
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={modoTier}
+                onChange={(e) => ativarModoTier(e.target.checked)}
+                className="h-4 w-4 accent-blue-600"
+              />
+              {modoTier ? "Ativado" : "Ativar"}
+            </label>
+          </div>
+
+          {modoTier && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {PROPOSTA_TIERS_ORDEM.map((t) => {
+                  const snap = t === activeTier ? snapshotAtual() : tiersData[t];
+                  const preenchida = !!snap && snap.itens.length > 0;
+                  const isActive = t === activeTier;
+                  const isPrincipal = (t === activeTier ? activeTier === "ideal" : tiersData[t]?.tierPrincipal) ?? t === "ideal";
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => trocarTier(t)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition flex items-center gap-1.5 ${
+                        isActive
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : preenchida
+                            ? `${PROPOSTA_TIER_COR[t]} border-transparent`
+                            : "border-dashed border-border text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {PROPOSTA_TIER_LABEL[t]}
+                      {isPrincipal && <Star className="h-3 w-3 fill-current" />}
+                      {!preenchida && <span className="text-[10px] uppercase">vazia</span>}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={distribuirAuto}
+                  className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 text-sm font-semibold hover:bg-blue-100"
+                >
+                  <Sparkles className="h-4 w-4" /> Distribuir automaticamente
+                </button>
+              </div>
+              <label className="inline-flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={activeTier === "ideal"
+                    ? true /* indicador, toggling abaixo via outro caminho */
+                    : (tiersData[activeTier]?.tierPrincipal ?? false)
+                  }
+                  onChange={(e) => {
+                    // marca este tier como principal (e desmarca os outros)
+                    const snap = snapshotAtual();
+                    const novo = { ...tiersData, [activeTier]: { ...snap, tierPrincipal: e.target.checked } };
+                    if (e.target.checked) {
+                      (Object.keys(novo) as PropostaTier[]).forEach((k) => {
+                        if (k !== activeTier && novo[k]) novo[k] = { ...novo[k]!, tierPrincipal: false };
+                      });
+                    }
+                    setTiersData(novo);
+                  }}
+                  className="h-3.5 w-3.5 accent-amber-600"
+                />
+                Recomendar esta opção (aparece destacada no comparativo)
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-card rounded-xl border border-border p-5 space-y-3">
             <h2 className="font-display font-bold text-sm uppercase tracking-wider text-vert">Cliente</h2>
