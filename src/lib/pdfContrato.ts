@@ -125,20 +125,22 @@ function tabelaPagamento(
   numero: string,
 ) {
   const colN = 12;
+  const colP = 22;
   const colV = 40;
-  const colD = CONTENT_W - colN - colV;
+  const colD = CONTENT_W - colN - colV - colP;
+  const total = formas.reduce((a, f) => a + f.valor, 0);
+  const pct = (v: number) => (total > 0 ? `${((v / total) * 100).toFixed(0)}%` : "—");
   ensureSpace(pdf, cur, 8 + formas.length * 8 + 4, empresa, numero);
-  // header
   pdf.setFillColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.rect(M, cur.y, CONTENT_W, 7, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
   pdf.text("Nº", M + 3, cur.y + 5);
-  pdf.text("FORMA DE PAGAMENTO", M + colN + 3, cur.y + 5);
-  pdf.text("VALOR", W - M - 3, cur.y + 5, { align: "right" });
+  pdf.text("MOMENTO DO PAGAMENTO", M + colN + 3, cur.y + 5);
+  pdf.text("%", W - M - colV - colP / 2, cur.y + 5, { align: "center" });
+  pdf.text("VALOR (R$)", W - M - 3, cur.y + 5, { align: "right" });
   cur.y += 7;
-  // rows
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   formas.forEach((f, i) => {
@@ -150,20 +152,20 @@ function tabelaPagamento(
     pdf.text(`${i + 1}`, M + 3, cur.y + 5.5);
     const desc = pdf.splitTextToSize(f.descricao, colD - 6) as string[];
     pdf.text(desc[0], M + colN + 3, cur.y + 5.5);
+    pdf.text(pct(f.valor), W - M - colV - colP / 2, cur.y + 5.5, { align: "center" });
     pdf.setFont("helvetica", "bold");
     pdf.text(brl(f.valor), W - M - 3, cur.y + 5.5, { align: "right" });
     pdf.setFont("helvetica", "normal");
     cur.y += 8;
   });
-  // total
-  const total = formas.reduce((a, f) => a + f.valor, 0);
   pdf.setDrawColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setLineWidth(0.4);
   pdf.line(M, cur.y, W - M, cur.y);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(VERT_DARK[0], VERT_DARK[1], VERT_DARK[2]);
   pdf.setFontSize(10);
-  pdf.text("TOTAL", M + 3, cur.y + 6);
+  pdf.text("TOTAL", M + colN + 3, cur.y + 6);
+  pdf.text("100%", W - M - colV - colP / 2, cur.y + 6, { align: "center" });
   pdf.text(brl(total), W - M - 3, cur.y + 6, { align: "right" });
   cur.y += 10;
 }
